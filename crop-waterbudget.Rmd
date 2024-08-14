@@ -59,6 +59,17 @@ source("code/5.0_function_get_budget.R")
 # [6] "Maize 15"       "FieldBeans 15"  "Ginger"         "Coconut"        "FORMULE"       
 # [11] "Cabbage"        "Tomato"         "Tomato_Irri"    "Cucumber"       "Rice"
 # [16] "Maize"          "Banana"         "Areca"          "Beans_Irri"  
+
+# Crops in Rotations
+# unique(kc.doy.crops$crop.rotation)
+#  [1] "Areca_16"         "Banana_15"        "BlackEyedBeans_1" "BlackEyedBeans_2"
+#  [5] "Cabbage_10"       "Cabbage_11"       "Cabbage_12"       "Cabbage_13"      
+#  [9] "Cabbage_17"       "Coconut_17"       "Coconut_9"        "Cucumber_11"     
+# [13] "FieldBeans_3"     "FieldBeans_6"     "FingerMillet_8"   "Ginger_7"        
+# [17] "HorseGram_2"      "Horsegram_14"     "Horsegram_3"      "Maize_13"        
+# [21] "Maize_14"         "Maize_5"          "Maize_8"          "Rice_12"         
+# [25] "Tomato_10"        "Tomato_Irri_11"   "beans_Irri_17"    "formule_0"       
+# [29] "millet_1"         "millet_4"  
 p.list <- list(rain = rain,
                crop.param = crop.param,
                soil.param = soil.param,
@@ -68,7 +79,8 @@ p.list <- list(rain = rain,
                et0.input = et0.daily, # For "daily", choose: et0.daily
                kc.doy.crops = kc.doy.crops,
                # crops.vec = c("no_crop"),
-               crops.vec = c("FieldBeans", "Horsegram"), # See crops options above 
+               crops.vec = c("Coconut"), # See crops options above
+               crops.rotation.vec = c("Coconut_9"), # If crops.vec is other than "no_crop", crops.rotation.vec must be provided
                kc_no_crop = list(summer = 0.005, kr = 0.2),
                soil.type = "red",
                CN = 85,

@@ -61,7 +61,7 @@ get_peff_et0 <- function(p = p.list) {
 #~~~~~~~~~~~~~~~
 # Function 2 of 2:  get_budget ----
 #~~~~~~~~~~~~~~~
-get_budget <- function(p = p.list, ts = out.get_peff_aet) {
+get_budget <- function(p = p.list, ts = met.forcing) {
   # #~~~~~~~~~~~~~~~
   # ## source functions ----
   # #~~~~~~~~~~~~~~~
@@ -89,9 +89,10 @@ get_budget <- function(p = p.list, ts = out.get_peff_aet) {
       }
     }
   } else {
-    kc.doy.ls <- split(kc.doy.crops, kc.doy.crops$crop)
+    kc.doy.ls <- split(kc.doy.crops, kc.doy.crops$crop.rotation)
     names(kc.doy.ls) <- tolower(names(kc.doy.ls))
-    kc.doy.ls.select <- kc.doy.ls[crops.vec]
+    crops.rotation.vec <- tolower(p$crops.rotation.vec)
+    kc.doy.ls.select <- kc.doy.ls[crops.rotation.vec]
     kc.crops.ls <- lapply(kc.doy.ls.select, get_kc, 
                        from = ts$date[1], to = ts$date[nrow(ts)])
     # Has a list for each crop. Converting to a joint data-frame
