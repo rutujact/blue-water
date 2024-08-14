@@ -78,9 +78,9 @@ p.list <- list(rain = rain,
                et0.timestep = "daily", # weekly/daily
                et0.input = et0.daily, # For "daily", choose: et0.daily
                kc.doy.crops = kc.doy.crops,
-               # crops.vec = c("no_crop"),
-               crops.vec = c("Coconut"), # See crops options above
-               crops.rotation.vec = c("Coconut_9"), # If crops.vec is other than "no_crop", crops.rotation.vec must be provided
+               # crops.vec = c("no_crop"), # Upper/Lower/title all accepted
+               crops.vec = c("Coconut", "Cabbage", "beans_Irri"), # See crops options above. # Upper/Lower/title all accepted
+               crops.rotation.vec = c("Cabbage_17", "Coconut_17", "beans_Irri_17"), # If crops.vec is other than "no_crop", crops.rotation.vec must be provided # Upper/Lower/title all accepted
                kc_no_crop = list(summer = 0.005, kr = 0.2),
                soil.type = "red",
                CN = 85,
@@ -98,8 +98,18 @@ budget <- get_budget(p = p.list, ts = met.forcing)
 ```{r plot-daily, echo = FALSE, fig.align='center', fig.cap='...'}
 knitr::include_graphics('figures/water_budgets/water_budget_daily.jpg')
 ```
-### Yearly
 
+### Yearly
 ```{r plot-yearly, echo = FALSE, fig.align='center', fig.cap='...'}
 knitr::include_graphics('figures/water_budgets/water_budget_yearly.jpg')
+```
+
+### Monthly Average
+```{r plot-monthly-avg, out.width='50%', echo = FALSE, fig.align='center', fig.cap='...'}
+knitr::include_graphics('figures/water_budgets/water_budget_monthly.jpg')
+```
+
+### Monthly Average % Runoff Overlaid
+```{r plot-runoff-overlaid, out.width='70%', echo = FALSE, fig.align='center', fig.cap='...'}
+knitr::include_graphics('figures/water_budgets/water_budget_runoff_overlaid_monthly.jpg')
 ```
