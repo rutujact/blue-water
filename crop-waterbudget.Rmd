@@ -12,6 +12,7 @@ if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse)
 pacman::p_load(ggpubr)
 # install.packages("knitr")
+if (!dir.exists("figures")) {dir.create("figures", showWarnings = FALSE)}
 if (!dir.exists("figures/crop_kc_curves")) {dir.create("figures/crop_kc_curves", showWarnings = FALSE)}
 if (!dir.exists("figures/water_budgets")) {dir.create("figures/water_budgets", showWarnings = FALSE)}
 ```
