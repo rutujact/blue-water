@@ -57,7 +57,7 @@ source("code/5.0_function_get_budget.R")
 # unique(crop.param$crop)
 # [1] "No_crop"        "Blackeyedbeans" "Horsegram"      "FieldBeans"     "FingerMillet"  
 # [6] "Maize 15"       "FieldBeans 15"  "Ginger"         "Coconut"        "FORMULE"       
-# [11] "Cabbage"        "Tomato"         "Tomato_Irri"    "Cucumber"       "Rice"          
+# [11] "Cabbage"        "Tomato"         "Tomato_Irri"    "Cucumber"       "Rice"
 # [16] "Maize"          "Banana"         "Areca"          "Beans_Irri"  
 p.list <- list(rain = rain,
                crop.param = crop.param,
