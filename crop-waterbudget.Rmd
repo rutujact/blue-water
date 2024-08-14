@@ -1,203 +1,85 @@
 ---
-title: "Crop Contributions to Water Budget Fluxes"
-subtitle: "Graphing ideas in R with Sankey Diagram and Treemap"
+title: "crop-waterbudget"
+subtitle: "Derive Water Budget for a given Crop System & Met Forcing"
 author: "Rutuja Chitra-Tarak"
-date: "2024-07-18"
+date: "`r Sys.Date()`"
 output: html_document
 ---
 
-```{r load-library, message=FALSE, echo=FALSE}
+```{r setup, include=FALSE}
 rm(list = ls())
-library(tidyverse)
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse)
+pacman::p_load(ggpubr)
+# install.packages("knitr")
+if (!dir.exists("figures/crop_kc_curves")) {dir.create("figures/crop_kc_curves", showWarnings = FALSE)}
+if (!dir.exists("figures/water_budgets")) {dir.create("figures/water_budgets", showWarnings = FALSE)}
 ```
 
-# Sankey Diagram
+## Load Data & Functions
 
-## Sankey - Version 1
+```{r load_data_&_functions}
+#~~~~~~~~~~~~~~~
+# Get Input Data ----
+#~~~~~~~~~~~~~~~
+rain <- read.csv(file = "data-raw/rainfall.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
+et0.week.imd <- read.csv(file = paste0("data/et0.week.imd.csv"), header = TRUE) # year, week (0-52), et0
+et0.daily <- read.csv(file = "data-raw/et0.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
 
-Crops contributing to influx and outflux of water are on the same side of the storage node.
+crop.param <- read.csv(file = "data/crop.parameters.csv", header = TRUE)
+kc.doy.crops <- read.csv(file = "data/Kc_curve_parameters_by_crop_rotation.csv", header = TRUE)
+soil.param <- read.csv(file = "data/soil.parameters.csv", header = TRUE)
 
-```{r sankey.1, message=FALSE}
-# https://r-graph-gallery.com/sankey-diagram.html
-library(networkD3)
-
-# A connection data frame is a list of flows with intensity for each flow
- 
-links <- data.frame(
-  source=paste0("crop", 1:10), 
-  flux = 10*c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400)
-  )
-links$target <- rep("Storage", nrow(links))
-
-neutral.thresh <- 100
-
-links <- links %>% 
-  mutate(group = if_else(abs(flux) < neutral.thresh, "Neutral", 
-                            if_else(flux < neutral.thresh, "Outflux", "Influx")),
-         value = if_else(flux == 0, 1, abs(flux)))
-
-# From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
-  name=c(as.character(links$source), 
-  as.character(links$target)) %>% unique(),
-  # Add a 'group' column to the nodes data frame: Add one for "Storage"
-  group = as.factor(c(as.character(links$group), "Storage"))
-)
-# Give a color for each group:
-my_color <- 'd3.scaleOrdinal() .domain(["Influx", "Neutral", "Outflux", "Storage"]) .range(["steelblue", "#69b3a2", "Orange", "grey"])'
-
-# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
- 
-# Make the Network
-p <- sankeyNetwork(Links = links, Nodes = nodes,
-              Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name",
-              fontSize = 12,
-              colourScale = my_color,
-              NodeGroup = "group",
-              sinksRight = FALSE)
-# Creates an interactive graph - flows could be moved around. Check it out!
-p
-# save the widget
-library(htmlwidgets)
-widget.path <- paste0(getwd(), "/HtmlWidget")
-if(!dir.exists(widget.path)) {dir.create(path = widget.path)}
-saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankey_version1.html"))
+#~~~~~~~~~~~~~~~
+# Source Functions ----
+#~~~~~~~~~~~~~~~
+source("code/2.0_function_get_Peff.R")
+source("code/3.0_function_get_et0.R")
+source("code/4.0_function_get_kc.R")
+source("code/5.0_function_get_budget.R")
 ```
 
-## Sankey - Version 2
+## User sets Parameters here & Run Water Budget Functions
 
-Crops contributing to influx and outflux of water are on the opposite side of the storage node. Graph is interactive - Neutral crops could be pushed aside manually.
-```{r sankey.2, message=FALSE, echo = FALSE}
-# https://r-graph-gallery.com/sankey-diagram.html
-library(networkD3)
- 
-links <- data.frame(
-  source=c(paste0("crop", 1:7), rep("Storage", 3)),
-  flux = 10*c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400)
-  )
-links$target <- c(rep("Storage", 7), paste0("crop", 8:10))
-
-neutral.thresh <- 10*10
-
-links <- links %>% 
-  mutate(group = if_else(abs(flux) < neutral.thresh, "Neutral", 
-                            if_else(flux < neutral.thresh, "Outflux", "Influx")),
-         value = if_else(flux == 0, 1, abs(flux)))
-
-# From these flows we need to create a node data frame: it lists every entities involved in the flow
-nodes <- data.frame(
-  name=c(as.character(links$source), 
-  as.character(links$target)) %>% unique(),
-  # Add a 'group' column to the nodes data frame: Add one for "Storage"
-  group = as.factor(c(links$group[1:7], "Storage", links$group[8:10])) #as.factor(c(as.character(links$group), "Storage"))
-)
-# Give a color for each group:
-my_color <- 'd3.scaleOrdinal() .domain(["Influx", "Neutral", "Outflux", "Storage"]) .range(["steelblue", "#69b3a2", "Orange", "grey"])'
-
-# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
-links$IDsource <- match(links$source, nodes$name)-1 
-links$IDtarget <- match(links$target, nodes$name)-1
- 
-# Make the Network
-p <- sankeyNetwork(Links = links, Nodes = nodes,
-              Source = "IDsource", Target = "IDtarget",
-              Value = "value", NodeID = "name", 
-                            fontSize = 12,
-              colourScale = my_color,
-              NodeGroup = "group",
-              sinksRight = TRUE)
-# Creates an interactive graph - flows could be moved around. Check it out!
-p
-# save the widget
-saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankey_version2.html"))
+```{r set_param_run_budget}
+#~~~~~~~~~~~~~~~
+# Provide Input Parameters ----
+#~~~~~~~~~~~~~~~
+# Crop options
+# unique(crop.param$crop)
+# [1] "No_crop"        "Blackeyedbeans" "Horsegram"      "FieldBeans"     "FingerMillet"  
+# [6] "Maize 15"       "FieldBeans 15"  "Ginger"         "Coconut"        "FORMULE"       
+# [11] "Cabbage"        "Tomato"         "Tomato_Irri"    "Cucumber"       "Rice"          
+# [16] "Maize"          "Banana"         "Areca"          "Beans_Irri"  
+p.list <- list(rain = rain,
+               crop.param = crop.param,
+               soil.param = soil.param,
+               # et0.timestep = "weekly", # weekly/daily
+               # et0.input = et0.week.imd, # For "weekly", choose: et0.week.imd
+               et0.timestep = "daily", # weekly/daily
+               et0.input = et0.daily, # For "daily", choose: et0.daily
+               kc.doy.crops = kc.doy.crops,
+               # crops.vec = c("no_crop"),
+               crops.vec = c("FieldBeans", "Horsegram"), # See crops options above 
+               kc_no_crop = list(summer = 0.005, kr = 0.2),
+               soil.type = "red",
+               CN = 85,
+               sm.init = 0.5)
+#~~~~~~~~~~~~~~~
+# Run water budget functions ----
+#~~~~~~~~~~~~~~~
+met.forcing <- get_peff_et0(p = p.list)
+budget <- get_budget(p = p.list, ts = met.forcing)
 ```
 
-# ggsankey
+## Output Plots
 
-```{r ggsankey}
-# Example at: https://r-charts.com/flow/sankey-diagram-ggplot2/
-# install.packages("remotes")
-# remotes::install_github("davidsjoberg/ggsankey")
-library(ggsankey)
-
-crop.data <- data.frame(crop = c(paste0("Crop", 1:10)),
-                        flux = c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400))
-neutral.thresh <- 10
-
-crop.data <- crop.data %>% 
-  mutate(flux = as.numeric(flux),
-         flux_type = if_else(abs(flux) < neutral.thresh, "Neutral", 
-                             if_else(flux < neutral.thresh, "Outflux", "Influx")),
-         flux.abs = if_else(flux == 0, 1, abs(flux)))
-
-df <- crop.data %>%
-  make_long(crop, flux_type, value = flux.abs) 
-
-ggplot(df, aes(x = x, 
-               next_x = next_x, 
-               node = node, 
-               next_node = next_node,
-               fill = factor(next_node)),
-               label = node,
-       value = value) +
-  geom_sankey() +
-  theme_sankey(base_size = 16) +
-  scale_fill_discrete(na.translate = FALSE) +
-  guides(fill = guide_legend(title = "Flux Type"))
-
-# The widths should change by the flux value, but it's not working.
+### Daily
+```{r plot-daily, echo = FALSE, fig.align='center', fig.cap='...'}
+knitr::include_graphics('figures/water_budgets/water_budget_daily.jpg')
 ```
+### Yearly
 
-# Treemap
-
-```{r treemap, warning=FALSE, message=FALSE}
-# Inspiration from: https://www.data-to-viz.com/graph/treemap.html
-# libraries
-library(tidyverse)
-# install.packages("treemap")
-library(treemap)
-
-crop.data <- data.frame(crop = c(paste0("Crop", 1:10)),
-                        flux = c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400))
-neutral.thresh <- 10
-
-crop.data <- crop.data %>% 
-  mutate(flux = as.numeric(flux),
-         flux_type = if_else(abs(flux) < neutral.thresh, "Neutral", 
-                             if_else(flux < neutral.thresh, "Outflux", "Influx")),
-         flux.abs = abs(flux))
-
-# Plot
-p <- treemap(crop.data,
-            # data
-            index=c("flux_type", "crop"),
-            vSize="flux.abs",
-            type="index",
-
-            # Main
-            title="",
-            palette="Dark2",
-
-            # Borders:
-            border.col=c("black", "grey"),
-            border.lwds=c(1,0.5,0.1),
-
-            # Labels
-            fontsize.labels=c(32, 20),
-            # fontsize.labels=c(0.7, 0.4, 0.3),
-            fontcolor.labels=c("white", "white"),
-            fontface.labels=1,
-            bg.labels=c("transparent"),
-            align.labels=list( c("center", "center"), c("left", "top")),
-            overlap.labels=0.5#, inflate.labels=T
-
-)
-
-# Interactive treemap
-# install.packages("d3treeR") # Couldn't find. Need to look up 
-# library(d3treeR)
-# d3tree2(p, rootname = "General" )
+```{r plot-yearly, echo = FALSE, fig.align='center', fig.cap='...'}
+knitr::include_graphics('figures/water_budgets/water_budget_yearly.jpg')
 ```
