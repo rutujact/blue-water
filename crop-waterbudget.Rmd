@@ -20,11 +20,18 @@ if (!dir.exists("figures/water_budgets")) {dir.create("figures/water_budgets", s
 
 ```{r load_data_&_functions}
 #~~~~~~~~~~~~~~~
-# Get Input Data ----
+# Get Required Input Data ----
 #~~~~~~~~~~~~~~~
 rain <- read.csv(file = "data-raw/rainfall.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
 et0.week.imd <- read.csv(file = paste0("data/et0.week.imd.csv"), header = TRUE) # year, week (0-52), et0
 et0.daily <- read.csv(file = "data-raw/et0.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
+
+# The following are prepared with 
+# code:
+# source("code/1.0_format_crop_kc_crop_param_&_soil_param.R")
+# and data files:
+# 1. "data-raw/Kc Billikere final_mod.xlsx", sheet = "Crop cycles Kc"
+# 2. "data-raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx", sheet = "CROP paprameter"
 
 crop.param <- read.csv(file = "data/crop.parameters.csv", header = TRUE)
 kc.doy.crops <- read.csv(file = "data/Kc_curve_parameters_by_crop_rotation.csv", header = TRUE)

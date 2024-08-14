@@ -1,0 +1,151 @@
+"crop.rotation","rotation","crop","doy_var","doy","kc"
+"Areca_16","16","Areca","Sowing date",1,0.95
+"Areca_16","16","Areca","End of ini",92,0.95
+"Areca_16","16","Areca","End of Dev",183,1.11
+"Areca_16","16","Areca","End of Mid",274,1.11
+"Areca_16","16","Areca","Harvest date",366,1.09
+"Banana_15","15","Banana","Sowing date",1,1
+"Banana_15","15","Banana","End of ini",121,1
+"Banana_15","15","Banana","End of Dev",181,1.2
+"Banana_15","15","Banana","End of Mid",361,1.2
+"Banana_15","15","Banana","Harvest date",366,1.1
+"BlackEyedBeans_1","1","BlackEyedBeans","Sowing date",121,0.4
+"BlackEyedBeans_1","1","BlackEyedBeans","End of ini",138,0.4
+"BlackEyedBeans_1","1","BlackEyedBeans","End of Dev",177,1.15
+"BlackEyedBeans_1","1","BlackEyedBeans","End of Mid",206,1.15
+"BlackEyedBeans_1","1","BlackEyedBeans","Harvest date",228,0.35
+"BlackEyedBeans_2","2","BlackEyedBeans","Sowing date",121,0.4
+"BlackEyedBeans_2","2","BlackEyedBeans","End of ini",138,0.4
+"BlackEyedBeans_2","2","BlackEyedBeans","End of Dev",177,1.15
+"BlackEyedBeans_2","2","BlackEyedBeans","End of Mid",206,1.15
+"BlackEyedBeans_2","2","BlackEyedBeans","Harvest date",228,0.35
+"Cabbage_10","10","Cabbage","Sowing date",121,0.7
+"Cabbage_10","10","Cabbage","End of ini",143,0.7
+"Cabbage_10","10","Cabbage","End of Dev",176,1.05
+"Cabbage_10","10","Cabbage","End of Mid",201,1.05
+"Cabbage_10","10","Cabbage","Harvest date",211,0.95
+"Cabbage_11","11","Cabbage","Sowing date",160,0.7
+"Cabbage_11","11","Cabbage","End of ini",182,0.7
+"Cabbage_11","11","Cabbage","End of Dev",215,1.05
+"Cabbage_11","11","Cabbage","End of Mid",240,1.05
+"Cabbage_11","11","Cabbage","Harvest date",250,0.95
+"Cabbage_12","12","Cabbage","Sowing date",271,0.7
+"Cabbage_12","12","Cabbage","End of ini",293,0.7
+"Cabbage_12","12","Cabbage","End of Dev",326,1.05
+"Cabbage_12","12","Cabbage","End of Mid",351,1.05
+"Cabbage_12","12","Cabbage","Harvest date",361,0.95
+"Cabbage_13","13","Cabbage","Sowing date",275,0.7
+"Cabbage_13","13","Cabbage","End of ini",297,0.7
+"Cabbage_13","13","Cabbage","End of Dev",330,1.05
+"Cabbage_13","13","Cabbage","End of Mid",355,1.05
+"Cabbage_13","13","Cabbage","Harvest date",365,0.95
+"Cabbage_17","17","Cabbage","Sowing date",121,0.7
+"Cabbage_17","17","Cabbage","End of ini",143,0.7
+"Cabbage_17","17","Cabbage","End of Dev",176,1.05
+"Cabbage_17","17","Cabbage","End of Mid",201,1.05
+"Cabbage_17","17","Cabbage","Harvest date",211,0.95
+"Coconut_17","17","Coconut","Sowing date",1,0.95
+"Coconut_17","17","Coconut","End of ini",92,0.95
+"Coconut_17","17","Coconut","End of Dev",183,1.19
+"Coconut_17","17","Coconut","End of Mid",275,1.19
+"Coconut_17","17","Coconut","Harvest date",366,1.14
+"Coconut_9","9","Coconut","Sowing date",1,0.95
+"Coconut_9","9","Coconut","End of ini",92,0.95
+"Coconut_9","9","Coconut","End of Dev",183,1.19
+"Coconut_9","9","Coconut","End of Mid",275,1.19
+"Coconut_9","9","Coconut","Harvest date",366,1.14
+"Cucumber_11","11","Cucumber","Sowing date",275,0.6
+"Cucumber_11","11","Cucumber","End of ini",292,0.6
+"Cucumber_11","11","Cucumber","End of Dev",318,1
+"Cucumber_11","11","Cucumber","End of Mid",352,1
+"Cucumber_11","11","Cucumber","Harvest date",365,0.9
+"FieldBeans_3","3","FieldBeans","Sowing date",121,0.4
+"FieldBeans_3","3","FieldBeans","End of ini",136,0.4
+"FieldBeans_3","3","FieldBeans","End of Dev",171,1.15
+"FieldBeans_3","3","FieldBeans","End of Mid",196,1.15
+"FieldBeans_3","3","FieldBeans","Harvest date",216,0.35
+"FieldBeans_6","6","FieldBeans","Sowing date",166,0.4
+"FieldBeans_6","6","FieldBeans","End of ini",181,0.4
+"FieldBeans_6","6","FieldBeans","End of Dev",216,1.15
+"FieldBeans_6","6","FieldBeans","End of Mid",241,1.15
+"FieldBeans_6","6","FieldBeans","Harvest date",261,0.35
+"FingerMillet_8","8","FingerMillet","Sowing date",240,0.51
+"FingerMillet_8","8","FingerMillet","End of ini",258,0.51
+"FingerMillet_8","8","FingerMillet","End of Dev",294,0.87
+"FingerMillet_8","8","FingerMillet","End of Mid",336,0.87
+"FingerMillet_8","8","FingerMillet","Harvest date",360,0.5
+"Ginger_7","7","Ginger","Sowing date",50,0.4
+"Ginger_7","7","Ginger","End of ini",132,0.4
+"Ginger_7","7","Ginger","End of Dev",232,1
+"Ginger_7","7","Ginger","End of Mid",293,1
+"Ginger_7","7","Ginger","Harvest date",320,0.2
+"HorseGram_2","2","HorseGram","Sowing date",243,0.4
+"HorseGram_2","2","HorseGram","End of ini",263,0.4
+"HorseGram_2","2","HorseGram","End of Dev",293,1.15
+"HorseGram_2","2","HorseGram","End of Mid",323,1.15
+"HorseGram_2","2","HorseGram","Harvest date",333,0.35
+"Horsegram_14","14","Horsegram","Sowing date",276,0.4
+"Horsegram_14","14","Horsegram","End of ini",296,0.4
+"Horsegram_14","14","Horsegram","End of Dev",326,1.15
+"Horsegram_14","14","Horsegram","End of Mid",356,1.15
+"Horsegram_14","14","Horsegram","Harvest date",366,0.35
+"Horsegram_3","3","Horsegram","Sowing date",231,0.4
+"Horsegram_3","3","Horsegram","End of ini",251,0.4
+"Horsegram_3","3","Horsegram","End of Dev",281,1.15
+"Horsegram_3","3","Horsegram","End of Mid",311,1.15
+"Horsegram_3","3","Horsegram","Harvest date",321,0.35
+"Maize_13","13","Maize","Sowing date",121,0.3
+"Maize_13","13","Maize","End of ini",141,0.3
+"Maize_13","13","Maize","End of Dev",176,1.2
+"Maize_13","13","Maize","End of Mid",215,1.2
+"Maize_13","13","Maize","Harvest date",245,0.6
+"Maize_14","14","Maize","Sowing date",121,0.3
+"Maize_14","14","Maize","End of ini",141,0.3
+"Maize_14","14","Maize","End of Dev",176,1.2
+"Maize_14","14","Maize","End of Mid",215,1.2
+"Maize_14","14","Maize","Harvest date",245,0.6
+"Maize_5","5","Maize","Sowing date",166,0.3
+"Maize_5","5","Maize","End of ini",186,0.3
+"Maize_5","5","Maize","End of Dev",221,1.2
+"Maize_5","5","Maize","End of Mid",260,1.2
+"Maize_5","5","Maize","Harvest date",290,0.6
+"Maize_8","8","Maize","Sowing date",100,0.3
+"Maize_8","8","Maize","End of ini",120,0.3
+"Maize_8","8","Maize","End of Dev",155,1.2
+"Maize_8","8","Maize","End of Mid",194,1.2
+"Maize_8","8","Maize","Harvest date",224,0.6
+"Rice_12","12","Rice","Sowing date",121,1.05
+"Rice_12","12","Rice","End of ini",145,1.05
+"Rice_12","12","Rice","End of Dev",169,1.2
+"Rice_12","12","Rice","End of Mid",217,1.2
+"Rice_12","12","Rice","Harvest date",241,0.9
+"Tomato_10","10","Tomato","Sowing date",242,0.6
+"Tomato_10","10","Tomato","End of ini",269,0.6
+"Tomato_10","10","Tomato","End of Dev",304,1.15
+"Tomato_10","10","Tomato","End of Mid",339,1.15
+"Tomato_10","10","Tomato","Harvest date",362,0.8
+"Tomato_Irri_11","11","Tomato_Irri","Sowing date",15,0.6
+"Tomato_Irri_11","11","Tomato_Irri","End of ini",42,0.6
+"Tomato_Irri_11","11","Tomato_Irri","End of Dev",77,1.15
+"Tomato_Irri_11","11","Tomato_Irri","End of Mid",112,1.15
+"Tomato_Irri_11","11","Tomato_Irri","Harvest date",135,0.8
+"beans_Irri_17","17","beans_Irri","Sowing date",241,0.5
+"beans_Irri_17","17","beans_Irri","End of ini",258,0.5
+"beans_Irri_17","17","beans_Irri","End of Dev",284,1.05
+"beans_Irri_17","17","beans_Irri","End of Mid",318,1.05
+"beans_Irri_17","17","beans_Irri","Harvest date",331,0.9
+"formule_0","0","formule","Sowing date",150,0.51
+"formule_0","0","formule","End of ini",165,0.51
+"formule_0","0","formule","End of Dev",195,0.87
+"formule_0","0","formule","End of Mid",228,0.87
+"formule_0","0","formule","Harvest date",248,0.47
+"millet_1","1","millet","Sowing date",243,0.51
+"millet_1","1","millet","End of ini",261,0.51
+"millet_1","1","millet","End of Dev",297,0.87
+"millet_1","1","millet","End of Mid",339,0.87
+"millet_1","1","millet","Harvest date",363,0.5
+"millet_4","4","millet","Sowing date",152,0.51
+"millet_4","4","millet","End of ini",170,0.51
+"millet_4","4","millet","End of Dev",206,0.87
+"millet_4","4","millet","End of Mid",248,0.87
+"millet_4","4","millet","Harvest date",272,0.5
