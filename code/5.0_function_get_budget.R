@@ -61,7 +61,9 @@ get_peff_et0 <- function(p = p.list) {
 #~~~~~~~~~~~~~~~
 # Function 2 of 2:  get_budget ----
 #~~~~~~~~~~~~~~~
-get_budget <- function(p = p.list, ts = met.forcing) {
+get_budget <- function(cs, #= crop.system.ls[[3]], 
+                       p = p.list, 
+                       ts = met.forcing) {
   # #~~~~~~~~~~~~~~~
   # ## source functions ----
   # #~~~~~~~~~~~~~~~
@@ -72,7 +74,7 @@ get_budget <- function(p = p.list, ts = met.forcing) {
   #~~~~~~~~~~~~~~~
   crop.param.ls <- split(p$crop.param, p$crop.param$crop)
   names(crop.param.ls) <- tolower(names(crop.param.ls))
-  crops.vec <- tolower(p$crops.vec)
+  crops.vec <- tolower(cs$crop)
   if ("no_crop" %in% crops.vec) {
     kcr <- data.frame(date = ts$date) 
     kcr$doy <- as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), 
@@ -80,7 +82,7 @@ get_budget <- function(p = p.list, ts = met.forcing) {
     kcr$kcr <- NA
     kcr$kcr[kcr$doy < 120] <- p$kc_no_crop[["summer"]]
     kcr$kcr[kcr$doy >= 120] <- p$kc_no_crop[["kr"]]
-    # "no_crop" normally should be rainfed, but just in case:
+    # "no_crop" normally should be rainfed, but just in case the field was irrigated:
     if (crop.param.ls[[crops.vec]]$irrigation == "rainfed") {
       kcr$irrigated <- FALSE
     } else {
@@ -91,8 +93,8 @@ get_budget <- function(p = p.list, ts = met.forcing) {
   } else {
     kc.doy.ls <- split(kc.doy.crops, kc.doy.crops$crop.rotation)
     names(kc.doy.ls) <- tolower(names(kc.doy.ls))
-    crops.rotation.vec <- tolower(p$crops.rotation.vec)
-    kc.doy.ls.select <- kc.doy.ls[crops.rotation.vec]
+    crop.rotation.vec <- tolower(cs$crop.rotation)
+    kc.doy.ls.select <- kc.doy.ls["cucumber_11"]
     kc.crops.ls <- lapply(kc.doy.ls.select, get_kc, 
                        from = ts$date[1], to = ts$date[nrow(ts)])
     # Has a list for each crop. Converting to a joint data-frame
@@ -171,15 +173,17 @@ get_budget <- function(p = p.list, ts = met.forcing) {
     ts$aet[i] <- min(ts$sm.mid[i], ts$etcs[i], na.rm = TRUE) 
     # sm is updated by removing AET, and adding irrigation when irrigated and soil under water-stress
     # Why isn't irrigation given before/during AET drawn?----
-    if (ts$irrigated[i] & ((ts$sm.mid[i] - ts$aet[i]) < whc*raw)) {
-      # If irrigated (crop present and crop is under irrigation) 
-      # AND soil is water-stressed, then irrigated to whc
-      ts$sm[i] <- whc 
-    } else {
-      # Else only ET is removed
-      ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+    irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < whc*raw
+    if (ts$irrigated[i] & 
+        (!is.na(irri.need.test) || !is.null(irri.need.test)) & irri.need.test) {
+        # If irrigated (crop present and crop is under irrigation) 
+        # AND soil is water-stressed, then irrigated to whc
+        ts$sm[i] <- whc         
+        } else {
+        # Else only ET is removed
+          ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+        }
     }
-  }
   # t2 = Sys.time()
   # t2-t1
   # Extent of Irrigation does not have dependent variables, so can be calculated outside loop
@@ -196,7 +200,7 @@ get_budget <- function(p = p.list, ts = met.forcing) {
     ts$aet.crop[ts$etc == 0] <- 0
     ts$aet.crop[ts$etc > 0] <- ts$aet[ts$etc > 0]
     ts$aet.to.etc.crop[ts$etc.crop == 0] <- NA
-    ts$aet.to.etc.crop[ts$etc.crop != 0] <- ts$aet.crop[ts$etc.crop != 0]/ts$etc.crop[ts$etc.crop != 0]
+    ts$aet.to.etc.crop[ts$etc.crop != 0 & !is.na(ts$etc.crop)] <- ts$aet.crop[ts$etc.crop != 0 & !is.na(ts$etc.crop)]/ts$etc.crop[ts$etc.crop != 0 & !is.na(ts$etc.crop)]
   }
   ts$aet.to.P <- min(ts$aet/ts$Peff, NA)
   ts$runoff.percent <- min(ts$Q/ts$P*100, NA)
@@ -214,8 +218,8 @@ get_budget <- function(p = p.list, ts = met.forcing) {
   # [21] "sm.hold"         "sm.mid"          "ks"              "sm"              "sm.percent"     
   # [26] "aet.to.etc.crop"
   
-  write.csv(ts, file = paste0("data/water_budget_SOIL_", p$soil.type, 
-                              "_CROPS_", paste(p$crops.vec, collapse = "_"), "_daily.csv"), row.names = FALSE)
+  write.csv(ts, file = paste0("data/water_budgets/water_budget_SOIL_", p$soil.type, 
+                              "_CROPS_", paste(cs$crop, collapse = "_"), "_daily.csv"), row.names = FALSE)
   
   #~~~~~~~~~~~~~~
   # Summary stats----
@@ -227,8 +231,25 @@ get_budget <- function(p = p.list, ts = met.forcing) {
   mean.yr <- ts %>% group_by(year) %>%
     summarise_at(vars(sm.percent, aet.to.etc.crop), mean, na.rm = TRUE)
   sum.yr <-  sum.yr %>% left_join(mean.yr, by = "year")
-  write.csv(sum.yr, file = paste0("data/water_budget_SOIL_", p$soil.type, 
-                              "_CROPS_", paste(p$crops.vec, collapse = "_"), "_yearly.csv"), row.names = FALSE)
+  write.csv(sum.yr, file = paste0("data/water_budgets/water_budget_SOIL_", p$soil.type, 
+                              "_CROPS_", paste(cs$crop, collapse = "_"), "_yearly.csv"), row.names = FALSE)
+  
+  # Summary at annual scale:
+  # When the functions in .fns return a data frame, you typically get a
+  # "packed" data frame back
+  quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
+    tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
+  }
+  # Use .unpack to automatically expand these packed data frames into their
+  # individual columns
+  summary.yr <- sum.yr %>% 
+    pivot_longer(-year, names_to = "var", values_to = "value") %>%
+    group_by(var) %>%
+    reframe(quantile_df(value)) %>%
+    as.data.frame()
+  write.csv(summary.yr, file = paste0("data/water_budgets/water_budget_SOIL_", p$soil.type, 
+                                  "_CROPS_", paste(cs$crop, collapse = "_"), "_yrly.summary.csv"), row.names = FALSE)
+  
   # Monthly
   sum.mo <- ts %>% 
     group_by(year, month) %>%
@@ -243,100 +264,102 @@ get_budget <- function(p = p.list, ts = met.forcing) {
     select(-year) %>%
     group_by(month) %>%
     summarise_all(mean, na.rm = TRUE)
-    
   #~~~~~~~~~~~~~~
-  # Plot Water Budget ----
-  #~~~~~~~~~~~~~~
-  crop.sys.title <- paste0("Crop System: ", 
-                       paste(toupper(p$crops.vec), collapse = " + "), 
-                       " on ", toupper(p$soil.type), " soil")
-  # Daily ----
-  daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm", "aet", "recharge", "aet.to.etc.crop")
-  years.to.plot <- c(2022, 2023)
-  ts.l <- ts %>%
-    pivot_longer(cols = -c(date, year, doy), names_to = "var", values_to = "value") %>%
-    subset(var %in% daily.vars.to.plot)
-  ts.l.select <- ts.l %>% subset(year %in% years.to.plot)
-  p.daily_1 <- 
-    ggplot(ts.l.select %>% subset(var %in% c("P", "Q", "irrigation", "sm")), 
-           aes(x = date, y = value)) +
-    geom_line(aes(group = var, color = var)) +
-    ylab("mm") + xlab("Year-DOY") +
-    scale_x_date(date_labels = "%Y-%j", date_breaks = "6 months") +
-    theme_minimal() +
-    scale_color_discrete("")
-  p.daily_2 <- p.daily_1 %+% subset(ts.l.select, var %in% c("aet", "recharge"))
-  p.daily_3 <- p.daily_1 %+% subset(ts.l.select, var %in% c("kcr", "aet.to.etc.crop")) +
-    ylab("value") + 
-    ggtitle(paste0(crop.sys.title, "\n", 
-                   "Water Budget for ", paste(years.to.plot, collapse = "-")))
-  p.daily.budget <- ggarrange(p.daily_3, p.daily_1, p.daily_2, 
-                              nrow = 3, ncol = 1,
-                              labels = c("A", "B", "C"),
-                              # common.legend = TRUE, 
-                              legend = "top")
-  # Save plot
-  ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type, 
-               "_CROPS_", paste(p$crops.vec, collapse = "_"), "_", paste(years.to.plot, collapse = "-"),"_daily.pdf"), 
-        width = 9, height = 9)
-  ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_daily.jpg"), 
-         width = 9, height = 9)  
-  # Plot yearly ----
-  sum.yr.l <- sum.yr %>% 
-    pivot_longer(cols = -c(year), names_to = "var", values_to = "value")
-  yearly.vars.to.plot <- c("aet.to.etc.crop", "aet.to.P", "balance", "aet", "P", "Q", "recharge", "irrigation", "sm.percent")
-  sum.yr.l.select <- sum.yr.l %>% subset(var %in% yearly.vars.to.plot)
-  sum.yr.l.select$var_f = factor(sum.yr.l.select$var, 
-                                 levels = c("aet.to.etc.crop", "aet.to.P", "balance", "aet", "P", "Q", "recharge", "irrigation", "sm.percent"))
-  p.yearly.budget <- ggplot(sum.yr.l.select, 
-                            aes(x = year, y = value)) +
-    facet_grid(var_f ~ ., scales = "free_y") +
-    geom_col(aes(fill = var_f), show.legend = FALSE) +
-    ylab("Value") + xlab("Year") +
-    ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
-    theme_minimal()
-  ggsave(plot = p.yearly.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type, 
-                    "_CROPS_", paste(p$crops.vec, collapse = "_"), "_yearly.pdf"), width = 9, height = 9)
-  ggsave(plot = p.yearly.budget, file = paste0("figures/water_budgets/water_budget_yearly.jpg"), width = 9, height = 9)
-
-  # Plot monthly----
-  clim.mo.l <- clim.mo %>%
-    pivot_longer(cols = -c(month), names_to = "var", values_to = "value")
-  monthly.vars.to.plot <- c("aet.to.etc.crop", "aet.to.P", "balance", "Q", "runoff.percent", "aet", "etc", "P", "recharge", "irrigation", "sm.percent")
-  clim.mo.l.select <- clim.mo.l %>% subset(var %in% monthly.vars.to.plot)
-  clim.mo.l.select$var_f = factor(clim.mo.l.select$var,
-                                 levels = c("aet.to.etc.crop", "aet.to.P", "balance", "Q", "runoff.percent", "aet", "etc", "P", "recharge", "irrigation", "sm.percent"))
-  p.monthly.budget <- ggplot(clim.mo.l.select,
-                            aes(x = month, y = value)) +
-    facet_grid(var_f ~ ., scales = "free_y") +
-    geom_col(aes(fill = var_f), show.legend = FALSE, width = 0.7) +
-    ylab("Value") + xlab("Month") +
-    ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
-    theme_minimal()
-  ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type,
-                                               "_CROPS_", paste(p$crops.vec, collapse = "_"), "_monthly.pdf"), width = 5, height = 9)
-  ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_monthly.jpg"), width = 5, height = 9)
-  
-  p.monthly.runoff <- ggplot(clim.mo.l.select %>% 
-                               subset(var_f %in% c("P", "Q")),
-                             aes(x = month, y = value)) +
-    geom_col(aes(fill = var_f), width = 0.7, position = position_dodge()) +
-    geom_line(data = clim.mo.l.select %>% 
-                 subset(var %in% c("irrigation", "runoff.percent", "etc")), 
-               aes(col = var)) +
-    geom_point(data = clim.mo.l.select %>% 
-                 subset(var %in% c("irrigation", "runoff.percent", "etc")), 
-               aes(col = var)) +
-    scale_fill_ordinal("") +
-    scale_color_discrete("") +
-    ylab("mm") + xlab("Month") +
-    ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
-    theme_minimal()
-  ggsave(plot = p.monthly.runoff, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type,
-                                                "_CROPS_", paste(p$crops.vec, collapse = "_"), "_runoff_overlaid_monthly.pdf"), width = 5, height = 3)
-  ggsave(plot = p.monthly.runoff, file = paste0("figures/water_budgets/water_budget_runoff_overlaid_monthly.jpg"), width = 5, height = 3)
-  
-  # summary(ts)
-  # plot(x = ts$date, y = ts$Peff)
-  return(list(ts, sum.yr))
+  # # Plot Water Budget ----
+  # #~~~~~~~~~~~~~~
+  # crop.sys.title <- paste0("Crop System: ", 
+  #                      paste(toupper(cs$crop), collapse = " + "), 
+  #                      " on ", toupper(p$soil.type), " soil")
+  # # Plot Daily ----
+  # daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm", "aet", "recharge", "aet.to.etc.crop")
+  # years.to.plot <- c(2022, 2023)
+  # ts.l <- ts %>%
+  #   pivot_longer(cols = -c(date, year, doy), names_to = "var", values_to = "value") %>%
+  #   subset(var %in% daily.vars.to.plot)
+  # ts.l.select <- ts.l %>% subset(year %in% years.to.plot)
+  # p.daily_1 <- 
+  #   ggplot(ts.l.select %>% subset(var %in% c("P", "Q", "irrigation", "sm")), 
+  #          aes(x = date, y = value)) +
+  #   geom_line(aes(group = var, color = var)) +
+  #   ylab("mm") + xlab("Year-DOY") +
+  #   scale_x_date(date_labels = "%Y-%j", date_breaks = "6 months") +
+  #   theme_minimal() +
+  #   scale_color_discrete("")
+  # p.daily_2 <- p.daily_1 %+% subset(ts.l.select, var %in% c("aet", "recharge"))
+  # p.daily_3 <- p.daily_1 %+% subset(ts.l.select, var %in% c("kcr", "aet.to.etc.crop")) +
+  #   ylab("value") + 
+  #   ggtitle(paste0(crop.sys.title, "\n", 
+  #                  "Water Budget for ", paste(years.to.plot, collapse = "-")))
+  # p.daily.budget <- ggarrange(p.daily_3, p.daily_1, p.daily_2, 
+  #                             nrow = 3, ncol = 1,
+  #                             labels = c("A", "B", "C"),
+  #                             # common.legend = TRUE, 
+  #                             legend = "top")
+  # # Save plot
+  # ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type, 
+  #              "_CROPS_", paste(cs$crop, collapse = "_"), "_", paste(years.to.plot, collapse = "-"),"_daily.pdf"), 
+  #       width = 9, height = 9)
+  # ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_daily.jpg"), 
+  #        width = 9, height = 9)  
+  # # Plot yearly ----
+  # sum.yr.l <- sum.yr %>% 
+  #   pivot_longer(cols = -c(year), names_to = "var", values_to = "value")
+  # yearly.vars.to.plot <- c("aet.to.etc.crop", "aet.to.P", "balance", "aet", "P", "Q", "recharge", "irrigation", "sm.percent")
+  # sum.yr.l.select <- sum.yr.l %>% subset(var %in% yearly.vars.to.plot)
+  # sum.yr.l.select$var_f = factor(sum.yr.l.select$var, 
+  #                                levels = c("aet.to.etc.crop", "aet.to.P", "balance", "aet", "P", "Q", "recharge", "irrigation", "sm.percent"))
+  # p.yearly.budget <- ggplot(sum.yr.l.select, 
+  #                           aes(x = year, y = value)) +
+  #   facet_grid(var_f ~ ., scales = "free_y") +
+  #   geom_line(aes(col = var_f), show.legend = FALSE) +
+  #   geom_smooth(span = 0.2) +
+  #   # geom_smooth(se = FALSE, method = lm, formula = y ~ splines::bs(x, 3), span = 0.3) +
+  #   ylab("Value") + xlab("Year") +
+  #   ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
+  #   theme_minimal()
+  # ggsave(plot = p.yearly.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type, 
+  #                   "_CROPS_", paste(cs$crop, collapse = "_"), "_yearly.pdf"), width = 9, height = 9)
+  # ggsave(plot = p.yearly.budget, file = paste0("figures/water_budgets/water_budget_yearly.jpg"), width = 9, height = 9)
+  # 
+  # # Plot monthly----
+  # clim.mo.l <- clim.mo %>%
+  #   pivot_longer(cols = -c(month), names_to = "var", values_to = "value")
+  # monthly.vars.to.plot <- c("aet.to.etc.crop", "aet.to.P", "balance", "Q", "runoff.percent", "aet", "etc", "P", "recharge", "irrigation", "sm.percent")
+  # clim.mo.l.select <- clim.mo.l %>% subset(var %in% monthly.vars.to.plot)
+  # clim.mo.l.select$var_f = factor(clim.mo.l.select$var,
+  #                                levels = c("aet.to.etc.crop", "aet.to.P", "balance", "Q", "runoff.percent", "aet", "etc", "P", "recharge", "irrigation", "sm.percent"))
+  # p.monthly.budget <- ggplot(clim.mo.l.select,
+  #                           aes(x = month, y = value)) +
+  #   facet_grid(var_f ~ ., scales = "free_y") +
+  #   geom_col(aes(fill = var_f), show.legend = FALSE, width = 0.7) +
+  #   ylab("Value") + xlab("Month") +
+  #   ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
+  #   theme_minimal()
+  # ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type,
+  #                                              "_CROPS_", paste(cs$crop, collapse = "_"), "_monthly.pdf"), width = 5, height = 9)
+  # ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_monthly.jpg"), width = 5, height = 9)
+  # 
+  # p.monthly.runoff <- ggplot(clim.mo.l.select %>% 
+  #                              subset(var_f %in% c("P", "Q")),
+  #                            aes(x = month, y = value)) +
+  #   geom_col(aes(fill = var_f), width = 0.7, position = position_dodge()) +
+  #   geom_line(data = clim.mo.l.select %>% 
+  #                subset(var %in% c("irrigation", "runoff.percent", "etc")), 
+  #              aes(col = var)) +
+  #   geom_point(data = clim.mo.l.select %>% 
+  #                subset(var %in% c("irrigation", "runoff.percent", "etc")), 
+  #              aes(col = var)) +
+  #   scale_fill_ordinal("") +
+  #   scale_color_discrete("") +
+  #   ylab("mm") + xlab("Month") +
+  #   ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
+  #   theme_minimal()
+  # ggsave(plot = p.monthly.runoff, file = paste0("figures/water_budgets/water_budget_SOIL_", p$soil.type,
+  #                                               "_CROPS_", paste(cs$crop, collapse = "_"), "_runoff_overlaid_monthly.pdf"), width = 5, height = 3)
+  # ggsave(plot = p.monthly.runoff, file = paste0("figures/water_budgets/water_budget_runoff_overlaid_monthly.jpg"), width = 5, height = 3)
+  # 
+  # # summary(ts)
+  # # plot(x = ts$date, y = ts$Peff)
+  # Return ----
+  return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, sum.mo = sum.mo, clim.mo = clim.mo))
 }
