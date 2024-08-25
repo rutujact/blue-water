@@ -38,7 +38,7 @@
 "Cabbage_13","13","Cabbage","End of ini",297,0.7
 "Cabbage_13","13","Cabbage","End of Dev",330,1.05
 "Cabbage_13","13","Cabbage","End of Mid",355,1.05
-"Cabbage_13","13","Cabbage","Harvest date",365,0.95
+"Cabbage_13","13","Cabbage","Harvest date",366,0.95
 "Cabbage_17","17","Cabbage","Sowing date",121,0.7
 "Cabbage_17","17","Cabbage","End of ini",143,0.7
 "Cabbage_17","17","Cabbage","End of Dev",176,1.05
@@ -58,7 +58,7 @@
 "Cucumber_11","11","Cucumber","End of ini",292,0.6
 "Cucumber_11","11","Cucumber","End of Dev",318,1
 "Cucumber_11","11","Cucumber","End of Mid",352,1
-"Cucumber_11","11","Cucumber","Harvest date",365,0.9
+"Cucumber_11","11","Cucumber","Harvest date",366,0.9
 "FieldBeans_3","3","FieldBeans","Sowing date",121,0.4
 "FieldBeans_3","3","FieldBeans","End of ini",136,0.4
 "FieldBeans_3","3","FieldBeans","End of Dev",171,1.15

@@ -97,22 +97,22 @@ get_kc <- function(kc.key,
     clim$kc[rows] <- (clim$doy[rows]*df$slope[i]) + df$intercept[i]
   }
   
-  pdf(paste0("figures/crop_kc_curves/", toupper(kc.key$crop[1]),".pdf"), width = 7, height = 5)
-  plot(1, type="n", xlab = "DOY", ylab = "Kc", xlim=c(0, 366), 
-       ylim=c(0, (max(clim$kc)*1.1)),
-       main = paste0(toupper(kc.key$crop[1]), "\nSegmented Crop Coefficient Curve"))
-  lines(x = clim$doy, y = clim$kc, type = "l")
-  segments(x0 = kc.key$doy, y0 = 0, x1 = kc.key$doy, y1 = kc.key$kc, 
-           cex = .5, col = "blue", lty = "dotted")
-  points(x = kc.key$doy, y = kc.key$kc, 
-           cex = .5, col = "blue")
-  text(x = kc.key$doy, y = (kc.key$kc)*1.05, labels = kc.key$doy, 
-      cex = 0.8, col = "blue")
-  text(x = phase$phase.mid.doy, y = 0.02, labels = phase$phase, 
-       cex = 0.8, col = "dark red", srt = 90, adj = 0)
-  text(x = actions$doy + c(-7, 7), y =  0.02, labels = actions$actions, 
-       cex = 0.8, col = "magenta", srt = 90, adj = 0)
-  dev.off()
+  # pdf(paste0("figures/crop_kc_curves/", toupper(kc.key$crop[1]),".pdf"), width = 7, height = 5)
+  # plot(1, type="n", xlab = "DOY", ylab = "Kc", xlim=c(0, 366), 
+  #      ylim=c(0, (max(clim$kc)*1.1)),
+  #      main = paste0(toupper(kc.key$crop[1]), "\nSegmented Crop Coefficient Curve"))
+  # lines(x = clim$doy, y = clim$kc, type = "l")
+  # segments(x0 = kc.key$doy, y0 = 0, x1 = kc.key$doy, y1 = kc.key$kc, 
+  #          cex = .5, col = "blue", lty = "dotted")
+  # points(x = kc.key$doy, y = kc.key$kc, 
+  #          cex = .5, col = "blue")
+  # text(x = kc.key$doy, y = (kc.key$kc)*1.05, labels = kc.key$doy, 
+  #     cex = 0.8, col = "blue")
+  # text(x = phase$phase.mid.doy, y = 0.02, labels = phase$phase, 
+  #      cex = 0.8, col = "dark red", srt = 90, adj = 0)
+  # text(x = actions$doy + c(-7, 7), y =  0.02, labels = actions$actions, 
+  #      cex = 0.8, col = "magenta", srt = 90, adj = 0)
+  # dev.off()
   # Recycle kc climatology for the full forcing data dates----
   ts <- data.frame(date = as.Date(seq(from, to, by = '1 day')))
   ts$doy <-

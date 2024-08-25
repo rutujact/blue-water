@@ -67,7 +67,9 @@ kc <- kc.raw.long %>%
 doy <- kc.raw.long %>% 
   subset(var %in% c("Sowing date", "End of ini", "End of Dev", 
                     "End of Mid", "Harvest date")) %>%
-  rename(doy = value, doy_var = var)
+  rename(doy = value, doy_var = var) %>%
+# IF a doy is 365, it should be 366 to include leap years:
+  mutate(doy = if_else(doy == "365", "366", doy))
 
 kc.doy.key <- data.frame(doy_var = c("Sowing date", "End of ini", "End of Dev", "End of Mid", "Harvest date"),
                            kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end"))
