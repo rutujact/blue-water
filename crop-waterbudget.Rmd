@@ -49,24 +49,28 @@ source("code/4.0_function_get_kc.R")
 source("code/5.0_function_get_budget.R")
 ```
 
-## User sets Parameters here & Run Water Budget Functions
+## User sets Parameters here for Water Budget functions
 
-```{r set_param_run_budget}
+```{r set_param_budget}
 #~~~~~~~~~~~~~~~
 # Provide Input Parameters ----
 #~~~~~~~~~~~~~~~
-# Crop System
+# Crop System ---- 
 rotations <- kc.doy.crops %>% select(rotation, crop, crop.rotation) %>% unique() %>%
   # Adding no_crop 
   bind_rows(data.frame(rotation = -1, crop = "no_crop", crop.rotation ="no_crop_-1")) %>%
   arrange(rotation)
 crop.system.ls <- split(rotations, rotations$rotation)
+save(crop.system.ls, file = "data/crop.system.ls.Rdata")
+# > crop.system.ls[1]
+# $`-1`
+#   rotation    crop crop.rotation
+# 1       -1 no_crop    no_crop_-1
 
 crop.system <- rotations %>% select(-crop.rotation) %>%
   group_by(rotation) %>%
   mutate(number = 1:n()) %>%
   pivot_wider(names_from = number, names_glue = "crop_{number}", values_from = crop)
-
 write.csv(crop.system, file = "data/crop.system.csv", row.names = FALSE)
 #    rotation crop_1         crop_2    crop_3     
 #       <dbl> <chr>          <chr>     <chr>      
@@ -97,31 +101,32 @@ p.list <- list(rain = rain,
                et0.timestep = "daily", # weekly/daily
                et0.input = et0.daily, # For "daily", choose: et0.daily
                kc.doy.crops = kc.doy.crops,
-               # # crops.vec = c("no_crop"), # Upper/Lower/title all accepted
-               # crops.vec = c("Coconut", "Cabbage", "beans_Irri"), # See crops options above. # Upper/Lower/title all accepted
-               # crops.rotation.vec = c("Cabbage_17", "Coconut_17", "beans_Irri_17"), # If crops.vec is other than "no_crop", crops.rotation.vec must be provided # Upper/Lower/title all accepted
                kc_no_crop = list(summer = 0.005, kr = 0.2),
                soil.type = "red",
                CN = 85,
                sm.init = 0.5)
-#~~~~~~~~~~~~~~~
-# Run water budget functions ----
-#~~~~~~~~~~~~~~~
+```
+
+## Run water budget functions
+
+```{r get_budget, eval = TRUE}
 met.forcing <- get_peff_et0(p = p.list)
 # Provide crop.system.ls or sub elements like crop.system.ls[c(1, 3)]
 budget <- lapply(crop.system.ls, get_budget, p = p.list, ts = met.forcing)
 save(budget, file = "data/water_budgets/Budget.Rdata")
 # For debugging:
 # cs <- crop.system.ls[[13]]
-# for (i in 14:length(crop.system.ls)) {
+# for (i in 1:length(crop.system.ls)) {
 #   budget <- lapply(crop.system.ls[i], get_budget, p = p.list, ts = met.forcing)
 # }
 ```
-
 ## Output Plots
 
 ### Crop System Summary
-```{r plot-summary, echo = FALSE, fig.align='center', fig.cap='...'}
+
+```{r plot-summary, echo = TRUE, fig.align='center', fig.cap='...'}
+
+load(file = "data/water_budgets/Budget.Rdata")
 summary.yr.ls <- lapply(budget, function(x) {return(x$summary.yr)})
 # summary.crop.ls <- lapply(summary.yr.ls, bind_rows, .id = "rotation")
 summary.crop <- do.call(rbind, summary.yr.ls) 
@@ -134,31 +139,48 @@ summary.crop <- summary.crop %>%
          crop_3 = if_else(is.na(crop_3), "", crop_3),
          crop.system = paste(crop_1, crop_2, crop_3, sep = " "))
 
-summ.qs <- summary.crop %>% pivot_wider(names_from = quantile, values_from = value)
-  
-ggplot(summ.qs %>% subset(var %in% c("balance", "irrigation", "aet.to.P", "aet.to.etc.crop")), 
-       aes(x = crop.system, y = `0.5`)) +
-  facet_grid(var ~ ., scales = "free_y") +
-  geom_col() + ylab("Median (SE)") + xlab("Crop System") +
-  geom_errorbar(aes(ymax = `0.975`, ymin = `0.025`), width = 0.1) + theme_classic()
+summ.qs <- summary.crop %>% pivot_wider(names_from = quantile, values_from = value) %>%
+  arrange(var, `0.5`) #%>% 
+  # group_by(var) %>%
+  # mutate(group.col = if_else(`0.5` < mean(`0.5`, na.rm = TRUE), "Low", "High")) %>%
+  # ungroup()
+
+# arrange factor levels in the order of 'balance' 
+summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
+  arrange(`0.5`) %>% 
+  mutate(crop.system = factor(crop.system, crop.system)) # this line reorders the factor in the same order
+summ.qs$crop.system <- factor(summ.qs$crop.system, levels=levels(summ.qs.balance$crop.system))
+
+save(summ.qs, file = "data/water_budgets/summ.qs.Rdata")
+
+p.crop.sys.summ <- ggplot(summ.qs %>% 
+                            subset(var %in% c("balance", "irrigation", "aet.to.Peff", "aet.to.etc.crop")),
+       aes(y = crop.system, x = `0.5`)) +
+  facet_grid(. ~ var, scales = "free_x") +
+  geom_col() + xlab("Median (SE)") + ylab("Crop System") +
+  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.1) +
+  theme_classic()
+print(p.crop.sys.summ)
+ggsave(plot = p.crop.sys.summ, file = paste0("figures/water_budgets/crop.system_budget_summary.pdf"),
+        width = 9, height = 4)
 ```
 
 ### Daily
-```{r plot-daily, eval=FALSE, fig.align='center', fig.cap='...', include=FALSE}
+```{r plot-daily, eval=FALSE, echo=FALSE, fig.align='center', fig.cap='...', include=FALSE}
 knitr::include_graphics('figures/water_budgets/water_budget_daily.jpg')
 ```
 
 ### Yearly
-```{r plot-yearly, eval=FALSE, fig.align='center', fig.cap='...', include=FALSE}
+```{r plot-yearly, eval=FALSE, echo=FALSE, fig.align='center', fig.cap='...', include=FALSE}
 knitr::include_graphics('figures/water_budgets/water_budget_yearly.jpg')
 ```
 
 ### Monthly Average
-```{r plot-monthly-avg, eval=FALSE, fig.align='center', fig.cap='...', include=FALSE, out.width='50%'}
+```{r plot-monthly-avg, eval=FALSE, echo=FALSE, fig.align='center', fig.cap='...', include=FALSE, out.width='50%'}
 knitr::include_graphics('figures/water_budgets/water_budget_monthly.jpg')
 ```
 
 ### Monthly Average % Runoff Overlaid
-```{r plot-runoff-overlaid, eval=FALSE, fig.align='center', fig.cap='...', include=FALSE, out.width='70%'}
+```{r plot-runoff-overlaid, eval=FALSE, echo=FALSE, fig.align='center', fig.cap='...', include=FALSE, out.width='70%'}
 knitr::include_graphics('figures/water_budgets/water_budget_runoff_overlaid_monthly.jpg')
 ```
