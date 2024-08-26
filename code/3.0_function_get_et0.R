@@ -1,15 +1,15 @@
 # ---
-# title: "Function to get Et0 daily time series from IMDs weekly average Et0 data"
-# subtitle: "Et0 = Reference Evapotranspiration. Assign average weekly data to each day of the week.
+# title: "Function to get et0 daily time series from IMDs weekly average et0 data"
+# subtitle: "et0 = Reference Evapotranspiration. Assign average weekly data to each day of the week.
 # author: "Rutuja Chitra-Tarak"
 # date: "2024-08-11"
-# input: (1) A data frame of IMD average weekly Et0 (mm/day):
+# input: (1) A data frame of IMD average weekly et0 (mm/day):
 #            class=data.frame(year=numeric, week=numeric, et0=numeric), dim=[n,3], 
-# output: data.frame(date=Date, year=numeric, week=numeric, Et0=numeric), class=data.frame, dim= [from - to + 1),4],
+# output: data.frame(date=Date, year=numeric, week=numeric, et0=numeric), class=data.frame, dim= [from - to + 1),4],
 # example:
-# source("code/3.0_function_get_et0.R")
+# source("code/3.0_function_get_ET0.R")
 # et0.week.imd <- read.csv(file = paste0("data/et0.week.imd.csv"), header = TRUE)
-# ts <- get_et0(et0.week.imd = et0.week.imd)
+# ts <- get_ET0(et0.week.imd = et0.week.imd)
 # plot(x = ts$doy, y = ts$et0)
 # ---
 

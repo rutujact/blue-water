@@ -1,11 +1,11 @@
 # ---
 # title: "Function to get kc curve time series"
-# subtitle: "Prepare Kc curve climatology (by doy) and recycle to the entire forcing met time series"
+# subtitle: "Prepare kc curve climatology (by doy) and recycle to the entire forcing met time series"
 # author: "Rutuja Chitra-Tarak"
 # date: "2024-08-11"
 # input: (1) A data frame of kc curve parameters, with doy and kc values corresponding to 
 #            data.frame(doy_var = c("Sowing date", "End of ini", "End of Dev", "End of Mid", "Harvest date"),
-#                       kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end")):
+#                       kc_var = c("kc_ini", "kc_ini", "kc_mid", "kc_mid", "kc_end")):
 #            class=data.frame(doy=numeric, kc=numeric), class=data.frame, dim=[5, 2], 
 #        (2) beginning date as.Date(), class=date, length=1 
 #        (3) end date as.Date() for the met data time series, class=date, length=1
@@ -22,7 +22,7 @@ get_kc <- function(kc.key,
                    from = as.Date("1951/01/01"),
                    to = as.Date("2023/12/31")) {
   # Example Data
-  # kc.doy.df <- read.csv(file = "data/Kc_curve_parameters_by_crop_rotation.csv", header = TRUE)
+  # kc.doy.df <- read.csv(file = "data/kc_curve_parameters_by_crop_rotation.csv", header = TRUE)
   # 
   # # List by Crop.Rotation
   # kc.doy.ls <- split(kc.doy.df, kc.doy.df$crop.rotation)
@@ -57,7 +57,7 @@ get_kc <- function(kc.key,
   df$doy <- as.numeric(df$doy)
   df$kc <- as.numeric(df$kc)
   # If doy = 1 OR doy = 366 absent,
-  # Provide Kc values as 0 for the entire period before the sowing date and after the harvest date----
+  # Provide kc values as 0 for the entire period before the sowing date and after the harvest date----
  
   # if doy 1 absent: 
   while(!any(df$doy == 1)) { 
@@ -98,7 +98,7 @@ get_kc <- function(kc.key,
   }
   
   # pdf(paste0("figures/crop_kc_curves/", toupper(kc.key$crop[1]),".pdf"), width = 7, height = 5)
-  # plot(1, type="n", xlab = "DOY", ylab = "Kc", xlim=c(0, 366), 
+  # plot(1, type="n", xlab = "DOY", ylab = "kc", xlim=c(0, 366), 
   #      ylim=c(0, (max(clim$kc)*1.1)),
   #      main = paste0(toupper(kc.key$crop[1]), "\nSegmented Crop Coefficient Curve"))
   # lines(x = clim$doy, y = clim$kc, type = "l")

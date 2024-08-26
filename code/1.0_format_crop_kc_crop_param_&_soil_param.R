@@ -17,79 +17,79 @@ pacman::p_load(tidyverse)
 # "Kc_end" is the value at "Harvest date"
 
 # Get parameters for FAO Segmented Crop Coefficient (Kc) curve by crop of each rotation ----
-kc.raw <- readxl::read_xlsx("data-raw/Kc Billikere final_mod.xlsx",
+Kc.raw <- readxl::read_xlsx("data-raw/Kc Billikere final_mod.xlsx",
                                    sheet = "Crop cycles Kc",
                                    range = "A1:AX15")
 
 # Wrangle raw data to prepare Kc parameter table by DOY----
 # Remove columns with all NAs
-kc.raw <- kc.raw[, !as.logical(sapply(kc.raw, function(x)all(is.na(x))))]
-kc.raw <- kc.raw[,-2]
+Kc.raw <- Kc.raw[, !as.logical(sapply(Kc.raw, function(x)all(is.na(x))))]
+Kc.raw <- Kc.raw[,-2]
 # Remove extra row
-kc.raw <- kc.raw[-2,]
+Kc.raw <- Kc.raw[-2,]
 
 # Header edits
-colnames(kc.raw)[1] <- "var"
-colnames(kc.raw)[2] <- "FORMULE"
+colnames(Kc.raw)[1] <- "var"
+colnames(Kc.raw)[2] <- "FORMULE"
 # Remove header extras
-cols.to.change <- colnames(kc.raw)[stringr::str_detect(colnames(kc.raw), "[...]")]
+cols.to.change <- colnames(Kc.raw)[stringr::str_detect(colnames(Kc.raw), "[...]")]
 
-colnames(kc.raw)[stringr::str_detect(colnames(kc.raw), "[...]")] <- 
+colnames(Kc.raw)[stringr::str_detect(colnames(Kc.raw), "[...]")] <- 
   gsub("...[0-9]*$", "", cols.to.change, perl = TRUE)
 
 # To add crop name to header
-colnames(kc.raw)[-c(1,2)] <- paste0(colnames(kc.raw)[-c(1,2)], ".", kc.raw[1, c(-1,-2)])
+colnames(Kc.raw)[-c(1,2)] <- paste0(colnames(Kc.raw)[-c(1,2)], ".", Kc.raw[1, c(-1,-2)])
 
 # Remove extra row with crop name
-kc.raw <- kc.raw[-1,]
+Kc.raw <- Kc.raw[-1,]
 # Change name of "[values as used in the generic] formula" to pattern
-colnames(kc.raw)[2] <- "Rotation 0.Kc_formule"
+colnames(Kc.raw)[2] <- "Rotation 0.Kc_formule"
 
 # Separate crops by Rotation
-kc.raw.long <- kc.raw %>% 
+Kc.raw.long <- Kc.raw %>% 
   pivot_longer(cols = starts_with("Rotation"), 
                           names_pattern = "(Rotation )([0-9]{1,2}).(Kc_)(.*)",
-                          names_to = c("text", "rotation", "kc", "crop")) %>%
-  select(-text, -kc)
-# unique(kc.raw$var)
+                          names_to = c("text", "rotation", "Kc", "crop")) %>%
+  select(-text, -Kc)
+# unique(Kc.raw$var)
 # [1] "Sowing date"  "Kc_ini"       "Ini_duration" "End of ini"   "Dev_duration"
 # [6] "End of Dev"   "Kc_mid"       "Mid_duration" "End of Mid"   "Kc_end"      
 # [11] "End_duration" "Harvest date"
 # Only select rows with Kc values
-kc <- kc.raw.long %>% 
-  subset(var %in% kc.raw$var[stringr::str_detect(kc.raw$var, "Kc")]) %>%
-  rename(kc = value, kc_var = var)
+Kc <- Kc.raw.long %>% 
+  subset(var %in% Kc.raw$var[stringr::str_detect(Kc.raw$var, "Kc")]) %>%
+  rename(Kc = value, Kc_var = var)
   # pivot_wider(names_from = c(crop, rotation),
   #             names_glue = "{crop}_{rotation}",
   #             values_from = value)
 
 # Only select rows with DOY values
-doy <- kc.raw.long %>% 
+doy <- Kc.raw.long %>% 
   subset(var %in% c("Sowing date", "End of ini", "End of Dev", 
                     "End of Mid", "Harvest date")) %>%
   rename(doy = value, doy_var = var) %>%
 # IF a doy is 365, it should be 366 to include leap years:
   mutate(doy = if_else(doy == "365", "366", doy))
 
-kc.doy.key <- data.frame(doy_var = c("Sowing date", "End of ini", "End of Dev", "End of Mid", "Harvest date"),
-                           kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end"))
+Kc.doy.key <- data.frame(doy_var = c("Sowing date", "End of ini", "End of Dev", "End of Mid", "Harvest date"),
+                           Kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end"))
 
-doy <- left_join(doy, kc.doy.key, by = c("doy_var"))
-kc.doy <- left_join(doy, kc, by = c("kc_var", "crop", "rotation")) %>%
-  arrange(crop, rotation, doy, kc) %>%
-  mutate(doy = as.numeric(doy), kc = as.numeric(kc))
+doy <- left_join(doy, Kc.doy.key, by = c("doy_var"))
+Kc.doy <- left_join(doy, Kc, by = c("Kc_var", "crop", "rotation")) %>%
+  arrange(crop, rotation, doy, Kc) %>%
+  mutate(doy = as.numeric(doy), Kc = as.numeric(Kc))
 
 
 # This is FAO Kc Parameter Table by DOY by Crop and Rotation----
-kc.doy.df <- kc.doy %>% select(rotation, crop, doy_var, doy, kc) %>%
+Kc.doy.df <- Kc.doy %>% select(rotation, crop, doy_var, doy, Kc) %>%
   unite(crop.rotation, c("crop", "rotation"), sep = "_", remove = FALSE) %>%
-  arrange(crop.rotation, doy, kc) #%>%
+  arrange(crop.rotation, doy, Kc) #%>%
   # mutate(irrigation = if_else(grepl("Iri", crop.rotation, ignore.case = TRUE), 
   #                             "Irrigated", 
   #                             if_else(grepl("Irri", crop.rotation, ignore.case = TRUE), 
   #                                     "Irrigated", 
   #                                     "Rainfed")))
-write.csv(kc.doy.df, file = "data/Kc_curve_parameters_by_crop_rotation.csv", row.names = FALSE)
+write.csv(Kc.doy.df, file = "data/Kc_curve_parameters_by_crop_rotation.csv", row.names = FALSE)
 
 # Format & Save Crop Parameters (rooting depth, irrigation, season)----
 param.raw <- readxl::read_xlsx("data-raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx",
@@ -106,11 +106,11 @@ crop.param <- param.raw
 colnames(crop.param) <- c("crop", "irrigation", "rooting_depth_cm", "season")
 crop.param <- crop.param %>%
   mutate(irrigation = case_match(as.character(irrigation), "1" ~ "irrigated", "2" ~ "rainfed", .default = NA))
-match.param.crop <- pmatch(tolower(unique(kc.doy.df$crop)), tolower(crop.param$crop))
+match.param.crop <- pmatch(tolower(unique(Kc.doy.df$crop)), tolower(crop.param$crop))
 # Crops found in param
 tolower(crop.param$crop)[match.param.crop]
 # Crops not found in param
-tolower(unique(kc.doy.df$crop))[is.na(match.param.crop)]
+tolower(unique(Kc.doy.df$crop))[is.na(match.param.crop)]
 # "millet"
 write.csv(crop.param, file = "data/crop.parameters.csv", row.names = FALSE)
 
