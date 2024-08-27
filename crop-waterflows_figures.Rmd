@@ -22,9 +22,8 @@ Crops contributing to influx and outflux of water are on the same side of the st
 library(networkD3)
 
 # A connection data frame is a list of flows with intensity for each flow
- 
 links <- data.frame(
-  source=paste0("crop", 1:10), 
+  source=paste0("crop", 1:10),
   flux = 10*c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400)
   )
 links$target <- rep("Storage", nrow(links))
@@ -75,9 +74,13 @@ Crops contributing to influx and outflux of water are on the opposite side of th
 library(networkD3)
  
 links <- data.frame(
-  source=c(paste0("crop", 1:7), rep("Storage", 3)),
-  flux = 10*c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400)
-  )
+  source=c(paste0("crop", 1:7), 
+           rep("Storage", 3)),
+  flux = 10*c(10, 200, 100, 60, 5, 0, -5, 
+              -30, -150, -400)
+  ) %>% 
+  arrange(flux)
+
 links$target <- c(rep("Storage", 7), paste0("crop", 8:10))
 
 neutral.thresh <- 10*10
@@ -113,6 +116,65 @@ p <- sankeyNetwork(Links = links, Nodes = nodes,
 p
 # save the widget
 saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankey_version2.html"))
+```
+
+# Sankey Version 2 for balance obtained from function get_budget on crop-systems
+
+```{r sankey.2.crop.system, message=FALSE, echo = FALSE}
+# https://r-graph-gallery.com/sankey-diagram.html
+library(networkD3)
+ 
+# links <- data.frame(
+#   source=c(paste0("crop", 1:7), 
+#            rep("Storage", 3)),
+#   flux = 10*c(10, 200, 100, 60, 5, 0, -5, 
+#               -30, -150, -400))
+# 
+# links$target <- c(rep("Storage", 7), 
+#                   paste0("crop", 8:10))
+
+load(file = "data/water_budgets/summ.qs.Rdata")
+summ.qs.balance <- summ.qs %>% subset(var == "balance")
+
+links <- data.frame(source = summ.qs.balance$crop.system,
+                    flux = summ.qs.balance$`0.5`)
+links$target <- c(rep("Storage", nrow(links)))
+
+neutral.thresh <- 10*10
+
+links <- links %>% 
+  mutate(group = if_else(abs(flux) < neutral.thresh, "Neutral", 
+                            if_else(flux < neutral.thresh, "Outflux", "Influx")),
+         value = if_else(flux == 0, 1, abs(flux)))
+
+# From these flows we need to create a node data frame: it lists every entities involved in the flow
+nodes <- data.frame(
+  name=c(as.character(links$source), 
+  as.character(links$target)) %>% unique(),
+  # Add a 'group' column to the nodes data frame: Add one for "Storage"
+  group = as.factor(c(links$group[1:nrow(links)], "Storage"))
+  #as.factor(c(as.character(links$group), "Storage"))
+)
+
+# Give a color for each group:
+my_color <- 'd3.scaleOrdinal() .domain(["Influx", "Neutral", "Outflux", "Storage"]) .range(["steelblue", "#69b3a2", "Orange", "grey"])'
+
+# With networkD3, connection must be provided using id, not using real name like in the links dataframe.. So we need to reformat it.
+links$IDsource <- match(links$source, nodes$name)-1 
+links$IDtarget <- match(links$target, nodes$name)-1
+ 
+# Make the Network
+p <- sankeyNetwork(Links = links, Nodes = nodes,
+              Source = "IDsource", Target = "IDtarget",
+              Value = "value", NodeID = "name", 
+                            fontSize = 12,
+              colourScale = my_color,
+              NodeGroup = "group",
+              sinksRight = TRUE)
+# Creates an interactive graph - flows could be moved around. Check it out!
+p
+# save the widget
+saveWidget(p, file=paste0( getwd(), "/HtmlWidget/sankey_version2_crop.system.html"))
 ```
 
 # ggsankey
@@ -160,8 +222,13 @@ library(tidyverse)
 # install.packages("treemap")
 library(treemap)
 
-crop.data <- data.frame(crop = c(paste0("Crop", 1:10)),
-                        flux = c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400))
+load(file = "data/water_budgets/summ.qs.Rdata")
+summ.qs.balance <- summ.qs %>% subset(var == "balance")
+crop.data <- data.frame(crop = summ.qs.balance$crop.system,
+                    flux = summ.qs.balance$`0.5`)
+
+# crop.data <- data.frame(crop = c(paste0("Crop", 1:10)),
+#                         flux = c(10, 200, 100, 60, 5, 0, -5, -30, -150, -400))
 neutral.thresh <- 10
 
 crop.data <- crop.data %>% 
