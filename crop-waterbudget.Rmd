@@ -124,22 +124,25 @@ save(budget, file = "data/water_budgets/Budget.Rdata")
 
 ### Crop System Summary
 
-```{r plot-summary, echo = TRUE, fig.align='center', fig.cap='...'}
+```{r plot-summary, echo = TRUE, fig.align = 'center', fig.cap = '...'}
 
 load(file = "data/water_budgets/Budget.Rdata")
+crop.system <- read.csv(file = "data/crop.system.csv", header = TRUE)
 summary.yr.ls <- lapply(budget, function(x) {return(x$summary.yr)})
 # summary.crop.ls <- lapply(summary.yr.ls, bind_rows, .id = "rotation")
 summary.crop <- do.call(rbind, summary.yr.ls) 
 summary.crop$rownames <- rownames(summary.crop)
 summary.crop <- summary.crop %>% 
-  separate_wider_delim(rownames, ".", names = c("rotation", "extra"), cols_remove = TRUE) %>% 
-  mutate(rotation = as.numeric(rotation)) %>% select(-extra) %>%
+  separate_wider_delim(rownames, ".", names = c("rotation", "extra"), cols_remove = TRUE) %>%
+  mutate(rotation = as.numeric(rotation)) %>% 
+  select(-extra) %>%
   left_join(crop.system, by = "rotation") %>%
   mutate(crop_2 = if_else(is.na(crop_2), "", crop_2),
          crop_3 = if_else(is.na(crop_3), "", crop_3),
          crop.system = paste(crop_1, crop_2, crop_3, sep = " "))
 
-summ.qs <- summary.crop %>% pivot_wider(names_from = quantile, values_from = value) %>%
+summ.qs <- summary.crop %>% 
+  pivot_wider(names_from = quantile, values_from = value) %>%
   arrange(var, `0.5`) #%>% 
   # group_by(var) %>%
   # mutate(group.col = if_else(`0.5` < mean(`0.5`, na.rm = TRUE), "Low", "High")) %>%
@@ -149,8 +152,8 @@ summ.qs <- summary.crop %>% pivot_wider(names_from = quantile, values_from = val
 summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
   arrange(`0.5`) %>% 
   mutate(crop.system = factor(crop.system, crop.system)) # this line reorders the factor in the same order
-summ.qs$crop.system <- factor(summ.qs$crop.system, levels=levels(summ.qs.balance$crop.system))
-
+summ.qs$crop.system <- factor(summ.qs$crop.system,
+                              levels=levels(summ.qs.balance$crop.system))
 save(summ.qs, file = "data/water_budgets/summ.qs.Rdata")
 
 p.crop.sys.summ <- ggplot(summ.qs %>% 
@@ -164,6 +167,7 @@ print(p.crop.sys.summ)
 ggsave(plot = p.crop.sys.summ, file = paste0("figures/water_budgets/crop.system_budget_summary.pdf"),
         width = 9, height = 4)
 ```
+
 
 ### Daily
 ```{r plot-daily, eval=FALSE, echo=FALSE, fig.align='center', fig.cap='...', include=FALSE}
