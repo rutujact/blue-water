@@ -9,7 +9,7 @@
 #        (3) Soil type, class=character, length=1 
 # output: data.frame(date=Date, P=numeric, Q=numeric, Peff=numeric), class=data.frame, dim=n,3 
 # example:
-# source("code/2.0_function_get_Peff.R")
+# source("code/02_function_get_Peff.R")
 # ---
 get_Peff <- function(rain, CN = 85, soil.type = "red") {
   rain <- read.csv(file = "data-raw/rainfall.csv", header = TRUE)

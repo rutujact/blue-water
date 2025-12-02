@@ -1,9 +1,11 @@
 ---
 title: "crop-waterbudget"
-subtitle: "Derive Water Budget for a given Crop System & Met Forcing"
 author: "Rutuja Chitra-Tarak"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+subtitle: Derive Water Budget for a given Crop System & Met Forcing
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +33,7 @@ et0.daily <- read.csv(file = "data-raw/et0.csv", header = TRUE) # Provide date i
 
 # The following are prepared with 
 # code:
-# source("code/1.0_format_crop_kc_crop_param_&_soil_param.R")
+# source("code/01_format_crop_kc_crop_param_&_soil_param.R")
 # and data files:
 # 1. "data-raw/Kc Billikere final_mod.xlsx", sheet = "Crop cycles Kc"
 # 2. "data-raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx", sheet = "CROP paprameter"
@@ -43,10 +45,10 @@ soil.param <- read.csv(file = "data/soil.parameters.csv", header = TRUE)
 #~~~~~~~~~~~~~~~
 # Source Functions ----
 #~~~~~~~~~~~~~~~
-source("code/2.0_function_get_Peff.R")
-source("code/3.0_function_get_et0.R")
-source("code/4.0_function_get_kc.R")
-source("code/5.0_function_get_budget.R")
+source("code/02_function_get_Peff.R")
+source("code/03_function_get_et0.R")
+source("code/04_function_get_kc.R")
+source("code/05_function_get_budget.R")
 ```
 
 ## User sets Parameters here for Water Budget functions

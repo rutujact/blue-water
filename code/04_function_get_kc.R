@@ -11,7 +11,7 @@
 #        (3) end date as.Date() for the met data time series, class=date, length=1
 # output: data.frame(date=Date, doy=numeric, kc=numeric), class=data.frame, dim=[366, 3], 
 # example:
-# source("code/4.0_function_get_kc.R")
+# source("code/04_function_get_kc.R")
 # ts <- get_kc(kc.key = kc.key, from = as.Date("2024-01-01"),
 #           to = as.Date(as.Date("2024-12-01")))
 # plot(x = ts$doy, y = ts$kc)
