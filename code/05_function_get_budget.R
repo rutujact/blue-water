@@ -194,14 +194,14 @@ get_budget <- function(cs, #= crop.system.ls[[3]],
       ts$sm.mid[i] <- ts$sm.hold[i]
     }
     
-    if(ts$sm.mid[i] >= whc*raw) {
+    if(ts$sm.mid[i] >= whc*raw) { # raw = readily available water
       ts$ks[i] <- 1
     } else {
-      ts$ks[i] <- ts$sm.mid[i]/(whc*(1-raw))
+      ts$ks[i] <- ts$sm.mid[i]/(whc*raw)
     }
     # Potential et crop cycle given soil moisture
     ts$etcs[i] <- ts$etc[i]*ts$ks[i]
-    # aet crop cycle can only be the fraction of etcs that's available in sm.mid
+    # aet crop cycle can only be the part of etcs that's present in sm.mid
     ts$aet[i] <- min(ts$sm.mid[i], ts$etcs[i], na.rm = TRUE) 
     # sm is updated by removing aet, and adding irrigation when irrigated and soil under water-stress
     # Why isn't irrigation given before/during aet drawn?----
