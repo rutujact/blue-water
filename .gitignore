@@ -6,11 +6,11 @@
 # You can be specific with these rules
 !code/*.R
 !R/*.R
-!data/et0.week.imd.csv
-!data/crop.parameters.csv
-!data/Kc_curve_parameters_by_crop_rotation.csv
-!data/soil.parameters.csv
-!data-raw/*.csv
+!data/processed/et0.week.imd.csv
+!data/processed/crop.parameters.csv
+!data/processed/Kc_curve_parameters_by_crop_rotation.csv
+!data/processed/soil.parameters.csv
+!data/raw/*.csv
 # Recursively allow files under subtree
 !.gitignore
 DESCRIPTION

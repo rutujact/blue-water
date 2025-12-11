@@ -12,7 +12,7 @@
 # source("code/02_function_get_Peff.R")
 # ---
 get_Peff <- function(rain, CN = 85, soil.type = "red") {
-  rain <- read.csv(file = "data-raw/rainfall.csv", header = TRUE)
+  rain <- read.csv(file = "data/raw/rainfall.csv", header = TRUE)
   colnames(rain) <- tolower(colnames(rain))
   ts <- rain[, c("date", "p")]
   colnames(ts)[2] <- "P"
@@ -56,7 +56,7 @@ get_Peff <- function(rain, CN = 85, soil.type = "red") {
       c(ts$P[!P.below.thresh] - thresh)^2/ c(ts$P[!P.below.thresh] + 0.7*S)
   }
   ts$Peff <- ts$P - ts$Q
-  write.csv(ts, file = paste0("data/Peffective_", soil.type, ".csv"), row.names = FALSE)
+  write.csv(ts, file = paste0("data/processed/Peffective_", soil.type, ".csv"), row.names = FALSE)
   # summary(ts)
   # plot(x = ts$date, y = ts$Peff)
   return(ts)

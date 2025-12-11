@@ -8,7 +8,7 @@
 # output: data.frame(date=Date, year=numeric, week=numeric, et0=numeric), class=data.frame, dim= [from - to + 1),4],
 # example:
 # source("code/03_function_get_ET0.R")
-# et0.week.imd <- read.csv(file = paste0("data/et0.week.imd.csv"), header = TRUE)
+# et0.week.imd <- read.csv(file = paste0("data/processed/et0.week.imd.csv"), header = TRUE)
 # ts <- get_ET0(et0.week.imd = et0.week.imd)
 # plot(x = ts$doy, y = ts$et0)
 # ---
@@ -31,7 +31,7 @@ get_et0 <- function(et0.week.imd = et0.week.imd) {
   # et0.week.imd <- data.frame(year = imd.years,
   #                            week = imd.weeks,
   #                            et0 = rnorm(length(imd.weeks), mean = 6, sd = 1))
-  # write.csv(et0.week.imd, file = paste0("data/et0.week.imd.csv"), row.names = FALSE)
+  # write.csv(et0.week.imd, file = paste0("data/processed/et0.week.imd.csv"), row.names = FALSE)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
   df <- et0.week.imd

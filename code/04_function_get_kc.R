@@ -22,7 +22,7 @@ get_kc <- function(kc.key,
                    from = as.Date("1951/01/01"),
                    to = as.Date("2023/12/31")) {
   # Example Data
-  # kc.doy.df <- read.csv(file = "data/kc_curve_parameters_by_crop_rotation.csv", header = TRUE)
+  # kc.doy.df <- read.csv(file = "data/processed/kc_curve_parameters_by_crop_rotation.csv", header = TRUE)
   # 
   # # List by Crop.Rotation
   # kc.doy.ls <- split(kc.doy.df, kc.doy.df$crop.rotation)

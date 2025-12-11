@@ -1,5 +1,5 @@
 # ---
-# title: "Prepare data from Model in Excel"
+# title: "Prepare data from Laurent's Crop Water Budget in Excel"
 # subtitle: ""
 # author: "Rutuja Chitra-Tarak"
 # date: "2024-07-18"
@@ -8,6 +8,7 @@
 rm(list = ls())
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse)
+if (!dir.exists("data/processed")) {dir.create("data/processed", showWarnings = FALSE)}
 # Chapter 6 - ETc - Single crop coefficient (Kc)
 # https://www.fao.org/4/X0490E/x0490e0b.htm
 # https://www.researchgate.net/figure/FAO-segmented-crop-coefficient-curve-and-four-growing-stages-after-Allen-et-al-1998_fig5_225419080
@@ -17,7 +18,7 @@ pacman::p_load(tidyverse)
 # "Kc_end" is the value at "Harvest date"
 
 # Get parameters for FAO Segmented Crop Coefficient (Kc) curve by crop of each rotation ----
-Kc.raw <- readxl::read_xlsx("data-raw/Kc Billikere final_mod.xlsx",
+Kc.raw <- readxl::read_xlsx("data/raw/Kc Billikere final_mod.xlsx",
                                    sheet = "Crop cycles Kc",
                                    range = "A1:AX15")
 
@@ -79,7 +80,6 @@ Kc.doy <- left_join(doy, Kc, by = c("Kc_var", "crop", "rotation")) %>%
   arrange(crop, rotation, doy, Kc) %>%
   mutate(doy = as.numeric(doy), Kc = as.numeric(Kc))
 
-
 # This is FAO Kc Parameter Table by DOY by Crop and Rotation----
 Kc.doy.df <- Kc.doy %>% select(rotation, crop, doy_var, doy, Kc) %>%
   unite(crop.rotation, c("crop", "rotation"), sep = "_", remove = FALSE) %>%
@@ -89,10 +89,10 @@ Kc.doy.df <- Kc.doy %>% select(rotation, crop, doy_var, doy, Kc) %>%
   #                             if_else(grepl("Irri", crop.rotation, ignore.case = TRUE), 
   #                                     "Irrigated", 
   #                                     "Rainfed")))
-write.csv(Kc.doy.df, file = "data/Kc_curve_parameters_by_crop_rotation.csv", row.names = FALSE)
+write.csv(Kc.doy.df, file = "data/processed/Kc_curve_parameters_by_crop_rotation.csv", row.names = FALSE)
 
 # Format & Save Crop Parameters (rooting depth, irrigation, season)----
-param.raw <- readxl::read_xlsx("data-raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx",
+param.raw <- readxl::read_xlsx("data/raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx",
                             sheet = "CROP paprameter")
 
 param.raw <- param.raw[, !as.logical(sapply(param.raw, function(x)all(is.na(x))))]
@@ -112,10 +112,10 @@ tolower(crop.param$crop)[match.param.crop]
 # Crops not found in param
 tolower(unique(Kc.doy.df$crop))[is.na(match.param.crop)]
 # "millet"
-write.csv(crop.param, file = "data/crop.parameters.csv", row.names = FALSE)
+write.csv(crop.param, file = "data/processed/crop.parameters.csv", row.names = FALSE)
 
 # Save Soil Parameters (soil.type, whc, raw)----
 soil.param <- data.frame(soil.type = c("red", "black"),
            whc.mmpercm = c(1.2, 1.7), # mm/cm soil
            raw = c(0.4, 0.4)) # %
-write.csv(soil.param, file = "data/soil.parameters.csv", row.names = FALSE)
+write.csv(soil.param, file = "data/processed/soil.parameters.csv", row.names = FALSE)
