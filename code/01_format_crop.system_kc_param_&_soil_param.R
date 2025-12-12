@@ -46,6 +46,8 @@ Kc.raw <- Kc.raw[-1,]
 # Change name of "[values as used in the generic] formula" to pattern
 colnames(Kc.raw)[2] <- "Rotation 0.Kc_formule"
 
+colnames(Kc.raw)[which(colnames(Kc.raw) == "Rotation 4.Kc_millet")] <- "Rotation 4.Kc_FingerMillet"
+
 # Separate crops by Rotation
 Kc.raw.long <- Kc.raw %>% 
   pivot_longer(cols = starts_with("Rotation"), 
@@ -83,7 +85,8 @@ Kc.doy <- left_join(doy, Kc, by = c("Kc_var", "crop", "rotation")) %>%
 # This is FAO Kc Parameter Table by DOY by Crop and Rotation----
 Kc.doy.df <- Kc.doy %>% select(rotation, crop, doy_var, doy, Kc) %>%
   unite(crop.rotation, c("crop", "rotation"), sep = "_", remove = FALSE) %>%
-  arrange(crop.rotation, doy, Kc) #%>%
+  arrange(crop.rotation, doy, Kc) %>%
+  rename(kc = Kc)
   # mutate(irrigation = if_else(grepl("Iri", crop.rotation, ignore.case = TRUE), 
   #                             "Irrigated", 
   #                             if_else(grepl("Irri", crop.rotation, ignore.case = TRUE), 
@@ -132,6 +135,28 @@ crop.system <- crop.system %>%
   mutate(crop.system = gsub("-", "+", crop.system),
          Irrigation = str_to_title(Irrigation)) %>%
   select(-crop1_crop2_crop3) %>%
-  select(crop.system, Irrigation, everything())
+  # Adding Rotation # to match with crop Kc data given by rotation in "Crop cycles Kc" in "Kc Billikere final_mod.xlsx"
+  mutate(rotation = forcats::fct_recode(factor(crop.system), 
+  '2' = 'Blackeyedbeans+Horsegram', '5' = 'Maize 15', '6' = 'FieldBeans 15', 
+  '4' = 'FingerMillet', '8' = 'Maize+FingerMillet', '3' = 'FieldBeans+Horsegram', 
+  '13' = 'Maize+Cabbage', '7' = 'Ginger', 
+  '10' = 'Cabbage+Tomato', '12' = 'Rice+Cabbage', '11' = 'Tomato_Irri+Cabbage+Cucumber', 
+  '17' = 'Coconut+Cabbage+Beans_Irri', '16' = 'Areca', '9' = 'Coconut', '15' = 'Banana')) %>%
+  select(rotation, crop.system, Irrigation, everything()) %>%
+  dplyr::distinct(rotation, .keep_all = TRUE)
 write.csv(crop.system, file = "data/processed/crop.system.csv", row.names = FALSE)
 
+crop.system.l <- crop.system %>%
+  mutate(crop.system_num = 1:n()) %>%
+  pivot_longer(cols = starts_with("crop_"),
+               names_prefix = "crop_",
+               names_to = "crop_num", values_to = "crop") %>%
+  mutate(crop.rotation = if_else(crop == "No_crop", crop, 
+                                 paste(gsub(" 15", "", crop), rotation, sep = "_"))) %>%
+  # As per rotations sheets in the xlsx files 
+  mutate(Irrigation = if_else(crop == "No_crop", "rainfed", tolower(Irrigation))) %>%
+  select(crop.system_num, crop.system, crop_num, crop, Irrigation, everything())
+
+# crop.system.l$irrigation_2 <- crop.param$irrigation[
+#   match(tolower(crop.system.l$crop), tolower(crop.param$crop))] # Does not match fro Maize because crop param has two Maize
+write.csv(crop.system.l, file = "data/processed/crop.system.l.csv", row.names = FALSE)

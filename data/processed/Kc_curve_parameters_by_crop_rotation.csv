@@ -69,6 +69,11 @@
 "FieldBeans_6","6","FieldBeans","End of Dev",216,1.15
 "FieldBeans_6","6","FieldBeans","End of Mid",241,1.15
 "FieldBeans_6","6","FieldBeans","Harvest date",261,0.35
+"FingerMillet_4","4","FingerMillet","Sowing date",152,0.51
+"FingerMillet_4","4","FingerMillet","End of ini",170,0.51
+"FingerMillet_4","4","FingerMillet","End of Dev",206,0.87
+"FingerMillet_4","4","FingerMillet","End of Mid",248,0.87
+"FingerMillet_4","4","FingerMillet","Harvest date",272,0.5
 "FingerMillet_8","8","FingerMillet","Sowing date",240,0.51
 "FingerMillet_8","8","FingerMillet","End of ini",258,0.51
 "FingerMillet_8","8","FingerMillet","End of Dev",294,0.87
@@ -144,8 +149,3 @@
 "millet_1","1","millet","End of Dev",297,0.87
 "millet_1","1","millet","End of Mid",339,0.87
 "millet_1","1","millet","Harvest date",363,0.5
-"millet_4","4","millet","Sowing date",152,0.51
-"millet_4","4","millet","End of ini",170,0.51
-"millet_4","4","millet","End of Dev",206,0.87
-"millet_4","4","millet","End of Mid",248,0.87
-"millet_4","4","millet","Harvest date",272,0.5
