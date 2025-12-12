@@ -119,3 +119,19 @@ soil.param <- data.frame(soil.type = c("red", "black"),
            whc.mmpercm = c(1.2, 1.7), # mm/cm soil
            raw = c(0.4, 0.4)) # %
 write.csv(soil.param, file = "data/processed/soil.parameters.csv", row.names = FALSE)
+
+# Get Crop Rotations ----
+# Format & Save Crop Parameters (rooting depth, irrigation, season)----
+crop.system <- readxl::read_xlsx("data/raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx",
+                               sheet = "All rotations")
+crop.system <- as.data.frame(t(crop.system[c(2,5), -c(1,2)]))
+names(crop.system) <- c("crop1_crop2_crop3", "Irrigation")
+crop.system <- crop.system %>%
+  separate_wider_delim(crop1_crop2_crop3, "-", names = c("crop_1", "crop_2", "crop_3"), cols_remove = FALSE) %>%
+  mutate(crop.system = gsub("-No_crop", "", crop1_crop2_crop3)) %>%
+  mutate(crop.system = gsub("-", "+", crop.system),
+         Irrigation = str_to_title(Irrigation)) %>%
+  select(-crop1_crop2_crop3) %>%
+  select(crop.system, Irrigation, everything())
+write.csv(crop.system, file = "data/processed/crop.system.csv", row.names = FALSE)
+
