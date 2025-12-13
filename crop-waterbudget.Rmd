@@ -1,6 +1,6 @@
 ---
-title: "Blue Water Potential of Various Crop-systems^[This code should be cited as: DOI: ]"
-subtitle: An R wokflow to derive Net Potential Water Recharge for given Crop Systems and Met Forcing
+title: "Blue Water Potential of Various Croping Systems^[This code should be cited as: DOI: ]"
+subtitle: An R workflow to derive Net Potential Water Recharge for given Cropping Systems and Met Forcing of a site
 # author: Rutuja Chitra-Tarak, Jess Shue, Patricia Mezza, Kay Garlick-Ott, Roy Rich,
 #   Sean M. McMahon
 date: "`r format(Sys.time(), '%d %B, %Y')`"
@@ -98,7 +98,7 @@ knitr::kable(head(et0.daily[1:3,]))
 soil.param <- read.csv(file = "data/processed/soil.parameters.csv", header = TRUE)
 knitr::kable(head(soil.param))
 ```
-### 3. A List of Crop Systems for Water Budgeting
+### 3. Load a List of Cropping Systems for Water Budgeting
 
 ```{r, crop-systems}
 # The following are prepared with code:
@@ -202,7 +202,7 @@ met.forcing <- get_peff_et0(p = p.list)
 
 ## 3. Run Water Budget Function
 
-Function is run in parallel for various crop systems
+Function is run in parallel for various cropping systems
 
 ```{r, get_budget, eval = FALSE, include = TRUE}
 
@@ -240,11 +240,11 @@ save(budget, file = "output/water_budgets/Budget.Rdata")
 # }
 ```
 
-## 4. Water Budgeting Outputs for various Crop Systems
+## 4. Water Budgeting Outputs for Various Cropping Systems
 
-### 1. Annual Climatology of Water Supply-Demand
+### 1. Water Supply-Demand of Cropping Systems - Annual Perspective 
 
-```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for various crop systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
+```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for various cropping systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
 
 load(file = "output/water_budgets/Budget.Rdata")
 
@@ -270,7 +270,7 @@ summary.crop <- summary.crop %>%
 summ.qs <- summary.crop %>%
   pivot_wider(names_from = quantile, values_from = value) %>%
   arrange(var, mean) %>%
-  mutate(var.plot = forcats::fct_recode(factor(var), "Precipitation (mm)" = "P", "Precipitation - Recharge (mm)" = "Peff", "-Recharge (mm)" = "Q", "ET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "Crop ET Supply:Demand" = "aet.to.etc.crop", "NPWR (mm)" = "balance", "Potential ET (mm)" = "et0", "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", "Potential Crop ET given Soil Moisture" = "etcs", "Irrigation (mm)" = "irrigation", "Recharge (mm)" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
+  mutate(var.plot = forcats::fct_recode(factor(var), "Precipitation (mm)" = "P", "Precipitation - Recharge (mm)" = "Peff", "-Recharge (mm)" = "Q", "ET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "Crop ET Supply:Demand" = "aet.to.etc.crop", "NPWR (mm)" = "balance", "Potential ET (mm)" = "et0", "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", "Potential Crop ET given Soil Moisture" = "etcs", "Pumping (mm)" = "irrigation", "Recharge (mm)" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
 
 # arrange factor levels in the order of 'Balance' 
 summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
@@ -281,48 +281,43 @@ summ.qs$crop.system <- factor(summ.qs$crop.system,           levels=levels(summ.
 save(summ.qs, file = "output/water_budgets/summ.qs.Rdata")
 
 # Plot Annual Climatology of Water Supply Demand & NPWR 
-yr.vars.to.plot.1 <- c("Recharge (mm)", "Irrigation (mm)", "Crop ET Supply:Demand")
+yr.vars.to.plot.1 <- c("Recharge (mm)", "Pumping (mm)", "Crop ET Supply:Demand")
 summ.qs.select.1 <- summ.qs %>% subset(var.plot %in% yr.vars.to.plot.1) %>%
-    mutate(var.plot = factor(var.plot, levels = c("Irrigation (mm)", "Recharge (mm)", "Crop ET Supply:Demand")))
+    mutate(var.plot = factor(var.plot, levels = c("Pumping (mm)", "Recharge (mm)", "Crop ET Supply:Demand")))
   
-p.yr.budget <- ggplot(summ.qs.select.1,
-       aes(y = crop.system, x = `0.5`)) +
+p.yr.budget.base <- ggplot(summ.qs.select.1,
+       aes(y = crop.system)) +
   facet_grid(. ~ var.plot, scales = "free_x") +
-  geom_col(aes(fill = Irrigation)) +
-  xlab("Median (95 CI)") + ylab("Crop System") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.1) +
+  scale_fill_manual(values=c("Rainfed" = "yellow3", "Irrigated" = "skyblue")) +
+  ylab("Cropping System") +
   theme_baseR + theme(legend.title = element_blank())
-# print(p.yr.budget)
-ggsave(plot = p.yr.budget, file = paste0("figures/water_budgets/annual_crop.system_budget.jpg"), width = 9, height = 4)
 
-p.yr.budget.mean <- ggplot(summ.qs.select.1,
-       aes(y = crop.system, x = mean)) +
-  facet_grid(. ~ var.plot, scales = "free_x") +
-  geom_col(aes(fill = Irrigation)) +
-  xlab("Mean (95 CI)") + ylab("Crop System") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.1) +
-  theme_baseR + theme(legend.title = element_blank())
+p.yr.budget.median <- p.yr.budget.base +  
+  geom_col(aes(x = `0.5`, fill = Irrigation)) + xlab("Median (95 CI)") +
+  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
+ggsave(plot = p.yr.budget.median, file = paste0("figures/water_budgets/annual_crop.system_budget.median.jpg"), width = 9, height = 4)
+
+p.yr.budget.mean <- p.yr.budget.base +  
+  geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
+  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
 print(p.yr.budget.mean)
-ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/annual_crop.system_budget_mean.jpg"), width = 9, height = 4)
-
+ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/annual_crop.system_budget.mean.jpg"), width = 9, height = 4)
 ```
 
-### 2. Annual Blue Water Potential
+### 2. Blue Water Potential of Cropping Systems - Annual Perspective
 
-```{r, ann-npwr, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of NPWR (mean + 95 CI) for various crop systems.', eval = TRUE, include = TRUE}
-p.yr.npwr <- ggplot(subset(summ.qs, var.plot == "NPWR (mm)"),
-       aes(y = crop.system, x = mean)) +
-  geom_col(aes(fill = Irrigation)) + 
-  xlab("Net Potential Water Recharge (mm)") + ylab("Crop System") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.1) +
-  theme_baseR
-print(p.yr.npwr)
-ggsave(plot = p.yr.npwr, file = paste0("figures/water_budgets/crop.system_budget_summary.jpg"), width = 9, height = 4)
+```{r, ann-npwr, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of NPWR (mean + 95 CI) for various cropping systems.', eval = TRUE, include = TRUE}
+p.yr.npwr.mean <- p.yr.budget.base %+% 
+  subset(summ.qs, var.plot == "NPWR (mm)") +
+  geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
+  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
+print(p.yr.npwr.mean)
+ggsave(plot = p.yr.npwr.mean, file = paste0("figures/water_budgets/crop.system_budget_summary.mean.jpg"), width = 9, height = 4)
 ```
 
-### 3. Monthly Climatalogy of Water Budget
+### 3. Water Budget of Cropping Systems - Monthly Perspective
 
-```{r, monthly-supply-demand, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of water fluxes (median + 95 CI) for various crop systems. Note that recharge is depicted in negative terms on the water consumption axis. Crop systems are organised in order of increasing annual irrigation, followed by decreasing annual recharge.', include=TRUE}
+```{r, monthly-supply-demand, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of water fluxes (median + 95 CI) for various cropping systems. Note that recharge is depicted in negative terms on the water consumption axis. Cropping systems are organised in order of increasing annual irrigation, followed by decreasing annual recharge.', include=TRUE}
 # Plot monthly----
 # When the functions in .fns return a data frame, you typically get a
   # "packed" data frame back
@@ -360,11 +355,10 @@ clim.crop.select.1 <- clim.crop %>%
   mutate(var_f = fct_recode(var, "Potential Crop ET" = "plot.etc",
                             "Actual ET" = "plot.aet", 
                             "-Recharge" = "plot.recharge",
-                            #"Recharge" ="plot.recharge", 
-                            "Irrigation" = "plot.irri"),
+                            "Pumping" = "plot.irri"),
          var_f = factor(var_f, levels = c("Potential Crop ET",
-                            "Actual ET", "-Recharge", "Irrigation"))) %>%
-  # To order crop systems by least irrigation, joining total annual irrigation
+                            "Actual ET", "-Recharge", "Pumping"))) %>%
+  # To order cropping systems by least irrigation, joining total annual irrigation
   left_join(subset(clim.crop, var %in% "irrigation") %>% group_by(crop.system) %>% summarise(irri.median.sum = sum(median, na.rm = TRUE)), by = join_by(crop.system)) %>%
   left_join(subset(clim.crop, var %in% "recharge") %>% group_by(crop.system) %>% summarise(recharge.median.sum = sum(median, na.rm = TRUE)), by = join_by(crop.system)) %>%
   arrange(irri.median.sum, desc(recharge.median.sum)) %>%
@@ -380,15 +374,15 @@ p.monthly.budget.base <- ggplot(clim.crop.select.1,
   facet_wrap(crop.system ~ . , scales = "fixed")
 p.monthly.budget <- p.monthly.budget.base +
   theme(legend.position = "top", legend.title = element_blank()) +
-  ylab("Water Consumption (mm)") + xlab("Month") +
-  ggtitle("Monthly Water Use & Recharge from Various Crop Systems in Billikere")
+  ylab("Water Consumption (mm) (median + 95 CI)") + xlab("Month") +
+  ggtitle("Monthly Water Use & Recharge from Various Cropping Systems in Billikere (1970:2022)")
 print(p.monthly.budget)
 ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_monthly_select.1_crop.system.jpg"), width = 11.52 , height = 7.49)
 ```
 
-### 4. Monthly Blue Water Potential of Various Crop Systems
+### 4. Blue Water Potential of Various Cropping Systems - Monthly Perspective
 
-```{r, mo-npwr, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of NPWR (median + 95 CI) for various crop systems. Positive values are depicted in blue (Blue Water), negative values in red. Crop systems are organised in decreasing order of median annual Blue Water potential.', include=TRUE}
+```{r, mo-npwr, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of NPWR (median + 95 CI) for various cropping systems. Positive values are depicted in blue (Blue Water), negative values in red. Cropping systems are organised in decreasing order of annual Blue Water potential.', include=TRUE}
 
 clim.crop.select.2 <- clim.crop %>%
   subset(var %in% "balance") %>%
@@ -422,8 +416,8 @@ p.monthly.npwr <- ggplot(mutate(clim.crop.select.2, above_axis = median >= 0),
   scale_x_continuous(breaks = 1:12, labels = as.character(1:12), limits = c(1, 12)) +
   geom_abline(intercept = 0, slope = 0, linewidth = 0.2) +
   theme(legend.position = "none") + 
-  ylab("NPWR (mm)") + xlab("Month") +
-  ggtitle("Monthly Blue Water Potential for Various Crop Systems in Billikere")
+  ylab("NPWR (mm) (median + 95 CI)") + xlab("Month") +
+  ggtitle("Monthly Blue Water Potential for Various Cropping Systems in Billikere (1970:2022)")
 print(p.monthly.npwr)
 ggsave(plot = p.monthly.npwr, file = paste0("figures/water_budgets/water_budget_monthly_select.1_crop.system.jpg"), width = 11.52, height = 7.49)
 ```
