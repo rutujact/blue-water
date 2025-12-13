@@ -247,9 +247,26 @@ save(budget, file = "output/water_budgets/Budget.Rdata")
 ```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for various cropping systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
 
 load(file = "output/water_budgets/Budget.Rdata")
-
 crop.system <- read.csv(file = "data/processed/crop.system.csv", header = TRUE)
 
+# Save daily outputs ----
+ts.all.ls <- lapply(budget, function(x) {return(x$ts)})
+ts.all <- dplyr::bind_rows(ts.all.ls, .id = "crop.system") %>% 
+  left_join(crop.system, by = "crop.system") %>%
+  relocate(names(crop.system), .after = crop.system)
+write.csv(ts.all, file = "output/water_budgets/water.budget.daily.csv", row.names = FALSE)
+# Save only one year (the first) to share a lighter file
+ts.all.first.yr <- subset(ts.all, year == min(unique(ts.all$year)))
+write.csv(ts.all.first.yr, file = paste0("output/water_budgets/water.budget.daily.", min(unique(ts.all$year)),".csv"), row.names = FALSE)
+
+# Save yearly outputs ----
+sum.yr.all.ls <- lapply(budget, function(x) {return(x$sum.yr)})
+sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.system") %>% 
+  left_join(crop.system, by = "crop.system") %>%
+  relocate(names(crop.system), .after = crop.system)
+write.csv(sum.yr.all, file = "output/water_budgets/water.budget.yearly.csv", row.names = FALSE)
+
+# Save summary outputs ----
 summary.yr.ls <- lapply(budget, function(x) {
     mean.yr <- x$sum.yr %>%
       pivot_longer(-year, names_to = "var", values_to = "value") %>%
@@ -265,7 +282,8 @@ summary.yr.ls <- lapply(budget, function(x) {
 
 summary.crop <- dplyr::bind_rows(summary.yr.ls, .id = "crop.system") 
 summary.crop <- summary.crop %>% 
-  left_join(crop.system, by = "crop.system")
+  left_join(crop.system, by = "crop.system")  %>%
+  relocate(names(crop.system), .after = crop.system)
 
 summ.qs <- summary.crop %>%
   pivot_wider(names_from = quantile, values_from = value) %>%
@@ -279,6 +297,7 @@ summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
 summ.qs$crop.system <- factor(summ.qs$crop.system,           levels=levels(summ.qs.balance$crop.system))
 
 save(summ.qs, file = "output/water_budgets/summ.qs.Rdata")
+write.csv(summ.qs, file = "output/water_budgets/water.budget.annual.climatology.csv", row.names = FALSE)
 
 # Plot Annual Climatology of Water Supply Demand & NPWR 
 yr.vars.to.plot.1 <- c("Recharge (mm)", "Pumping (mm)", "Crop ET Supply:Demand")
@@ -318,6 +337,7 @@ ggsave(plot = p.yr.npwr.mean, file = paste0("figures/water_budgets/crop.system_b
 ### 3. Water Budget of Cropping Systems - Monthly Perspective
 
 ```{r, monthly-supply-demand, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of water fluxes (median + 95 CI) for various cropping systems. Note that recharge is depicted in negative terms on the water consumption axis. Cropping systems are organised in order of increasing annual irrigation, followed by decreasing annual recharge.', include=TRUE}
+
 # Plot monthly----
 # When the functions in .fns return a data frame, you typically get a
   # "packed" data frame back
@@ -345,9 +365,12 @@ budget <- lapply(budget, add_clim.mo)
 clim.mo.ls <- lapply(budget, function(x) {return(x$clim.mo)})
 clim.crop <- dplyr::bind_rows(clim.mo.ls, .id = "crop.system") 
 clim.crop <- clim.crop %>% 
-  left_join(crop.system, by = "crop.system") %>% 
-  select(crop.system, everything(), -rotation)
+  left_join(crop.system, by = "crop.system") %>%
+  relocate(names(crop.system), .after = crop.system)
+# Save monthly outputs ----
+write.csv(clim.crop, file = "output/water_budgets/water.budget.monthly.climatology.csv", row.names = FALSE)
 
+# Select vars to plot
 mo.vars.to.plot.1 <- c("plot.recharge", "plot.aet", "plot.etc", "plot.irri") 
                        
 clim.crop.select.1 <- clim.crop %>% 
