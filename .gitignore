@@ -6,15 +6,30 @@
 # You can be specific with these rules
 !code/*.R
 !R/*.R
+# Workflow
+!crop-waterbudget_Workflow.html
+# Input data
 !data/processed/et0.week.imd.csv
 !data/processed/crop.parameters.csv
 !data/processed/Kc_curve_parameters_by_crop_rotation.csv
 !data/processed/soil.parameters.csv
 !data/raw/*.csv
+# Output data
+!output/water_budgets/water.budget.annual.csv
+!output/water_budgets/water.budget.annual.climatology.csv
+!output/water_budgets/water.budget.monthly.climatology.csv
+!output/water_budgets/water.budget.daily.1970.csv
+# Ouput figures
+!figures/water_budgets/annual_climatology_water_budget_mean.jpg
+!figures/water_budgets/annual_climatology_water_budget_median.jpg
+!figures/water_budgets/annual_climatology_npwr_mean.jpg
+!figures/water_budgets/monthly_climatology_water_budget_median.jpg
+!figures/water_budgets/monthly_climatology_npwr_median.jpg
 # Recursively allow files under subtree
 !.gitignore
 DESCRIPTION
 !*.Rmd
 !*.Rproj
+!preamble.tex
 # https://stackoverflow.com/questions/44568184/gitignore-everything-except-a-subfolder-with-every-content
 .Rproj.user

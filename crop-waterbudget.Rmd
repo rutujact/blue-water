@@ -4,7 +4,7 @@ subtitle: An R workflow to derive Net Potential Water Recharge for given Croppin
 # author: Rutuja Chitra-Tarak, Jess Shue, Patricia Mezza, Kay Garlick-Ott, Roy Rich,
 #   Sean M. McMahon
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = paste0(substr(inputFile,1,nchar(inputFile)-4), '_Crop-Waterbudget_', Sys.Date(),'.html'))})
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = paste0(substr(inputFile,1,nchar(inputFile)-4), '_Workflow.html'))})
 output:
   html_document:
     df_print: paged
@@ -67,6 +67,7 @@ theme_baseR <- theme_bw() +
 #~~~~~~~~~~~~~~~
 # Source Functions ----
 #~~~~~~~~~~~~~~~
+# source("code/01_format_crop.system_kc_param_&_soil_param.R") # Used for data formatting
 source("code/02_function_get_Peff.R")
 # source("code/03_function_get_et0.R") # Used in case of weekly et0 data to convert to daily et0
 source("code/04_function_get_kc.R")
@@ -259,12 +260,12 @@ write.csv(ts.all, file = "output/water_budgets/water.budget.daily.csv", row.name
 ts.all.first.yr <- subset(ts.all, year == min(unique(ts.all$year)))
 write.csv(ts.all.first.yr, file = paste0("output/water_budgets/water.budget.daily.", min(unique(ts.all$year)),".csv"), row.names = FALSE)
 
-# Save yearly outputs ----
+# Save annual outputs ----
 sum.yr.all.ls <- lapply(budget, function(x) {return(x$sum.yr)})
 sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.system") %>% 
   left_join(crop.system, by = "crop.system") %>%
   relocate(names(crop.system), .after = crop.system)
-write.csv(sum.yr.all, file = "output/water_budgets/water.budget.yearly.csv", row.names = FALSE)
+write.csv(sum.yr.all, file = "output/water_budgets/water.budget.annual.csv", row.names = FALSE)
 
 # Save summary outputs ----
 summary.yr.ls <- lapply(budget, function(x) {
@@ -314,13 +315,13 @@ p.yr.budget.base <- ggplot(summ.qs.select.1,
 p.yr.budget.median <- p.yr.budget.base +  
   geom_col(aes(x = `0.5`, fill = Irrigation)) + xlab("Median (95 CI)") +
   geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
-ggsave(plot = p.yr.budget.median, file = paste0("figures/water_budgets/annual_crop.system_budget.median.jpg"), width = 9, height = 4)
+ggsave(plot = p.yr.budget.median, file = paste0("figures/water_budgets/annual_climatology_water_budget_median.jpg"), width = 9, height = 4)
 
 p.yr.budget.mean <- p.yr.budget.base +  
   geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
   geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
 print(p.yr.budget.mean)
-ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/annual_crop.system_budget.mean.jpg"), width = 9, height = 4)
+ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/annual_climatology_water_budget_mean.jpg"), width = 9, height = 4)
 ```
 
 ### 2. Blue Water Potential of Cropping Systems - Annual Perspective
@@ -331,7 +332,7 @@ p.yr.npwr.mean <- p.yr.budget.base %+%
   geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
   geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
 print(p.yr.npwr.mean)
-ggsave(plot = p.yr.npwr.mean, file = paste0("figures/water_budgets/crop.system_budget_summary.mean.jpg"), width = 9, height = 4)
+ggsave(plot = p.yr.npwr.mean, file = paste0("figures/water_budgets/annual_climatology_npwr_mean.jpg"), width = 9, height = 4)
 ```
 
 ### 3. Water Budget of Cropping Systems - Monthly Perspective
@@ -400,7 +401,7 @@ p.monthly.budget <- p.monthly.budget.base +
   ylab("Water Consumption (mm) (median + 95 CI)") + xlab("Month") +
   ggtitle("Monthly Water Use & Recharge from Various Cropping Systems in Billikere (1970:2022)")
 print(p.monthly.budget)
-ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/water_budget_monthly_select.1_crop.system.jpg"), width = 11.52 , height = 7.49)
+ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/monthly_climatology_water_budget_median.jpg"), width = 11.52 , height = 7.49)
 ```
 
 ### 4. Blue Water Potential of Various Cropping Systems - Monthly Perspective
@@ -442,5 +443,5 @@ p.monthly.npwr <- ggplot(mutate(clim.crop.select.2, above_axis = median >= 0),
   ylab("NPWR (mm) (median + 95 CI)") + xlab("Month") +
   ggtitle("Monthly Blue Water Potential for Various Cropping Systems in Billikere (1970:2022)")
 print(p.monthly.npwr)
-ggsave(plot = p.monthly.npwr, file = paste0("figures/water_budgets/water_budget_monthly_select.1_crop.system.jpg"), width = 11.52, height = 7.49)
+ggsave(plot = p.monthly.npwr, file = paste0("figures/water_budgets/monthly_climatology_npwr_median.jpg"), width = 11.52, height = 7.49)
 ```
