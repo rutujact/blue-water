@@ -119,26 +119,69 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   kc.crops.df <- bind_rows(lapply(kc.crops.ls, function(x) x[["ts"]]), 
                            .id = "crop") %>%
     pivot_wider(names_from = crop, values_from = kc)
-  # If 'no_crop', present, then adding kcr from it.
-  if (length(no.crop.vec) >= 1) {
-    kcr.nocrop <- data.frame(date = ts$date)
-    kcr.nocrop$doy <- as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), 
-                                        format = "%j"))
-    kcr.nocrop$kcr <- NA
-    # Adding kcr based on the number of no_crops
-    kcr.nocrop$kcr[kcr.nocrop$doy < 120] <- length(no.crop.vec)*p$kc_no_crop[["summer"]]
-    kcr.nocrop$kcr[kcr.nocrop$doy >= 120] <- length(no.crop.vec)*p$kc_no_crop[["kr"]]
-    
-    kc.crops.df <- kc.crops.df %>% 
-      left_join(kcr.nocrop %>% rename(no_crop = kcr) %>% select(-doy), by = "date")
-  } 
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  ## Adding Kc for bare ground when crop Kc zero or when only perennials present ----
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # CASE 1 & 2: One of the crops is a perennial/tree and thus have year-round non-zero Kc---- 
+  # If kc is never zero, one of the crops is a tree. Find this case:
+  column.tree.test <- apply(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")], 2, function(x) {all(x != 0)})
+
+  any.tree <- any(column.tree.test)
+  if(any.tree) {
+    # Any other crops besides tree/perennial present?
+    non.tree.crops <- setdiff(crop.rotation.vec, names(which(column.tree.test))) 
+    if (length(non.tree.crops) > 0) {
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # CASE 1: Perennials & Annuals ----
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # Is crop kc, for the non-tree crops, zero on any day?
+      tree.column <- names(column.tree.test)[which(column.tree.test)]
+      non.tree.kcr.sum <- round(rowSums(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy", tree.column)], na.rm = TRUE))
+      any.zero.day <- any(non.tree.kcr.sum == 0)
+      
+      if(any.zero.day) {
+        # print("CASE 1: Perennial & Annual Crops")
+        
+        kc.crops.df$no_crop <- NA
+        kc.crops.df <- kc.crops.df %>%
+          mutate(no_crop = if_else(non.tree.kcr.sum == 0, if_else(doy < 120,
+                                                                  p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]), 0))
+      }
+      
+    } else {
+      # print("CASE 2: Perennial Crop & Bare-ground")
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # CASE 2: Perennials & Bare-ground ----
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      #In this case for the total kcr, give 0.5 weight to the tree kc and half to the 'no_crop' kc
+      kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")] <-
+        0.5*kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")]
+      
+      kc.crops.df <- kc.crops.df %>%
+        mutate(no_crop = if_else(doy < 120, p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]))
+    }
+    } else {
+      # print("CASE 3: Annual Crops")
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      # CASE 3: Annual Crops ----
+      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      all.crops.kcr.sum <- rowSums(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")], na.rm = TRUE)
+      any.zero.day <- any(all.crops.kcr.sum == 0)
+      
+      if(any.zero.day) {
+        kc.crops.df <- kc.crops.df %>%
+          mutate(no_crop = if_else(all.crops.kcr.sum == 0, if_else(doy < 120, 
+                                                                  p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]), 0))
+      }
+    }
   
   ## Summing up kc of all crop columns:
   kcr <- data.frame(date = kc.crops.df$date, doy = kc.crops.df$doy,
                     kcr = rowSums(kc.crops.df[, !colnames(kc.crops.df) 
                                               %in% c("date", "doy")], na.rm = TRUE))
+
   kcr <- kcr[order(kcr$date), ]
-  
+
   # Does any of the specified crops need irrigation ----
   irri.needed <- any(tolower(cs$Irrigation) == "irrigated")
   # If irri.needed, then is a crop present, that is, is kcr positive?
