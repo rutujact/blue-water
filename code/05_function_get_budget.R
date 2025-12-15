@@ -119,7 +119,7 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   kc.crops.df <- bind_rows(lapply(kc.crops.ls, function(x) x[["ts"]]), 
                            .id = "crop") %>%
     pivot_wider(names_from = crop, values_from = kc)
-  # If no_crop, present, then adding kcr from it.
+  # If 'no_crop', present, then adding kcr from it.
   if (length(no.crop.vec) >= 1) {
     kcr.nocrop <- data.frame(date = ts$date)
     kcr.nocrop$doy <- as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), 

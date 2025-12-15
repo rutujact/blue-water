@@ -1,5 +1,5 @@
 ---
-title: "Blue Water Potential of Various Croping Systems^[This code should be cited as: DOI: ]"
+title: "Blue Water Potential of Various Cropping Systems^[This code should be cited as: DOI: ]"
 subtitle: An R workflow to derive Net Potential Water Recharge for given Cropping Systems and Met Forcing of a site
 # author: Rutuja Chitra-Tarak, Jess Shue, Patricia Mezza, Kay Garlick-Ott, Roy Rich,
 #   Sean M. McMahon
@@ -63,7 +63,7 @@ theme_baseR <- theme_bw() +
 
 ## 1. Load Functions
 
-```{r,, load-functions}
+```{r, load-functions}
 #~~~~~~~~~~~~~~~
 # Source Functions ----
 #~~~~~~~~~~~~~~~
@@ -194,7 +194,7 @@ p.list <- list(rain = rain,
                et0.timestep = "daily", # weekly/daily
                et0.input = et0.daily, # For "daily", choose: et0.daily
                kc.doy.crops = kc.doy.crops,
-               kc_no_crop = list(summer = 0.005, kr = 0.2),
+               kc_no_crop = list(summer = 0.0, kr = 0.0), #list(summer = 0.005, kr = 0.2),
                soil.type = "red",
                CN = 85,
                sm.init = 0.5)
@@ -245,7 +245,7 @@ save(budget, file = "output/water_budgets/Budget.Rdata")
 
 ### 1. Water Supply-Demand of Cropping Systems - Annual Perspective 
 
-```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for various cropping systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
+```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for cropping systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
 
 load(file = "output/water_budgets/Budget.Rdata")
 crop.system <- read.csv(file = "data/processed/crop.system.csv", header = TRUE)
@@ -268,18 +268,7 @@ sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.system") %>%
 write.csv(sum.yr.all, file = "output/water_budgets/water.budget.annual.csv", row.names = FALSE)
 
 # Save summary outputs ----
-summary.yr.ls <- lapply(budget, function(x) {
-    mean.yr <- x$sum.yr %>%
-      pivot_longer(-year, names_to = "var", values_to = "value") %>%
-      group_by(var) %>%
-      summarise(value = mean(value, na.rm = TRUE)) %>%
-      mutate(quantile = "mean")
-
-    summary.yr <- x$summary.yr %>%
-      mutate(quantile = as.character(quantile)) %>%
-      bind_rows(mean.yr) %>% arrange(var)
-  return(summary.yr)}
-)
+summary.yr.ls <- lapply(budget, function(x) {return(x$summary.yr)})
 
 summary.crop <- dplyr::bind_rows(summary.yr.ls, .id = "crop.system") 
 summary.crop <- summary.crop %>% 
@@ -299,6 +288,14 @@ summ.qs$crop.system <- factor(summ.qs$crop.system,           levels=levels(summ.
 
 save(summ.qs, file = "output/water_budgets/summ.qs.Rdata")
 write.csv(summ.qs, file = "output/water_budgets/water.budget.annual.climatology.csv", row.names = FALSE)
+
+summ.qs.wide <- summ.qs %>% 
+  arrange(rotation) %>% 
+  select(-c(1, 3:6, var.plot, `0.025`, `0.5`, `0.975`)) %>%
+  mutate(mean = round(mean)) %>%
+  pivot_wider(names_from = "crop.system", values_from = c("mean")) %>%
+  subset(var == "etc")
+write.csv(summ.qs.wide, file = "output/water_budgets/water.budget.annual.climatology_mean_wide.csv", row.names = FALSE)
 
 # Plot Annual Climatology of Water Supply Demand & NPWR 
 yr.vars.to.plot.1 <- c("Recharge (mm)", "Pumping (mm)", "Crop ET Supply:Demand")
@@ -326,7 +323,7 @@ ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/annual_clim
 
 ### 2. Blue Water Potential of Cropping Systems - Annual Perspective
 
-```{r, ann-npwr, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of NPWR (mean + 95 CI) for various cropping systems.', eval = TRUE, include = TRUE}
+```{r, ann-npwr, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of NPWR (mean + 95 CI) for cropping systems.', eval = TRUE, include = TRUE}
 p.yr.npwr.mean <- p.yr.budget.base %+% 
   subset(summ.qs, var.plot == "NPWR (mm)") +
   geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
@@ -404,9 +401,9 @@ print(p.monthly.budget)
 ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/monthly_climatology_water_budget_median.jpg"), width = 11.52 , height = 7.49)
 ```
 
-### 4. Blue Water Potential of Various Cropping Systems - Monthly Perspective
+### 4. Blue Water Potential of Cropping Systems - Monthly Perspective
 
-```{r, mo-npwr, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of NPWR (median + 95 CI) for various cropping systems. Positive values are depicted in blue (Blue Water), negative values in red. Cropping systems are organised in decreasing order of annual Blue Water potential.', include=TRUE}
+```{r, mo-npwr, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of NPWR (median + 95 CI) for cropping systems. Positive values are depicted in blue (Blue Water), negative values in red. Cropping systems are organised in decreasing order of annual Blue Water potential.', include=TRUE}
 
 clim.crop.select.2 <- clim.crop %>%
   subset(var %in% "balance") %>%
