@@ -92,7 +92,8 @@ get_peff_et0 <- function(p = p.list) {
 #~~~~~~~~~~~~~~~
 get_budget <- function(cs, #= crop.system.ls[[1]], 
                        p = p.list, 
-                       ts = met.forcing) {
+                       ts = met.forcing,
+                       get_kc = get_kc) {
   # #~~~~~~~~~~~~~~~
   # ## source functions ----
   # #~~~~~~~~~~~~~~~
@@ -120,50 +121,45 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
                            .id = "crop") %>%
     pivot_wider(names_from = crop, values_from = kc)
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ## Adding Kc for bare ground when crop Kc zero or when only perennials present ----
+  ## Adding Kc for bare ground when crop Kc zero.   
+  ## Coconut is coded differently 
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # CASE 1 & 2: One of the crops is a perennial/tree and thus have year-round non-zero Kc---- 
-  # If kc is never zero, one of the crops is a tree. Find this case:
-  column.tree.test <- apply(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")], 2, function(x) {all(x != 0)})
-
-  any.tree <- any(column.tree.test)
-  if(any.tree) {
-    # Any other crops besides tree/perennial present?
-    non.tree.crops <- setdiff(crop.rotation.vec, names(which(column.tree.test))) 
-    if (length(non.tree.crops) > 0) {
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # CASE 1: Perennials & Annuals ----
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # Is crop kc, for the non-tree crops, zero on any day?
-      tree.column <- names(column.tree.test)[which(column.tree.test)]
-      non.tree.kcr.sum <- round(rowSums(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy", tree.column)], na.rm = TRUE))
-      any.zero.day <- any(non.tree.kcr.sum == 0)
-      
-      if(any.zero.day) {
-        # print("CASE 1: Perennial & Annual Crops")
-        
-        kc.crops.df$no_crop <- NA
-        kc.crops.df <- kc.crops.df %>%
-          mutate(no_crop = if_else(non.tree.kcr.sum == 0, if_else(doy < 120,
-                                                                  p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]), 0))
-      }
-      
-    } else {
-      # print("CASE 2: Perennial Crop & Bare-ground")
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # CASE 2: Perennials & Bare-ground ----
-      #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      #In this case for the total kcr, give 0.5 weight to the tree kc and half to the 'no_crop' kc
-      kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")] <-
-        0.5*kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")]
-      
+  # Coconut + other crops is coded differently: total Kcr = 0.5* Kc_coconut + 0.5*(Kc_crop2 + Kc_crop3)
+  # Other Crop.System: total Kcr = sum(Kc_crop1 + Kc_crop2 + Kc_crop3)
+  
+  # Any other crops besides coconut present?
+  non.coco.crops <- setdiff(crops.vec, c("coconut", "no_crop")) 
+  
+  if(any(crops.vec == "coconut") & (length(non.coco.crops) > 0)) {
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # CASE 1: Coconut & other crops ----
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # Is crop kc, for the non-coco crops, zero on any day?
+    coco.column <-  names(kc.crops.df)[pmatch("coconut", names(kc.crops.df))]
+    non.coco.kcr.sum <- round(rowSums(kc.crops.df[, !colnames(kc.crops.df) 
+                                                  %in% c("date", "doy", coco.column)], na.rm = TRUE))
+    any.zero.day <- any(non.coco.kcr.sum == 0)
+    
+    if(any.zero.day) {
+      # print("CASE 1: Coconut & Annual Crops")
+      kc.crops.df$no_crop <- NA
       kc.crops.df <- kc.crops.df %>%
-        mutate(no_crop = if_else(doy < 120, p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]))
+        mutate(no_crop = if_else(non.coco.kcr.sum == 0, 
+                                 if_else(doy < 120,
+                                         p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]), 0))
     }
-    } else {
-      # print("CASE 3: Annual Crops")
+    #In this case for the total kcr, give 0.5 weight to the coco kc and half to the remainder kc
+    ## Summing up kc of all crop columns:
+    kcr <- data.frame(date = kc.crops.df$date, doy = kc.crops.df$doy,
+                      kcr = 0.5*rowSums(kc.crops.df[, colnames(kc.crops.df) 
+                                                    %in% coco.column], na.rm = TRUE) +
+                        0.5*rowSums(kc.crops.df[, !colnames(kc.crops.df) 
+                                                %in% c("date", "doy", coco.column)], na.rm = TRUE)) %>%
+      arrange(date)
+  } else {
+      # print("CASE 2: Annual Crops or Dense coconut")
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-      # CASE 3: Annual Crops ----
+      # CASE 3: Annual Crops or Dense Coconut ----
       #~~~~~~~~~~~~~~~~~~~~~~~~~~~
       all.crops.kcr.sum <- rowSums(kc.crops.df[, !colnames(kc.crops.df) %in% c("date", "doy")], na.rm = TRUE)
       any.zero.day <- any(all.crops.kcr.sum == 0)
@@ -173,27 +169,16 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
           mutate(no_crop = if_else(all.crops.kcr.sum == 0, if_else(doy < 120, 
                                                                   p$kc_no_crop[["summer"]], p$kc_no_crop[["kr"]]), 0))
       }
-    }
-  
-  ## Summing up kc of all crop columns:
-  kcr <- data.frame(date = kc.crops.df$date, doy = kc.crops.df$doy,
-                    kcr = rowSums(kc.crops.df[, !colnames(kc.crops.df) 
-                                              %in% c("date", "doy")], na.rm = TRUE))
-
-  kcr <- kcr[order(kcr$date), ]
-
-  # Does any of the specified crops need irrigation ----
-  irri.needed <- any(tolower(cs$Irrigation) == "irrigated")
-  # If irri.needed, then is a crop present, that is, is kcr positive?
-  if (irri.needed) {
-    kcr$irrigated[kcr$kcr > 0] <- TRUE
-    kcr$irrigated[kcr$kcr == 0] <- FALSE
-  } else {
-    kcr$irrigated <- FALSE
+      ## Summing up kc of all crop columns:
+      kcr <- data.frame(date = kc.crops.df$date, doy = kc.crops.df$doy,
+                        kcr = rowSums(kc.crops.df[, !colnames(kc.crops.df) 
+                                                  %in% c("date", "doy")], na.rm = TRUE)) %>%
+        arrange(date)
   }
- 
+
   # Join kcr with ts----
   ts <- left_join(ts, kcr, by = "date")
+  
   # Potential et crop cycle
   ts$etc <- ts$et0*ts$kcr
   
@@ -219,6 +204,8 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   ts$aet <- NA
   ts$sm <- NA
   ts$irrigation <- NA
+  # Does any of the specified crops need irrigation ----
+  irri.needed <- any(tolower(cs$Irrigation) == "irrigated")
   # Add a progress bar
   # pb = txtProgressBar(min = 0, max = nrow(ts), initial = 0, style = 3)
   # t1 = Sys.time()
@@ -239,29 +226,32 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
       ts$recharge[i] <- 0
       ts$sm.mid[i] <- ts$sm.hold[i]
     }
-    
     if(ts$sm.mid[i] >= whc*raw) { # raw = readily available water
       ts$ks[i] <- 1
     } else {
       ts$ks[i] <- ts$sm.mid[i]/(whc*raw)
     }
-    # Potential et crop cycle given soil moisture
-    ts$etcs[i] <- ts$etc[i]*ts$ks[i]
-    # aet crop cycle can only be the part of etcs that's present in sm.mid
-    ts$aet[i] <- min(ts$sm.mid[i], ts$etcs[i], na.rm = TRUE) 
-    # sm is updated by removing aet, and adding irrigation when irrigated and soil under water-stress
-    # Why isn't irrigation given before/during aet drawn?----
-    irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < whc*raw
-    if (ts$irrigated[i] & 
-        (!is.na(irri.need.test) || !is.null(irri.need.test)) & irri.need.test) {
-        # If irrigated (crop present and crop is under irrigation) 
-        # AND soil is water-stressed, then irrigated to whc
-        ts$sm[i] <- whc         
-        } else {
-        # Else only ET is removed
-          ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
-        }
+    # ET crop cycle given soil moisture
+    ts$aet[i] <- ts$etc[i]*ts$ks[i] # Column ET in Excel
+
+    # sm is updated by removing aet from sm.mid (recharge already removed)
+    # and updated to WHC If irrigation applied and soil under water-stress
+          # Why isn't irrigation given before/during aet drawn?----
+    if(irri.needed) {
+      # Is soil below whc*raw? 
+      irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < whc*raw
+      # then irrigated to whc
+      if((!is.na(irri.need.test) || !is.null(irri.need.test)) & irri.need.test) {
+        ts$sm[i] <- whc
+      } else {
+        # Else only ET is removed (recharge already removed when sm.mid calculated)
+        ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+      }
+    } else {
+      # Else only ET is removed (recharge already removed when sm.mid calculated)
+      ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
     }
+  }
   # t2 = Sys.time()
   # t2-t1
   #~~~~~~~~~~~~~~~  
@@ -283,12 +273,12 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   ts$year <- as.numeric(format(ts$date, format = "%Y"))
   ts$month <- as.numeric(format(ts$date, format = "%m"))
   ts <- ts %>% select(date, year, month, doy, P, Q, Peff,
-                      et0, etc, aet, etcs, etc.crop, aet.crop, 
+                      et0, etc, aet, etc.crop, aet.crop, 
                       recharge, irrigation, balance, runoff.percent, aet.to.Peff, everything())
   # > colnames(ts)
   # [1] "date"            "year"            "month"           "doy"             "P"              
   # [6] "Q"               "Peff"            "et0"             "etc"             "aet"            
-  # [11] "etcs"            "etc.crop"        "aet.crop"        "recharge"        "irrigation"     
+  # [11]           "etc.crop"        "aet.crop"        "recharge"        "irrigation"     
   # [16] "balance"         "runoff.percent"  "aet.to.Peff"      "kcr"             "irrigated"      
   # [21] "sm.hold"         "sm.mid"          "ks"              "sm"              "sm.percent"     
   # [26] "aet.to.etc.crop"
@@ -398,7 +388,7 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
                             aes(x = year, y = value)) +
     facet_grid(var_f ~ ., scales = "fixed") +
     geom_line(aes(col = var_f), show.legend = FALSE) +
-    geom_smooth(span = 0.2) +
+    geom_smooth(span = 0.2, method = 'loess', formula = 'y ~ x') +
     # geom_smooth(se = FALSE, method = lm, formula = y ~ splines::bs(x, 3), span = 0.3) +
     ylab("Value") + xlab("Year") +
     ggtitle(paste0(crop.sys.title, "\n", "Water Budget")) +
@@ -409,5 +399,7 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   # ~~~~~~~~~~~~~~
   # Return ----
   # ~~~~~~~~~~~~~~
-  return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, sum.mo = sum.mo, clim.mo = clim.mo))
+  return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
+              sum.mo = sum.mo, clim.mo = clim.mo,
+              kcr = kcr[1:366,], kc.crops.df = kc.crops.df[1:366,]))
 }
