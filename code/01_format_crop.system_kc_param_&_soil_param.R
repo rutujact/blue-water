@@ -127,21 +127,18 @@ write.csv(soil.param, file = "data/processed/soil.parameters.csv", row.names = F
 # Format & Save Crop Parameters (rooting depth, irrigation, season)----
 crop.system <- readxl::read_xlsx("data/raw/Model Crop Rotations Water budget Billikere_estimated rotations_effective rainfall.xlsx",
                                sheet = "All rotations")
-crop.system <- as.data.frame(t(crop.system[c(2,5), -c(1,2)]))
+# Removing dummy rotation 'Sauvegarde'
+crop.system <- as.data.frame(t(crop.system[c(2,5), -c(1, 2, 3)]))
 names(crop.system) <- c("crop1_crop2_crop3", "Irrigation")
 crop.system <- crop.system %>%
+  mutate(rotation = row.names(crop.system)) %>%
+  separate_wider_delim(rotation, delim = " ", names = c(NA, "rotation"), cols_remove = TRUE) %>%
+  
   separate_wider_delim(crop1_crop2_crop3, "-", names = c("crop_1", "crop_2", "crop_3"), cols_remove = FALSE) %>%
   mutate(crop.system = gsub("-No_crop", "", crop1_crop2_crop3)) %>%
   mutate(crop.system = gsub("-", "+", crop.system),
          Irrigation = str_to_title(Irrigation)) %>%
   select(-crop1_crop2_crop3) %>%
-  # Adding Rotation # to match with crop Kc data given by rotation in "Crop cycles Kc" in "Kc Billikere final_mod.xlsx"
-  mutate(rotation = forcats::fct_recode(factor(crop.system), 
-  '2' = 'Blackeyedbeans+Horsegram', '5' = 'Maize 15', '6' = 'FieldBeans 15', 
-  '4' = 'FingerMillet', '8' = 'Maize+FingerMillet', '3' = 'FieldBeans+Horsegram', 
-  '13' = 'Maize+Cabbage', '7' = 'Ginger', 
-  '10' = 'Cabbage+Tomato', '12' = 'Rice+Cabbage', '11' = 'Tomato_Irri+Cabbage+Cucumber', 
-  '17' = 'Coconut+Cabbage+Beans_Irri', '16' = 'Areca', '9' = 'Coconut', '15' = 'Banana')) %>%
   select(rotation, crop.system, Irrigation, everything()) %>%
   dplyr::distinct(rotation, .keep_all = TRUE)
 write.csv(crop.system, file = "data/processed/crop.system.csv", row.names = FALSE)
