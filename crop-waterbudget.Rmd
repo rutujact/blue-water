@@ -135,6 +135,7 @@ if (!any(is.na(root.crop.matches))) {
 # Add rooting depths for each crop in crop.systems
 crop.system.l$rooting_depth_cm <- crop.param$rooting_depth_cm[
   match(tolower(crop.system.l$crop), tolower(crop.param$crop))]
+
 # Save crop system data list for water budget function
 crop.system.ls <- split(crop.system.l, crop.system.l$crop.system)
 save(crop.system.ls, file = "data/processed/crop.system.ls.Rdata")
@@ -151,10 +152,10 @@ if (!any(is.na(kc.crop.matches))) {
 ```
 
 
-```{r, kc-curves, plot-kc, fig.show="hold", out.width="50%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Kc curves for two sample crops.', include=TRUE}
+```{r, input-kc-curves, fig.show="hold", out.width="50%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Kc curves for two sample crops.', include=TRUE}
 
 kc.doy.ls <- split(kc.doy.crops, kc.doy.crops$crop.rotation)
-kc.crops.ls <- lapply(kc.doy.ls, get_kc, from = as.Date("1922-01-01"), to = as.Date("1922-12-31"))
+kc.crops.ls <- lapply(kc.doy.ls, get_kc, from = as.Date("1970-01-01"), to = as.Date("1970-12-31"))
 
 par(mar = c(4, 4, .1, .1))
 knitr::include_graphics('figures/crop_kc_curves/MILLET_1.jpeg')
@@ -177,7 +178,25 @@ if (!file.exists(all.kc.figure.file)) {
 dev.off()
 }
 ```
+
 Kc Curves for crops in each rotation/crop-system can be found at  figures/crop_kc_curves/Segmented_Crop_Coefficient_Curves.pdf
+
+```{r, output-kc-curves, out.width="70%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Crop Kc curves under all cropping systems.', include=TRUE}
+
+kc.crops.l.ls <- lapply(kc.crops.ls, function(x) {return(x$ts)})
+kc.crops <- dplyr::bind_rows(kc.crops.l.ls, .id = "crop.rotation") %>%
+  mutate(crop.rotation = tolower(crop.rotation)) %>%
+  right_join(crop.system.l %>% select(rotation, crop.system, crop.rotation) %>%
+               subset(crop.rotation != "no_crop") %>% 
+               mutate(crop.rotation = tolower(crop.rotation)), by = "crop.rotation") %>% arrange(crop.system)
+
+p.kc.crops <- ggplot(kc.crops, aes(x = doy, y = kc)) +
+    geom_line(aes(color = crop.rotation, group = crop.rotation), show.legend = FALSE) +
+    facet_wrap(. ~ crop.system) +
+    theme_baseR + ylab("Crop Coefficient (Kc)") + xlab("Day of Year")
+print(p.kc.crops)
+  ggsave(plot = p.kc.crops, file = paste0("figures/crop_kc_curves/get_kc_output_by_crop.system.jpg"), width = 7, height = 5)
+```
 
 
 ## 2. A List of Parameters & Input Data for Water Budget Function
@@ -194,7 +213,7 @@ p.list <- list(rain = rain,
                et0.timestep = "daily", # weekly/daily
                et0.input = et0.daily, # For "daily", choose: et0.daily
                kc.doy.crops = kc.doy.crops,
-               kc_no_crop = list(summer = 0.0, kr = 0.0), #list(summer = 0.005, kr = 0.2),
+               kc_no_crop = list(summer = 0.005, kr = 0.2),
                soil.type = "red",
                CN = 85,
                sm.init = 0.5)
@@ -218,15 +237,15 @@ num_cores <- detectCores() - 1
 # Explicitly use "PSOCK" cluster type, which uses 'spawn' semantics across platforms.
 cl <- makeCluster(num_cores, type = "PSOCK") 
 
-# 3. Explicitly load the correct package on each node of the cluster. 
+# 3. Export necessary variables/packages to the cluster nodes
+# When using 'spawn', child processes start fresh and don't inherit the parent's environment.
+clusterExport(cl, varlist = c("p.list", "met.forcing", "get_budget", "get_kc", "quantile_df"), envir = environment()) 
+
+# 4. Explicitly load the correct package on each node of the cluster. 
 clusterEvalQ(cl, {library(tidyverse); library(ggpubr)})
 
-# 4. Export necessary variables/packages to the cluster nodes
-# When using 'spawn', child processes start fresh and don't inherit the parent's environment.
-clusterExport(cl, varlist = c("p.list", "met.forcing", "get_budget", "get_kc", "quantile_df")) 
-
 # 5. Use pblapply with the cluster object 'cl'
-budget <- pblapply(crop.system.ls, get_budget, cl = cl, p = p.list, ts = met.forcing)
+budget <- pblapply(crop.system.ls, get_budget, cl = cl, p = p.list, ts = met.forcing, get_kc = get_kc)
 
 # 6. Stop the cluster when done
 stopCluster(cl)
@@ -234,10 +253,10 @@ names(budget) <- names(crop.system.ls)
 save(budget, file = "output/water_budgets/Budget.Rdata")
 
 # For debugging:
-# cs <- crop.system.ls[[9]]
+# cs <- crop.system.ls[[15]]; p = p.list; ts = met.forcing; get_kc = get_kc
 # for (i in 1:length(crop.system.ls)) {
 #   print(i)
-#   budget <- lapply(crop.system.ls[i], get_budget, p = p.list, ts = met.forcing)
+#   budget <- lapply(crop.system.ls[i], get_budget, p = p.list, ts = met.forcing, get_kc = get_kc)
 # }
 ```
 
@@ -249,6 +268,21 @@ save(budget, file = "output/water_budgets/Budget.Rdata")
 
 load(file = "output/water_budgets/Budget.Rdata")
 crop.system <- read.csv(file = "data/processed/crop.system.csv", header = TRUE)
+# Debugging for crop kc
+
+# Save daily outputs ----
+kcr.all.ls <- lapply(budget, function(x) {return(x$kcr)})
+kcr.all <- dplyr::bind_rows(kcr.all.ls, .id = "crop.system") %>% 
+  left_join(crop.system, by = "crop.system") %>%
+  relocate(names(crop.system), .after = crop.system)
+kcr.yr.sum <- kcr.all %>% group_by(crop.system, rotation) %>% 
+  dplyr::summarise(kcr = sum(kcr, na.rm = TRUE), .groups = "drop") %>% arrange(rotation)
+# Kcr by rotation matches well with Excel
+kc.crops.l.ls.budget <- lapply(budget, function(x) {
+  x.l <- x$kc.crops.df %>% pivot_longer(cols = c(-date, -doy), names_to = "crop.rotation", values_to = "kc") %>% subset(!crop.rotation %in% "no_crop")
+  return(x.l)})
+kc.crops.budget <- dplyr::bind_rows(kc.crops.l.ls.budget, .id = "crop.system") %>% 
+  arrange()
 
 # Save daily outputs ----
 ts.all.ls <- lapply(budget, function(x) {return(x$ts)})
@@ -259,6 +293,8 @@ write.csv(ts.all, file = "output/water_budgets/water.budget.daily.csv", row.name
 # Save only one year (the first) to share a lighter file
 ts.all.first.yr <- subset(ts.all, year == min(unique(ts.all$year)))
 write.csv(ts.all.first.yr, file = paste0("output/water_budgets/water.budget.daily.", min(unique(ts.all$year)),".csv"), row.names = FALSE)
+
+# ts.all.first.yr %>% group_by(crop.system) %>% dplyr::summarise(irri = sum(irri.needed, na.rm = TRUE))
 
 # Save annual outputs ----
 sum.yr.all.ls <- lapply(budget, function(x) {return(x$sum.yr)})
@@ -278,7 +314,7 @@ summary.crop <- summary.crop %>%
 summ.qs <- summary.crop %>%
   pivot_wider(names_from = quantile, values_from = value) %>%
   arrange(var, mean) %>%
-  mutate(var.plot = forcats::fct_recode(factor(var), "Precipitation (mm)" = "P", "Precipitation - Recharge (mm)" = "Peff", "-Recharge (mm)" = "Q", "ET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "Crop ET Supply:Demand" = "aet.to.etc.crop", "NPWR (mm)" = "balance", "Potential ET (mm)" = "et0", "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", "Potential Crop ET given Soil Moisture" = "etcs", "Pumping (mm)" = "irrigation", "Recharge (mm)" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
+  mutate(var.plot = forcats::fct_recode(factor(var), "Precipitation (mm)" = "P", "Precipitation - Recharge (mm)" = "Peff", "-Recharge (mm)" = "Q", "AET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "Crop ET Supply:Demand" = "aet.to.etc.crop", "NPWR (mm)" = "balance", "Potential ET (mm)" = "et0", "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", "Pumping (mm)" = "irrigation", "Recharge (mm)" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
 
 # arrange factor levels in the order of 'Balance' 
 summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
@@ -289,12 +325,15 @@ summ.qs$crop.system <- factor(summ.qs$crop.system,           levels=levels(summ.
 save(summ.qs, file = "output/water_budgets/summ.qs.Rdata")
 write.csv(summ.qs, file = "output/water_budgets/water.budget.annual.climatology.csv", row.names = FALSE)
 
+summ.qs_order <- subset(summ.qs, var == "balance") %>% arrange(desc(mean))
 summ.qs.wide <- summ.qs %>% 
-  arrange(rotation) %>% 
   select(-c(1, 3:6, var.plot, `0.025`, `0.5`, `0.975`)) %>%
-  mutate(mean = round(mean)) %>%
+  mutate(mean = round(mean)) %>% 
+  # Ordering by decreasing order of Net Recharge/Balance
+  arrange(match(crop.system, summ.qs_order$crop.system)) %>%
+  # subset(var == "aet") %>% 
   pivot_wider(names_from = "crop.system", values_from = c("mean")) %>%
-  subset(var == "etc")
+  arrange(match(var, c("P", "Peff", "Q", "et0", "etc", "etc.crop", "aet", "aet.crop", "recharge", "irrigation", "balance", "aet.to.Peff", "aet.to.etc.crop", "runoff.percent", "sm.percent")))
 write.csv(summ.qs.wide, file = "output/water_budgets/water.budget.annual.climatology_mean_wide.csv", row.names = FALSE)
 
 # Plot Annual Climatology of Water Supply Demand & NPWR 
@@ -380,8 +419,8 @@ clim.crop.select.1 <- clim.crop %>%
          var_f = factor(var_f, levels = c("Potential Crop ET",
                             "Actual ET", "-Recharge", "Pumping"))) %>%
   # To order cropping systems by least irrigation, joining total annual irrigation
-  left_join(subset(clim.crop, var %in% "irrigation") %>% group_by(crop.system) %>% summarise(irri.median.sum = sum(median, na.rm = TRUE)), by = join_by(crop.system)) %>%
-  left_join(subset(clim.crop, var %in% "recharge") %>% group_by(crop.system) %>% summarise(recharge.median.sum = sum(median, na.rm = TRUE)), by = join_by(crop.system)) %>%
+  left_join(subset(clim.crop, var %in% "irrigation") %>% group_by(crop.system) %>% dplyr::summarise(irri.median.sum = sum(median, na.rm = TRUE), .groups = "drop"), by = join_by(crop.system)) %>%
+  left_join(subset(clim.crop, var %in% "recharge") %>% group_by(crop.system) %>% dplyr::summarise(recharge.median.sum = sum(median, na.rm = TRUE), .groups = "drop"), by = join_by(crop.system)) %>%
   arrange(irri.median.sum, desc(recharge.median.sum)) %>%
   mutate(crop.system = fct_reorder(crop.system, 1:n()))
 
@@ -412,7 +451,7 @@ clim.crop.select.2 <- clim.crop %>%
 
 clim.crop.select.2 <- clim.crop.select.2 %>%
   left_join(clim.crop.select.2 %>% group_by(crop.system) %>% 
-  summarise(balance.median.sum = sum(median, na.rm = TRUE)),  by = join_by(crop.system)) %>%
+  dplyr::summarise(balance.median.sum = sum(median, na.rm = TRUE), .groups = "drop"),  by = join_by(crop.system)) %>%
   arrange(desc(balance.median.sum))
 
 # p.monthly.npwr <- p.monthly.budget.base %+% clim.crop.select.2 +
