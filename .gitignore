@@ -25,6 +25,7 @@
 !figures/water_budgets/annual_climatology_npwr_mean.jpg
 !figures/water_budgets/monthly_climatology_water_budget_median.jpg
 !figures/water_budgets/monthly_climatology_npwr_median.jpg
+!figures/crop_kc_curves/Segmented_Crop_Coefficient_Curves.pdf
 # Recursively allow files under subtree
 !.gitignore
 DESCRIPTION
