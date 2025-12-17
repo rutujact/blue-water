@@ -116,6 +116,29 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
   kc.doy.ls.select <- kc.doy.ls[crop.rotation.vec]
   kc.crops.ls <- lapply(kc.doy.ls.select, get_kc, 
                      from = ts$date[1], to = ts$date[nrow(ts)])
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Adding irrigation need by crop ----
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  kc.crops.irri.ls <- lapply(names(kc.crops.ls), function(crop.rotation) {
+    element <- kc.crops.ls[[crop.rotation]]
+    # Does the crop need irrigation ----
+    irri <- cs$Irrigation[tolower(cs$crop.rotation) == crop.rotation]
+    crop.irri <- paste(crop.rotation, "irri", sep = "_")
+    element$ts[, crop.irri] <- FALSE
+    # If irri.needed, then is a crop present, that is, is kcr positive?
+    if (irri == "irrigated") {
+      kc_positive <- element$ts$kc > 0
+      element$ts[, crop.irri][kc_positive] <- TRUE
+    }
+    return(element$ts[, crop.irri])
+    }) |> setNames(names(kc.crops.ls))
+  kc.crops.irri <- bind_rows(lapply(kc.crops.irri.ls, function(x) {x}))
+  # Irrigation status TRUE across any crops? ----
+  ts$irri.needed <- apply(kc.crops.irri, 1, any)
+  
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Calculating total Rotation kcr ----
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
   # Has a list for each crop. Converting to a joint data-frame
   kc.crops.df <- bind_rows(lapply(kc.crops.ls, function(x) x[["ts"]]), 
                            .id = "crop") %>%
@@ -175,15 +198,17 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
                                                   %in% c("date", "doy")], na.rm = TRUE)) %>%
         arrange(date)
   }
-
+  
   # Join kcr with ts----
   ts <- left_join(ts, kcr, by = "date")
   
-  # Potential et crop cycle
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Potential et crop cycle ----
+  #~~~~~~~~~~~~~~~~~~~~~~~~~~~
   ts$etc <- ts$et0*ts$kcr
   
   #~~~~~~~~~~~~~~~
-  ## Get ks and aet ----
+  ## Get ks and aet depending on soil moisture ----
   #~~~~~~~~~~~~~~~  
   soil.param <- p$soil.param
   soil.param$soil.type <- tolower(soil.param$soil.type)
@@ -237,7 +262,7 @@ get_budget <- function(cs, #= crop.system.ls[[1]],
     # sm is updated by removing aet from sm.mid (recharge already removed)
     # and updated to WHC If irrigation applied and soil under water-stress
           # Why isn't irrigation given before/during aet drawn?----
-    if(irri.needed) {
+    if(ts$irri.needed[i]) {
       # Is soil below whc*raw? 
       irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < whc*raw
       # then irrigated to whc
