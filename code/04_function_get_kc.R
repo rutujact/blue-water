@@ -121,7 +121,7 @@ get_kc <- function(kc.key,
   ts <- data.frame(date = as.Date(seq(from, to, by = '1 day')))
   ts$doy <-
     as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), format = "%j"))
-  ts <- merge(ts, clim, by = "doy")
+  ts <- left_join(ts, clim, by = "doy")
   ts<-ts[,c("date","doy","kc")]
 
   return(list(ts = ts, kc.key = kc.key, clim = clim, phase = phase, actions = actions))
