@@ -1,8 +1,7 @@
 ---
 title: "Blue Water Potential of Various Cropping Systems^[This code should be cited as: DOI: ]"
 subtitle: An R workflow to derive Net Potential Water Recharge for given Cropping Systems and Met Forcing of a site
-# author: Rutuja Chitra-Tarak, Jess Shue, Patricia Mezza, Kay Garlick-Ott, Roy Rich,
-#   Sean M. McMahon
+# author: Rutuja Chitra-Tarak
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = paste0(substr(inputFile,1,nchar(inputFile)-4), '_Workflow.html'))})
 output:
