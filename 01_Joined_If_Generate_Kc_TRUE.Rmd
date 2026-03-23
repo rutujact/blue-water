@@ -1,0 +1,187 @@
+<!-- Called by 01_Format_Input_Data.Rmd if generate_kc = TRUE-->
+
+### 3.2.1 Kc Curve Parameters
+
+#### 3.2.1.1 Crops with Kc by Growth Phases
+
+Chapter 6 - ETc - Single crop coefficient (Kc)
+https://www.fao.org/4/X0490E/x0490e0b.htm
+https://www.researchgate.net/figure/FAO-segmented-crop-coefficient-curve-and-four-growing-stages-after-Allen-et-al-1998_fig5_225419080
+literature/FAO-segmented-crop-coefficient-curve-and-four-growing-stages-after-Allen-et-al-1998.pdf
+"Kc_ini" value continues from "Sowing day" to "End of ini"
+"Kc_mid" value continues from "End of Dev" to "End of Mid"
+"Kc_end" is the value at "Harvest day"
+
+##### 3.2.1.1 (a) Get Raw Kc Curve Parameter Table
+
+```{r, kc-raw, eval=generate_kc, include=generate_kc}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Get parameters for FAO Segmented Crop Coefficient (Kc) curve by crop of each rotation ----
+# From Laurent-Charlotte's Excel sheet
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kc.raw <- readxl::read_xlsx("data/raw/Model in Excel/1 Kc Anantapur.xlsx",
+                                   sheet = "Crop cycles Kc",
+                                   range = "A2:AK16")
+
+# Wrangle raw data to prepare Kc parameter table by DOY
+# Remove columns with all NAs
+Kc.raw <- Kc.raw[, !as.logical(sapply(Kc.raw, function(x)all(is.na(x))))]
+
+# Remove unused row
+Kc.raw <- Kc.raw[!Kc.raw$Date %in% c(NA, "Sowing_date"),]
+
+Kc.raw$Date[1] <- "Sowing day"
+Kc.raw$Date[nrow(Kc.raw)] <- "Harvest day"
+
+# Header edits
+colnames(Kc.raw)[1] <- "var"
+colnames(Kc.raw)[2] <- "FORMULE"
+Kc.raw$FORMULE <- as.numeric(as.character(Kc.raw$FORMULE))
+
+# Remove header extras
+cols.to.change <- colnames(Kc.raw)[stringr::str_detect(colnames(Kc.raw), "[...]")]
+
+colnames(Kc.raw)[stringr::str_detect(colnames(Kc.raw), "[...]")] <- 
+  gsub("...[0-9]*$", "", cols.to.change, perl = TRUE)
+
+# Remove columns with no header and unused columns. Groundnut Kc Curves are coded later
+Kc.raw <- Kc.raw[, -which(colnames(Kc.raw) %in% c("", "Groundnut_monsoon", "Groundnut_summer"))]
+
+# Convert to numeric
+# sapply(Kc.raw, class)
+Kc.raw[-1] <- lapply(Kc.raw[-1], function(x) as.numeric(as.character(x)))
+# Verify the column classes
+# sapply(Kc.raw, class)
+
+# Save this data as raw input data
+write.csv(Kc.raw, file = "data/raw/01_Crop_Kc_curve_parameters_Table.csv", row.names = FALSE)
+```
+
+##### 3.2.1.1 (b) Table of Crops Kc by Growth Phase DOY
+
+```{r, kc-crops, eval=generate_kc, include=generate_kc}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# READ data/raw/01_Crop_Kc_curve_parameters_Table.csv ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Kc.raw <- read.csv(file = "data/raw/01_Crop_Kc_curve_parameters_Table.csv", header = TRUE)
+
+# Separate crops by Rotation
+Kc.raw.long <- Kc.raw %>% 
+  pivot_longer(cols = -1, names_to = "crop") %>%
+  mutate(crop = str_to_title(gsub("_|\\.", " ", crop, perl = TRUE)))
+# unique(Kc.raw$var)
+# [1] "Sowing day"   "Kc_ini"       "Ini_duration" "End of ini"   "Dev_duration" "End of Dev"  
+# [7] "Kc_mid"       "Mid_duration" "End of Mid"   "Kc_end"       "End_duration" "Harvest day" 
+
+# Only select rows with Kc values
+Kc <- Kc.raw.long %>% 
+  subset(var %in% Kc.raw$var[stringr::str_detect(Kc.raw$var, "Kc")]) %>%
+  rename(Kc = value, Kc_var = var)
+
+# Only select rows with DOY values
+doy <- Kc.raw.long %>% 
+  subset(var %in% c("Sowing day", "End of ini", "End of Dev", 
+                    "End of Mid", "Harvest day")) %>%
+  rename(doy = value, doy_var = var) %>%
+# IF a doy is 365, it should be 366 to include leap years:
+  mutate(doy = if_else(doy == 365.00, 366.00, doy))
+
+Kc.doy.key <- data.frame(doy_var = c("Sowing day", "End of ini", "End of Dev", "End of Mid", "Harvest day"),
+                           Kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end"))
+
+doy <- left_join(doy, Kc.doy.key, by = c("doy_var"))
+Kc.doy <- left_join(doy, Kc, by = c("Kc_var", "crop")) %>%
+  arrange(crop, doy, Kc) %>%
+  mutate(doy = as.numeric(doy), Kc = as.numeric(Kc))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# This is FAO Kc Parameter Table by DOY by Crop 
+# SAVE data/processed/01_Crop_Kc_curve_parameters.csv ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Kc.doy.df <- Kc.doy %>% select(crop, doy_var, doy, Kc) %>%
+  arrange(crop, doy, Kc) %>%
+  rename(kc = Kc) 
+
+write.csv(Kc.doy.df, file = "data/processed/05.1_Crops_Kc_by_Growth_Phase_DOY.csv", row.names = FALSE)
+```
+
+##### 3.2.1.1 (c) Plot Segmented Crop Coefficient Curve
+
+```{r, input-kc-curves, fig.show="hold", out.width="50%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Segmented Crop Coefficient Curve', include=TRUE}
+
+kc.doy.ls <- split(kc.doy.crops, kc.doy.crops$crop.rotation)
+kc.crops.ls <- lapply(kc.doy.ls, get_kc, from = as.Date("1970-01-01"), to = as.Date("1970-12-31"))
+
+# par(mar = c(4, 4, .1, .1))
+# knitr::include_graphics('figures/crop_kc_curves/MILLET_1.jpeg')
+# knitr::include_graphics('figures/crop_kc_curves/GINGER_7.jpeg')
+
+all.kc.figure.file <- "figures/crop_kc_curves/Segmented_Crop_Coefficient_Curves.pdf"
+if (!file.exists(all.kc.figure.file)) {
+  pdf(all.kc.figure.file, width = 7, height = 5)
+    invisible(lapply(names(kc.crops.ls), function(crop.rotation) {
+  ls <- kc.crops.ls[[crop.rotation]]
+    plot(1, type="n", xlab="DOY", ylab="kc", xlim=c(0, 366), ylim=c(0, (max(ls$clim$kc)*1.1)),
+         main=paste0(toupper(crop.rotation), "\nSegmented Crop Coefficient Curve"))
+    lines(x=ls$clim$doy, y=ls$clim$kc, type="l")
+    segments(x0=ls$kc.key$doy, y0=0, x1=ls$kc.key$doy, y1=ls$kc.key$kc, cex=.5, col="blue", lty="dotted")
+    points(x=ls$kc.key$doy, y=ls$kc.key$kc, cex=.5, col="blue")
+    text(x=ls$kc.key$doy, y=(ls$kc.key$kc)*1.05, labels=ls$kc.key$doy, cex=0.8, col="blue")
+    text(x=ls$phase$phase.mid.doy, y=0.02, labels=ls$phase$phase, cex=0.8, col="dark red", srt=90, adj=0)
+    text(x=ls$actions$doy + c(-7, 7), y= 0.02, labels=ls$actions$actions, cex=0.8, col="magenta", srt=90, adj=0)
+  }))
+dev.off()
+}
+```
+
+#### 3.2.1.2 Crop with Kc by DOY Equation: Groundnut
+
+##### 3.2.1.2 (a) Table of Crop Kc by DOY 1:366
+
+```{r, kc-groundnut, eval=generate_kc, include=generate_kc}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Kc Equations for Groundnut ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Crop coefficient equation for groundnut (summer season)  (with R² = 0.9805)
+# which we begin on the 10th of January
+# Kc (d)=1.25*10^(-7)*d^4 - 2.82*10^(-5)*d^3 + 1.8*10^(-3)*d^2 - 2.49*10^(-2)*d + 0.3792
+# Crop coefficient equation for groundnut (Rabi/monsoon season)  (with R² = 0.9734), 
+# which we begin on the 1st of July 
+# Kc (d)=1.32*10^(-7)*d^4 - 2.99*10^(-5)*d^3 + 1.96*10^(-3)*d^2 - 3.02*10^(-2)*d + 0.4
+
+gm <- data.frame(d = 1:366) %>%
+           mutate(crop = "Groundnut Monsoon",
+                  Kc = 1.25*10^(-7)*d^4 - 2.82*10^(-5)*d^3 + 1.8*10^(-3)*d^2 - 2.49*10^(-2)*d + 0.3792)
+
+gs <- data.frame(d = 1:366) %>%
+  mutate(crop = "Groundnut Summer", 
+         Kc = 1.32*10^(-7)*d^4 - 2.99*10^(-5)*d^3 + 1.96*10^(-3)*d^2 - 3.02*10^(-2)*d + 0.4)
+kc_groundnut <- rbind(gm, gs)
+
+write.csv(kc_groundnut, file = "data/processed/05.1_Crop_Kc_by_DOY_groundnut.csv", row.names = FALSE)
+```
+
+### 3.2.2 Generate Kc Curves 
+
+```{r, generate-kc-curves, eval=generate_kc, include=generate_kc}
+# This has data to produce Kc curves:
+kc.doy.crops <- read.csv(file = "data/processed/05.1_Crops_Kc_by_Growth_Phase_DOY.csv", header = TRUE)
+knitr::kable(head(kc.doy.crops[1:3,]))
+# Are there parameteres present for all crop.rotations?
+crop.all <- unique(crop.systems.l$crop[crop.systems.l$crop != "No_crop"])
+kc.crop.matches <- match(crop.all, unique(kc.doy.crops$crop))
+if (!any(is.na(kc.crop.matches))) {
+  print("Kc curve parameters present for crops in all rotations.")
+} else {
+  print("Kc curve parameters not present for these crops:")
+  print(crop.all[is.na(kc.crop.matches)])
+}
+# [1] "Kc curve parameters not present for these crops:"
+#  [1] "No Crop"           "Grazed 1 Aug"      "Grazed 1 Sept"     "Grazed 1 Oct" 
+#  [5] "Grazed 1 Nov"      "Groundnut Monsoon" "Napier Short"      "Napier"       
+#  [9] "Groundnut Summer"  "Grazed Thrice" 
+
+source("code/03_function_get_kc.R")
+```

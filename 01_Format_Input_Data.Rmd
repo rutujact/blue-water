@@ -1,0 +1,307 @@
+---
+title: "Format Input Data for Blue Water Potential" 
+subtitle: "Climatic Data, Crop and Soil Parameters, Cropping Systems"
+author: Rutuja Chitra-Tarak
+date: "2024-07-18"
+modified: "2026-03-19"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_depth: 3
+---
+
+```{r, setup-file, include=FALSE}
+rm(list = ls())
+# Set global chunk options
+knitr::opts_chunk$set(
+  echo = TRUE,      # Show code chunks by default
+  message = FALSE,  # Hide messages globally
+  warning = FALSE,  # Hide warnings globally
+  results = 'asis'
+  # fig.width = 8,    # Set default figure width
+  # fig.height = 5    # Set default figure height
+)
+
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse)
+if (!dir.exists("data/processed")) {dir.create("data/processed", showWarnings = FALSE)}
+
+# Add ggplot theme to use ----
+theme_baseR <- theme_bw() +
+  theme(
+    panel.grid.major = element_blank(), # Remove major grid lines
+    panel.grid.minor = element_blank(), # Remove minor grid lines
+    panel.background = element_rect(fill = "white", colour = "black"), # Ensure white background and add a border
+    strip.background = element_blank() # Remove background from facet labels if applicable
+  )
+```
+
+# 1. Climatic Data
+
+```{r, clim}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Format Forcing Variables -- Precipitation and Et0 ---
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+clim <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx",
+                               sheet = "Climate")
+
+precip <- clim %>% 
+  select(date = Date, p = `Rainfall (mm)`) %>%
+  mutate(date = as.Date(date), p = as.numeric(p))
+
+knitr::kable(head(precip[1:3,]))
+
+write.csv(precip, file = "data/processed/01_precipitation.csv", row.names = FALSE)
+
+et0.daily <- clim %>% 
+  select(date = Date, et0 = ET0) %>%
+  mutate(date = as.Date(date), et0 = as.numeric(et0))
+
+knitr::kable(head(et0.daily[1:3,]))
+
+write.csv(et0.daily, file = "data/processed/02_et0.csv", row.names = FALSE)
+```
+
+# 2. Soil Parameters 
+
+```{r, soil-param}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE Soil Parameters (Soil Type, WHC, RAW) ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+soil.param <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx",
+                               sheet = "crop Kc _ param SOILS",
+                               range = "A2:D4")
+soil.param <- soil.param[, -1]
+colnames(soil.param) <- c("soil.type", "whc.mmpercm", "raw")
+knitr::kable(head(soil.param))
+
+write.csv(soil.param, file = "data/processed/03_soil.parameters.csv", row.names = FALSE)
+```
+
+# 3. Crop Parameters 
+
+## 3.1 Rooting Depth, Irrigation
+
+```{r, crop-param}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE Crop Parameters (rooting depth, irrigation)----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+crop.param <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx",
+                            sheet = "CROP parameters")
+
+crop.param <- crop.param[, !as.logical(sapply(crop.param, function(x)all(is.na(x))))]
+crop.param <- crop.param %>% 
+  filter(!if_all(everything(), is.na)) %>% 
+  filter(!if_all(2:4, is.na)) %>%
+  select(-Ref)
+# > colnames(crop.param)
+# [1] "CROP"               "irrig =1 rainfed=2" "rooting depth (cm)"
+colnames(crop.param) <- c("crop", "irrigation", "rooting_depth_cm")
+crop.param <- crop.param %>%
+  mutate(crop = str_to_title(gsub("_", " ", crop, perl = TRUE))) %>%
+  mutate(irrigation = case_match(as.character(irrigation), "1" ~ "irrigated", "2" ~ "rainfed", .default = NA)) %>%
+  mutate(crop.ID = match(crop, unique(crop))) %>%
+  select(crop.ID, everything())
+write.csv(crop.param, file = "data/processed/04_crop.parameters.csv", row.names = FALSE)
+```
+
+## 3.2 Crop Coefficient Kc
+
+```{r, decision}
+### 3.2.1 Using prepared Kc Curves or generating curves?
+generate_kc <- FALSE
+```
+
+### 3.2.1 Existing Kc Curves
+
+```{r, format-kc-curves, eval=!generate_kc, include=!generate_kc }
+kc.wide <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx", 
+                             sheet = "crop Kc _ param SOILS", 
+                             range = "B19:AL387")
+kc.wide <- as.data.frame(kc.wide[-c(1:2), ]) %>%
+  select(where(~ !all(is.na(.)))) %>%
+  select(-starts_with("0.."))
+  
+names(kc.wide)[1] <- "doy"
+
+kc.doy <- kc.wide %>%
+  pivot_longer(cols = -doy, names_to = "crop", values_to = "kc") %>%
+  mutate(crop = str_to_title(gsub("_", " ", crop, perl = TRUE)))
+
+write.csv(kc.doy, file = "data/processed/05_Crop_Kc_by_DOY_all_crops.csv", row.names = FALSE)
+```
+
+```{r, child = if (generate_kc) '01_Joined_If_Generate_Kc_TRUE.Rmd'}
+```
+
+# 4. Crop Systems by Rotations
+
+```{r, crop-systems}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE Crop Systems by Rotations ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## For More info, see "communications/Understanding Data in Excel Sheet_Crop.Systems.pdf"
+
+# 1. “Groundnut/Tomato/Tomato/Fallow”: avg of “Groundnut/Tomato” and “Tomato/Fallow”; 
+# 2. "Groundnut/Okra/Okra/Fallow": avg of “Okra/Tomato” and “Okra/Fallow”; 
+# 3. BWP of Grassland grazed once is the average BWP of “WB grazed_1 Aug, 1 Sept, 1
+#      Oct, and 1 Nov”, as we considered different rotations where grazing occurs once
+#      during the rainy season 
+# 4. Rice/Banana is the average of WB Rice_Banana 1, WB Banana 1, and WB Banana 2 (3-
+#      year crop cycle)
+# 5. The same applies to Napier: rice/Napier in the first year, followed by Napier
+#      continuing to grow in the second year (2-year crop cycle)
+
+crop.systems <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx", sheet = "All rotations")
+# Removing dummy rotation 'Sauvegarde'
+crop.systems <- as.data.frame(t(crop.systems[c(1:3), -c(1, 2)]))
+names(crop.systems) <- c("crop1_crop2_crop3", "crop.system", "n.rotation")
+crop.systems <- crop.systems %>%
+  mutate(WB = row.names(crop.systems)) %>%
+  subset(!is.na(n.rotation)) %>%
+  separate_wider_delim(WB, delim = " ", names = c(NA, "rotation"), 
+                       too_many = "merge", cols_remove = FALSE) %>%
+  mutate(crop.system = str_to_title(crop.system),
+           rotation = str_to_title(gsub("_", " ", rotation, perl = TRUE))) %>%
+  mutate(crop.system.ID = match(crop.system, unique(crop.system)),
+         rotation.ID = match(rotation, unique(rotation))) %>%
+  mutate(crop1_crop2_crop3 = str_to_title(gsub("_", " ", crop1_crop2_crop3, perl = TRUE))) %>%
+  separate_wider_delim(crop1_crop2_crop3, "-", 
+                       names = c("crop_1", "crop_2", "crop_3"),
+                       cols_remove = FALSE, too_few = "align_start") %>%
+  select(crop.system.ID, crop.system, n.rotation, rotation, rotation.ID, WB, crop1_crop2_crop3, everything()) %>%
+  relocate(crop1_crop2_crop3, .after = crop_3) %>%
+  relocate(WB, .after = last_col())
+
+knitr::kable(head(select(crop.systems, -crop1_crop2_crop3, -WB)))
+
+write.csv(crop.systems, file = "data/processed/06_crop.systems.csv", row.names = FALSE)
+```
+
+## 4.1 Join Crop Rooting Depth & Irrigation Requirement
+
+```{r, join-crop-root-depth}
+crop.systems.l <- crop.systems %>%
+  select(-WB) %>%
+  pivot_longer(cols = starts_with("crop_"),
+               names_prefix = "crop_",
+               names_to = "ncrop", values_to = "crop")
+
+#_________________
+# Join Crop Parameters (rooting depth, Irrigation, Crop.ID) ----
+#_________________
+
+crop.param <- read.csv(file = "data/processed/04_crop.parameters.csv", header = TRUE)
+knitr::kable(head(crop.param))
+
+crop.systems.l <- crop.systems.l %>%
+  left_join(crop.param, by = "crop") %>%
+  relocate(crop.ID, .after = crop)
+
+root.crop.matches <- match(crop.systems.l$crop, crop.param$crop)
+if (!any(is.na(root.crop.matches))) {
+  print("Crop root parameters present for crops in all rotations.")
+} else {
+  print("Crop root parameters not present for crops:");
+  print(crop.systems.l$crop[is.na(root.crop.matches)])
+}
+# Adding crop by rotation ID
+crop.systems.l <- crop.systems.l %>%
+  mutate(crop.rotation.ID = paste0(crop, ".", rotation.ID))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE Individual Crop (and Parameters) in a given Crop System by Row ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+knitr::kable(head(crop.systems.l))
+
+write.csv(crop.systems.l, file = "data/processed/07_crop.system.l.csv", row.names = FALSE)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE list: crop system data with root & irri params for water budget function----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+crop.systems.ls <- split(crop.systems.l, crop.systems.l$rotation)
+save(crop.systems.ls, file = "data/processed/08_crop.systems.ls.Rdata")
+```
+
+
+## 4.2 Join Crop Kc Curves for each Crop System Rotation
+
+```{r, read-kc-curves}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# READ Crop Kc Curves ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+kc.doy <- read.csv(file = "data/processed/05_Crop_Kc_by_DOY_all_crops.csv", header = TRUE)
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Verify if Kc curves present for all crops----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+crop.all <- unique(crop.systems.l$crop[crop.systems.l$crop != "No_crop"])
+kc.crop.matches <- match(crop.all, unique(kc.doy$crop))
+if (!any(is.na(kc.crop.matches))) {
+  print("Kc curve present for crops in all rotations.")
+} else {
+  print("Kc curve not present for these crops:")
+  print(crop.all[is.na(kc.crop.matches)])
+}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# JOIN Crop Kc Curves by Crop Rotation ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+kc.doy.crop.rotation <- crop.systems.l %>% select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, ncrop, crop, crop.ID) %>%
+  left_join(kc.doy %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
+
+knitr::kable(head(kc.doy.crop.rotation))
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE list: Crop Kc curves for each Crop System Rotation for the water budget function ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+kc.doy.crop.rotation.ls <- split(kc.doy.crop.rotation, kc.doy.crop.rotation$rotation)
+
+save(kc.doy.crop.rotation.ls, file = "data/processed/09_kc.doy.crop.rotation.ls.Rdata")
+```
+
+
+```{r, kc-curves-by_rotation, fig.show="hold", out.width="100%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Kc curves by Crop System Rotations', include=TRUE}
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PLOT Crop Kc Curves by Rotation - one pager ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+p.kc.crops.rotation <- ggplot(subset(kc.doy.crop.rotation, crop != "No Crop"), 
+                           aes(x = doy, y = kc)) +
+    geom_line(aes(color = crop, group = ncrop), show.legend = FALSE) +
+    facet_wrap(. ~ rotation) +
+    theme_baseR +
+  ylab("Crop Coefficient (Kc)") + xlab("Day of Year")
+print(p.kc.crops.rotation)
+ggsave(plot = p.kc.crops.rotation, file = paste0("figures/crop_kc_curves/Crop_Coefficient_Curves_by_rotation.jpg"), width = 7, height = 5)
+```
+
+
+```{r, kc-curves-by-system-per-page, fig.show=FALSE, eval=TRUE, echo=FALSE, include=TRUE}
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# PLOT Kc Curves by Crop System per page by Rotation ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+kc.doy.crop.system.ls <- split(kc.doy.crop.rotation, kc.doy.crop.rotation$crop.system)
+
+all.kc.figure.file <- "figures/crop_kc_curves/Crop_System_Kc_Curves_by_Rotation.pdf"
+plot.pdf <- function (x) {
+  pdf(all.kc.figure.file, width = 6, height = 4)
+    invisible(lapply(names(kc.doy.crop.system.ls), function(crop.system) {
+  df <- kc.doy.crop.system.ls[[crop.system]]
+  p <- ggplot(subset(df, crop != "No Crop"),
+         aes(x = doy, y = kc)) +
+    geom_line(aes(color = crop, group = ncrop)) +
+    facet_grid(rotation ~ .) +
+    theme_baseR + ylab("Crop Coefficient (Kc)") + xlab("Day of Year") +
+    ggtitle(crop.system) + theme(legend.position = "top")
+  print(p)
+  }))
+invisible(dev.off())
+}
+plot.pdf()
+```
+

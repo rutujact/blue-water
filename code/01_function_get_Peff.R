@@ -25,38 +25,34 @@ get_Peff <- function(rain, CN = 85, soil.type = "red") {
   # Central Research Institute for Dryland Agriculture, Santoshnagar, Saidabad, Hyderabad-
   # 500059, Andhra Pradesh, India. 60p
   
-  # cn = 25400 / c( 254 + s) 
+  # cn = 25400 / c(254 + s) 
+  
   S <- c( 25400 / CN) - 254
   
   ts$Q <- NA
   
   if (tolower(soil.type) == "black") {
-    
-    # Below a threshold P, Q is zero
+
     thresh <- 0.2*S
-    P.below.thresh <- c(ts$P < thresh)
-    ts$Q[P.below.thresh] <- 0
-    
-    # Above the threshold P, Q is based on a formula
-    # 𝑄= (𝑃− 0.2*𝑆)^2/(𝑃+ 0.8𝑆)
-    
-    ts$Q[!P.below.thresh] <- 
-      c(ts$P[!P.below.thresh] - thresh)^2/ c(ts$P[!P.below.thresh] + 0.8*S)
     
   } else if (tolower(soil.type) == "red") {
-    # Below a threshold P, Q is zero
+
     thresh <- 0.3*S
-    P.below.thresh <- c(ts$P < thresh)
-    ts$Q[P.below.thresh] <- 0
-      
-    # Above the threshold P, Q is based on a formula
-    # 𝑄= (𝑃− 0.3*𝑆)^2/(𝑃+ 0.7𝑆)
-      
-    ts$Q[!P.below.thresh] <- 
-      c(ts$P[!P.below.thresh] - thresh)^2/ c(ts$P[!P.below.thresh] + 0.7*S)
   }
+  
+  # If P is below a threshold, Q is zero
+  P.below.thresh <- c(ts$P < thresh)
+  ts$Q[P.below.thresh] <- 0
+  
+  # If P is above the threshold, Q is based on a formula
+  # 𝑄= (𝑃 − thresh)^2/(𝑃 - thresh + S)
+  
+  ts$Q[!P.below.thresh] <- 
+    c(ts$P[!P.below.thresh] - thresh)^2/ c(ts$P[!P.below.thresh] - thresh + S)
+  
   ts$Peff <- ts$P - ts$Q
-  write.csv(ts, file = paste0("data/processed/Peffective_", soil.type, ".csv"), row.names = FALSE)
+  
+  write.csv(ts, file = paste0("data/processed/10_Peffective_", soil.type, ".csv"), row.names = FALSE)
   # summary(ts)
   # plot(x = ts$date, y = ts$Peff)
   return(ts)
