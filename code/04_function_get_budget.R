@@ -1,11 +1,16 @@
 # ---
-# title: "Function to get water budget time series for each crop rotation"
-# subtitle: "Calculate ks based on kcr and etcr"
+# title: "Main function to get Blue Water Potential (Recharge - Irrigation) for each crop rotation"
 # author: "Rutuja Chitra-Tarak"
 # date: "2024-08-12"
 # Modified: "2026-05-09"
+# ---
 
-# Input from p.list are used in both functions below
+#~~~~~~~~~~~~~~~
+# Input-output expectations and formats for Functions get_budget() and get_peff_et0() ---- 
+#~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~
+## Input from p.list are used in both functions below ----
+#~~~~~~~~~~~~~~~
 # p.list <- list(precip = precip,
 #                et0 = et0,
 #                et0.timestep = et0.timestep, # weekly/daily
@@ -32,7 +37,9 @@
 #        (9) Kc values to be used when land fallow depending on season (summer: doy < 120; kharip_rabi: doy >=120)
 #            kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2),
 
-# (1) function: get_peff_et0()
+#~~~~~~~~~~~~~~~
+## (1) function: get_peff_et0() ----
+#~~~~~~~~~~~~~~~
 # Some functions (get_Peff, get_et0) that won't vary by specified crop rotation 
 # are invoked outside of get_budget, via get_peff_et0. 
 # This could be important for speed when get_budget is invoked multiple times for different crop rotations 
@@ -46,7 +53,9 @@
 # output: List of n = length(soil.param$soil) data.frames:
 #         data.frame(date=Date, P=numeric,  Q=numeric,  Peff=numeric, et0 = numeric), class=data.frame, dim=n,5 
 
-# (2) function: get_budget()
+#~~~~~~~~~~~~~~~
+## (2) function: get_budget() ----
+#~~~~~~~~~~~~~~~
 # input: cs = a list of a data-frame for each crop.system:
 #             data.frame(crop.system.ID = numeric, crop.system = character, 
 #             Irrigation = character, n.rotation = numeric, rotation = numeric, rotation.ID = numeric,  
@@ -55,13 +64,18 @@
 #        ts = met.forcing.ls : List of n = length(soil.param$soil) data.frames, output from get_peff_et0(): 
 #             data.frame(date=Date, P=numeric,  Q=numeric,  Peff=numeric, et0 = numeric), class=data.frame, dim=n,5 )
 
-# Tasks in get_budget():
+#~~~~~~~~~~~~~~~
+## What happens in get_budget()? ----
+#~~~~~~~~~~~~~~~
 # a. Get daily kcr = sum of crop ET coefficient, made non-zero for fallow times
-# b. Get daily soil moisture ET coefficient, ks, after removing recharge from soil and get AET = ks*kcr
-# c. 
-# c. Calculate Dynamic water states and fluxes
-# d. Calculate non-dynamic water budget variables
-# e. Calculate summary stats and daily, monthly, yearly and summary/climatology of yearly
+# c. Calculate Dynamic water states and fluxes 
+#    to (1) get daily soil moisture ET coefficient, ks, after removing recharge from soil 
+#       (2) to get AET = ks*kcr
+# d. Calculate non-dynamic water budget variables such as
+#       (1) daily irrigation supplied
+#       (2) daily NPWR = Recharge - Irrigation
+# e. Calculate aet to etc (= pet) and aet to P supply:demand,
+# e. Calculate summary stats: daily, monthly, yearly outputs and monthly & yearly climatology
 # f. Plot graphs
 # output: list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, sum.mo = sum.mo, clim.mo = clim.mo))
 
@@ -71,19 +85,19 @@
 # Function 1 of 2:  get_peff_et0() ----
 #~~~~~~~~~~~~~~~
 get_peff_et0 <- function(p = p.list, soil = soil) {
-  # #~~~~~~~~~~~~~~~
-  # ## source these functions externally if not internally----
-  # #~~~~~~~~~~~~~~~
+  # ~~~~~~~~~~~~~~~
+  # Functions sourced externally ----
+  # ~~~~~~~~~~~~~~~
   # source("code/02_function_get_Peff.R")
   # source("code/03_function_get_et0.R")
   
   #~~~~~~~~~~~~~~~
-  ## Get Peff ----
+  # Get Peff ----
   #~~~~~~~~~~~~~~~
   ts <- get_Peff(precip = p$precip, CN = p$CN, soil = soil)
   
   #~~~~~~~~~~~~~~~
-  ## Get et0 ----
+  # Get et0 ----
   #~~~~~~~~~~~~~~~  
   if (p$et0.timestep == "weekly") {
     et0 <- get_et0(p$et0)
@@ -129,7 +143,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
     ungroup()
   
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # 4. To allow for fallow land et0, make kcr non-zero when sum(kc) == 0 ----
+  # 4. To allow for fallow land ET, make kcr non-zero when sum(kc) == 0 ----
   #~~~~~~~~~~~~~~~~~~~~~~~~~~~
   summer.kc <- p$kc_no_crop[["summer"]]; kharip_rabi.kc <- p$kc_no_crop[["kharip_rabi"]]
   
@@ -182,7 +196,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   ts$sm.mid <- NA
   ts$ks <- NA
   ts$aet <- NA
-  ts$sm <- NA
+  ts$sm.end <- NA
   ts$irrigation <- NA
   
   # Add a progress bar
@@ -194,11 +208,17 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   #~~~~~~~~~~~~~~~  
   for(i in 1:nrow(ts)) {
     # setTxtProgressBar(pb,i)
+    #~~~~~~~~~~~~~~~  
+    ## 10.1 Soil Moisture with Precip Input is sm.hold----
+    #~~~~~~~~~~~~~~~ 
     if (i == 1) {
       ts$sm.hold[i] <- whc * p$sm.init
     } else {
-      ts$sm.hold[i] <- ts$sm[i-1] + ts$Peff.used[i]
+      ts$sm.hold[i] <- ts$sm.end[i-1] + ts$Peff.used[i]
     }
+    #~~~~~~~~~~~~~~~  
+    # 10.2 Water greater than WHC is removed as Recharge from sm.hold. Remaining is sm.mid----
+    #~~~~~~~~~~~~~~~ 
     if(ts$sm.hold[i] > whc) {
       ts$recharge[i] <- ts$sm.hold[i] - whc
       ts$sm.mid[i] <- whc
@@ -206,7 +226,9 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
       ts$recharge[i] <- 0
       ts$sm.mid[i] <- ts$sm.hold[i]
     }
-    # Define soil moisture cofficient for aet
+    #~~~~~~~~~~~~~~~  
+    # 10.3 Depending on readily available water in sm.mid define soil moisture coefficient, ks, for aet ----
+    #~~~~~~~~~~~~~~~
     if(ts$sm.mid[i] >= whc*raw) { # raw = readily available water
         ts$ks[i] <- 1
       } else {
@@ -217,25 +239,29 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
     if (ts$sm.mid[i] == 0) {
       ts$ks[i] <- 0
     }
-    # Calculate AET based on soil moisture dependent coefficient ks ----
-    # AET given potential ET and soil moisture ----
+    #~~~~~~~~~~~~~~~ 
+    # 10.4 Calculate AET based on soil moisture dependent coefficient, ks and crop etc (=PET) ----
+    #~~~~~~~~~~~~~~~ 
+    
     ts$aet[i] <- ts$etc[i]*ts$ks[i] # Column ET in Excel
-
-    # sm is updated by removing aet from sm.mid (recharge already removed)
-    # and updated to WHC if irrigation applied and soil under water-stress
+    
+    #~~~~~~~~~~~~~~~ 
+    # 10.5 sm.end is sm.mid - aet (recharge already removed)----
+    # 10.6 And sm.end is refilled to WHC if irrigation is applied and soil under water-stress ----
+    #~~~~~~~~~~~~~~~ 
     if(ts$irri.needed[i]) {
       # Is soil below whc*raw? 
       irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < whc*raw
       # then irrigated to whc
       if((!is.na(irri.need.test) || !is.null(irri.need.test)) & irri.need.test) {
-        ts$sm[i] <- whc
+        ts$sm.end[i] <- whc
       } else {
         # Else only ET is removed (recharge already removed when sm.mid calculated)
-        ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+        ts$sm.end[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
       }
     } else {
       # Else only ET is removed (recharge already removed when sm.mid calculated)
-      ts$sm[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+      ts$sm.end[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
     }
   }
   # t2 = Sys.time()
@@ -245,12 +271,15 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   # 11. Calculate non-dynamic water budget variables----
   #~~~~~~~~~~~~~~~  
   # Extent of Irrigation does not have dependent variables, so can be calculated outside loop
-  ts$irrigation <- ts$sm - (ts$sm.mid - ts$aet)
-  ts$sm.percent <- ts$sm/whc*100
+  #~~~~~~~~~~~~~~~  
+  ## 11.1 Irrigation is the difference, if any, between sm.end of the day and it's value after removing aet, which may be the same if no irrigation applied, or soil was not water-stressed ----
+  #~~~~~~~~~~~~~~~  
+  ts$irrigation <- ts$sm.end - (ts$sm.mid - ts$aet)
+  ts$sm.percent <- ts$sm.end/whc*100
   
   #~~~~~~~~~~~~~~~ 
-  # Get potential and actual crop ET, when crop was present (sum.kc > 0)
-  # 12. Get crop et supply:demand, aet:etc, for the crop duration ----
+  # Get potential and actual crop ET, while crop was present (sum.kc > 0)
+  ## 11.2 Get crop et supply:demand, aet:etc, for the crop duration ----
   #~~~~~~~~~~~~~~~ 
   ts$etc.crop <- ts$etc; ts$aet.crop <- ts$aet; ts$aet.to.etc.crop <- NA
   rows.crop.kc.zero <- which(ts$sum.kc == 0)
@@ -263,7 +292,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   ts$aet.to.etc.crop[valid.rows] <- ts$aet.crop[valid.rows]/ts$etc.crop[valid.rows]
   
   #~~~~~~~~~~~~~~~ 
-  # 13. Get aet:Peff, Percent Runoff, Net Recharge (R -Irri) ----
+  ## 11.3 Get aet:Peff, Percent Runoff, Net Recharge (R -Irri) ----
   #~~~~~~~~~~~~~~~ 
   ts$aet.to.Peff <- ts$aet/ts$Peff; ts$aet.to.Peff[ts$Peff == 0] <- NA
   ts$runoff.percent <- ts$Q/ts$P*100; ts$runoff.percent[ts$P == 0] <- NA
@@ -278,16 +307,16 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   # [6] "Q"               "Peff"            "et0"             "etc"             "aet"            
   # [11]           "etc.crop"        "aet.crop"        "recharge"        "irrigation"     
   # [16] "balance"         "runoff.percent"  "aet.to.Peff"      "kcr"             "irrigated"      
-  # [21] "sm.hold"         "sm.mid"          "ks"              "sm"              "sm.percent"     
+  # [21] "sm.hold"         "sm.mid"          "ks"              "sm.end"              "sm.percent"     
   # [26] "aet.to.etc.crop"
   
   # write.csv(ts, file = paste0("output/water_budgets/water_budget_SOIL_", p$soil, 
   #                             "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_daily.csv"), row.names = FALSE)
   
   #~~~~~~~~~~~~~~
-  # 14 Summary stats----
+  # 12 Summary stats----
   #~~~~~~~~~~~~~~
-  # 14.1 Yearly ----
+  ## 12.1 Yearly ----
   #~~~~~~~~~~~~~~
   sum.yr <- ts %>% group_by(year) %>%
     dplyr::summarise(across(P:balance, sum, na.rm = TRUE), .groups = "drop") %>%
@@ -299,7 +328,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   #                             "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_yearly.csv"), row.names = FALSE)
   
   #~~~~~~~~~~~~~~  
-  # 14.2 Annual Climatology ----
+  ## 12.2 Annual Climatology ----
   #~~~~~~~~~~~~~~
   # When the functions in .fns return a data frame, you typically get a
   # "packed" data frame back
@@ -326,7 +355,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
   # write.csv(summary.yr, file = paste0("output/water_budgets/water_budget_SOIL_", soil.type, 
   #                                 "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_yrly.summary.csv"), row.names = FALSE)
   #~~~~~~~~~~~~~~  
-  # 14.3 Monthly ----
+  ## 12.3 Monthly ----
   #~~~~~~~~~~~~~~
   sum.mo <- ts %>% 
     group_by(year, month) %>%
@@ -335,7 +364,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
     mutate(aet.to.Peff = aet/Peff, runoff.percent = Q/P*100)
   
   #~~~~~~~~~~~~~~  
-  # 14.4 Monthly Climatology ----
+  ## 14.4 Monthly Climatology ----
   #~~~~~~~~~~~~~~
   mean.mo <- ts %>% group_by(year, month) %>%
     dplyr::summarise(across(c(sm.percent, aet.to.etc.crop), mean, na.rm = TRUE), 
@@ -350,21 +379,21 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
     as.data.frame() %>%
     pivot_wider(names_from = "quantile", values_from = "value")
   # ~~~~~~~~~~~~~~
-  # 15 Plot Water Budget ----
+  # 13 Plot Water Budget ----
   #~~~~~~~~~~~~~~
   crop.sys.title <- paste0("Crop System: ", cs$crop.system[1], " | Rotation: ", cs$rotation[1],
                        " on ", toupper(soil.type), " soil")
   # ~~~~~~~~~~~~~~
-  # 15.1 Plot Daily ----
+  ## 13.1 Plot Daily ----
   # ~~~~~~~~~~~~~~
-  daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm", "aet", "recharge", "aet.to.etc.crop")
+  daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm.end", "aet", "recharge", "aet.to.etc.crop")
   years.to.plot <- c(2018)
   ts.l <- ts %>%
     pivot_longer(cols = -c(date, year, doy), names_to = "var", values_to = "value") %>%
     subset(var %in% daily.vars.to.plot)
   ts.l.select <- ts.l %>% subset(year %in% years.to.plot)
   p.daily_1 <-
-    ggplot(ts.l.select %>% subset(var %in% c("P", "Q", "irrigation", "sm")),
+    ggplot(ts.l.select %>% subset(var %in% c("P", "Q", "irrigation", "sm.end")),
            aes(x = date, y = value)) +
     geom_line(aes(group = var, color = var)) +
     ylab("mm") + xlab("Year-DOY") +
@@ -386,7 +415,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
                "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_", paste(years.to.plot, collapse = "-"),"_daily.pdf"),
         width = 9, height = 9)
   # ~~~~~~~~~~~~~~
-  # 15.2 Plot yearly ----
+  ## 13.2 Plot yearly ----
   # ~~~~~~~~~~~~~~
   sum.yr.l <- sum.yr %>%
     pivot_longer(cols = -c(year), names_to = "var", values_to = "value")
@@ -407,7 +436,7 @@ get_budget <- function(cs, #=crop.rotation.kc.ls,
                     "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_yearly.pdf"), width = 9, height = 9)
 
   # ~~~~~~~~~~~~~~
-  # 16. Return ----
+  # 14. Return ----
   # ~~~~~~~~~~~~~~
   return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
               sum.mo = sum.mo, clim.mo = clim.mo))
