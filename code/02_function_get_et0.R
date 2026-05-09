@@ -14,26 +14,6 @@
 # ---
 
 get_et0 <- function(et0.week.imd = et0.week.imd) {
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  ## Creating a sample IMD dataset----
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # year.from = 1970
-  # year.to = 2023
-  # dates <- seq(as.Date(paste0(year.from, "-01-01")), 
-  #                      as.Date(paste0(year.to, "-12-31")), by = "weeks")
-  ## Week of the year as decimal number (00–53) using Sunday as the first day 1 of 
-  ## the week (and typically with the first Sunday of the year as day 1 of week 1). 
-  ## The US convention.
-  # imd.years <-
-  #   as.numeric(format(strptime(dates, format = "%Y-%m-%d"), format = "%Y"))
-  # imd.weeks <-
-  #   as.numeric(format(strptime(dates, format = "%Y-%m-%d"), format = "%U"))
-  # et0.week.imd <- data.frame(year = imd.years,
-  #                            week = imd.weeks,
-  #                            et0 = rnorm(length(imd.weeks), mean = 6, sd = 1))
-  # write.csv(et0.week.imd, file = paste0("data/processed/et0.week.imd.csv"), row.names = FALSE)
-  #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
   df <- et0.week.imd
   colnames(df) <- tolower(colnames(df))
   df$year <- as.numeric(df$year)
