@@ -424,64 +424,6 @@ sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.system") %>%
 write.csv(sum.yr.all, file = "output/water_budgets/03_water.budget.annual.csv", row.names = FALSE)
 ```
 
-### QA-QC verify-with-excel
-
-```{r, verify-with-excel, echo = FALSE, eval = FALSE}
-#~~~~~~~~~~~~~~~
-# This is a team-internal chunk to verify R output with Excel output. ----
-# To verify with Excel outputs sheet = "All Rotations" in "data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx"----
-#~~~~~~~~~~~~~~~
-
-# 1. Get Summary Budgets
-summary_yr_budgets <- process_annual_budget(budget, crop.systems)
-
-# Rotation columns by mean annual value of Vars by rows
-
-summ.qs.rotation <- summary_yr_budgets$summary_yr_crop %>%
-  group_by(crop.system, WB, var, quantile) %>%
-  summarise(value = mean(value), .groups = "drop") %>%
-  pivot_wider(names_from = quantile, values_from = value)
-
-r.result <- summ.qs.rotation %>%
-  select(WB, var, mean) %>%
-  mutate(mean = round(mean)) %>%
-  # Ordering by decreasing order of Net Recharge/Balance
-  # arrange(match(crop.system, summ.qs_order$crop.system)) %>%
-  # subset(var == "aet") %>%
-  pivot_wider(names_from = "WB", values_from = c("mean")) %>%
-  arrange(match(var, c("P", "Peff.used", "Q", "et0", "etc", "etc.crop", "aet", "aet.crop", "recharge", "irrigation", "balance", "aet.to.Peff", "aet.to.etc.crop", "runoff.percent", "sm.percent"))) %>%
-    mutate(var.excel = forcats::fct_recode(factor(var), "Total Rf" = "P", "Effective Rf" = "Peff.used", "Runoff" = "Q", "AET (mm)" = "aet", "ET crop cycle" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "ET Supply:Demand" = "aet.to.etc.crop", "GW BALANCE (Net recharge)" = "balance", "ETo" = "et0", "Etc" = "etc", "ETc crop cycle" = "etc.crop", "Irrigation" = "irrigation", "Recharge" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
-
-write.csv(r.result, file = "output/water_budgets/06_water.budget.annual.climatology_mean_wide.csv", row.names = FALSE)
-
-r.result.l <- r.result %>%
-    pivot_longer(-c(var, var.excel), names_to = "WB", values_to = "R.value") %>%
-  mutate(WB.var = paste(WB, var.excel, sep = "_"))
-  
-excel.result <- read.csv(file = "data/processed/11_excel.result_sheet_All_Rotations.csv", header = TRUE)
-
-excel.result.l <- excel.result %>% 
-  pivot_longer(-c(var, stat), names_to = "WB", values_to = "Excel.value") %>%
-  mutate(WB = sub("WB.", "WB ", WB)) %>%
-  mutate(WB.var = paste(WB, var, sep = "_"))
-excel.result.l.mean <- excel.result.l %>% 
-  subset(stat == "mean")
-
-r.excel <- excel.result.l.mean %>% select(-WB, -var, -stat) %>% 
-  left_join(r.result.l, by = "WB.var") %>% select(-WB.var) %>%
-  relocate(WB, 1) %>% relocate(Excel.value, .after = R.value) %>%
-  subset(!is.na(WB)) %>%
-  mutate(diff = Excel.value - R.value) %>%
-  mutate(diff.pc = round(c(Excel.value - R.value)*100/Excel.value))
-
-r.excel.diff <- r.excel %>%
-  select(WB, var.excel, diff) %>%
-  pivot_wider(names_from = "WB", values_from = "diff")
-
-write.csv(r.excel , file = "output/water_budgets/R_vs_Excel_water.budget.annual.climatology_mean.csv", row.names = FALSE)
-write.csv(r.excel.diff , file = "output/water_budgets/diff_R_from_Excel_annual.climatology_mean.csv", row.names = FALSE)
-```
-
 ### 2. Mean Annual Perspective - Water Balance
 
 ```{r, annual-wb, fig.align='center', eval=TRUE, echo=FALSE, fig.cap = "Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Recharge is depicted in negative terms of the water consumption axis.", include = TRUE}
