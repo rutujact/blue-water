@@ -1,6 +1,6 @@
 ---
-title: "Blue Water Potential of Various Cropping Systems^[This code should be cited as: DOI: ]"
-subtitle: An R workflow to derive Net Potential Water Recharge for given Cropping Systems and Met Forcing of a site
+title: "The Blue Water Potential Calculator"
+subtitle: A generalized computational framework for simulating Blue Water Potential of various cropping systems
 # author: Rutuja Chitra-Tarak
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = paste0(substr(inputFile,1,nchar(inputFile)-4), '_Workflow.html'))})
@@ -21,10 +21,6 @@ output:
 oa: Rutuja Chitra-Tarak
 ---
 
-<!-- <style type="text/css"> -->
-<!--   .table {width: 25%;} -->
-<!-- </style> -->
-
 ```{r, setup-file, include=FALSE}
 rm(list = ls())
 # Set global chunk options
@@ -42,14 +38,62 @@ options(width = 50)
 
 # Load libraries----
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply)
+pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer)
 # tinytex::install_tinytex() # For PDF generation
 # install.packages("knitr") # For Rmarkdown generation
 
 # Create sub-directories----
-new.dir <- list("figures", "figures/crop_kc_curves", "figures/water_budgets", "output", "output/water_budgets")
+new.dir <- list("figures", "figures/crop_kc_curves", "figures/water_budgets", "figures/manuscript", "figures//presentation", "output", "output/water_budgets")
 lapply(new.dir, function (x) if (!dir.exists(x)) {dir.create(x, showWarnings = FALSE)})
 
+# --- MANUSCRIPT THEME (Optimized for black & white print / crisp vector PDF) ---
+theme_manuscript <- theme_bw(base_size = 11) + # standard baseline size for journals
+  theme(
+    # Clear out distracting internal gridlines
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(linewidth = 0.2, color = "#e0e0e0"),
+    
+    # Title and Text sizing
+    plot.title    = element_blank(), # Journals prefer titles in text captions
+    axis.title    = element_text(face = "bold", size = 11, color = "black"),
+    axis.text     = element_text(size = 9, color = "black"),
+    
+    # Legend layout
+    legend.position = "top",
+    legend.box      = "horizontal",
+    legend.title    = element_blank(),
+    legend.text     = element_text(size = 10, color = "black"),
+    legend.margin   = margin(b = -5),
+    
+    # Facet grid header styling (for your Kc plots)
+    strip.background = element_rect(fill = "#f8f9fa", color = "black"),
+    strip.text       = element_text(face = "bold", size = 9, color = "black")
+  )
+
+# --- PRESENTATION THEME (Optimized for 16:9 widescreen slides / back of the room) ---
+theme_presentation <- theme_minimal(base_size = 14) + # Larger base font size
+  theme(
+    # Clean workspace background for digital presentation slides
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_line(linewidth = 0.3, color = "#eaeaea"),
+    
+    # Bold headlines for slide viewers
+    plot.title    = element_text(face = "bold", size = 18, hjust = 0.5, margin = margin(b = 12)),
+    axis.title    = element_text(face = "bold", size = 14, color = "black"),
+    axis.text     = element_text(size = 12, color = "black"),
+    
+    # Ultra-clear, spaced out bold legend elements
+    legend.position  = "top",
+    legend.box       = "horizontal",
+    legend.title     = element_blank(),
+    legend.text      = element_text(size = 14, face = "bold", color = "black"),
+    legend.spacing.x = unit(0.4, "cm"),
+    
+    # Bold presentation facet strip elements
+    strip.text       = element_text(face = "bold", size = 12, color = "black")
+  )
 # Add ggplot theme to use ----
 theme_baseR <- theme_bw() +
   theme(
@@ -71,6 +115,7 @@ source("code/01_function_get_Peff.R")
 # source("code/02_function_get_et0.R") # Used in case of weekly et0 data to convert to daily et0
 source("code/03_function_expand_kc.R")
 source("code/04_function_get_budget.R")
+source("code/05_function_get_figures.R")
 quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
     tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
 }
@@ -81,13 +126,142 @@ quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
 ### 1. Load Meteorological Forcing
 
 ```{r, load-met}
+# Set this to TRUE, if you are using this code for a new site
+New_Site = FALSE
 #~~~~~~~~~~~~~~~
 # Get Required Input Data ----
 #~~~~~~~~~~~~~~~
 precip <- read.csv(file = "data/processed/01_precipitation.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD, Precipitation in mm
 knitr::kable(head(precip[1:3,]))
-et0.daily <- read.csv(file = "data/processed/02_et0.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
-knitr::kable(head(et0.daily[1:3,]))
+years.range <- range(as.numeric(format(strptime(precip$date, format = "%Y-%m-%d"), format = "%Y")))
+years.range.plot <- paste(years.range[1], ":", years.range[2])
+
+et0 <- read.csv(file = "data/processed/02_et0.csv", header = TRUE) # Provide date in a standard unambiguous format: YYYY-MM-DD
+knitr::kable(head(et0[1:3,]))
+et0.timestep = "daily" # weekly/daily
+```
+
+```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Anantapur average monthly rainfall, temperature, and reference evapotranspiration. Shaded ribbons and error bars denote the non-parametric 5th and 95th percentiles calculated from interannual monthly aggregates (1980–2018) (ICAR 2019).'}
+#_________________
+# Plot Climatological Profile ----
+#_________________
+
+climate_summary <- read.csv(file = "data/processed/03_climatology_for_figure.csv", header = TRUE) %>%
+  mutate(Month_Name = factor(Month, levels = 1:12, labels = month.abb))
+# Ensure Month_Name reads sequentially as a fixed chronological factor
+climate_summary <- climate_summary %>%
+  mutate(Month_Name = factor(Month_Name, levels = month.abb))
+
+scale_factor <- 7.5
+
+# 1. Pivot the long format variables using your new suffix naming convention
+climate_summary_long <- climate_summary %>%
+  pivot_longer(
+    cols = c(Rainfall_avg, ET0_avg), 
+    names_to = "Water_Metric", 
+    values_to = "Volume"
+  ) %>%
+  mutate(Water_Metric = recode(Water_Metric, "Rainfall_avg" = "Rainfall", "ET0_avg" = "ET0"))
+
+# 2. Match the q05 and q95 values to the long format data for bar error bars
+water_errors <- climate_summary %>%
+  select(Month_Name, Rainfall_q05, Rainfall_q95, ET0_q05, ET0_q95) %>%
+  pivot_longer(
+    cols = -Month_Name,
+    names_to = c("Water_Metric", ".value"),
+    names_pattern = "(Rainfall|ET0)_(q05|q95)"
+  )
+
+# Combine long averages with long errors
+climate_summary_long <- left_join(climate_summary_long, water_errors, by = c("Month_Name", "Water_Metric"))
+
+# 3. Create the multi-layer plot with quantile boundaries
+# Updated Plot Code Fragment
+fig.1_journal <- ggplot() +
+  # A. Water Metric Bars
+  geom_bar(data = climate_summary_long, 
+           aes(x = Month_Name, y = Volume, fill = Water_Metric), 
+           stat = "identity", position = position_dodge(width = 0.9), alpha = 0.85) +
+  
+  # B. COLOR-CODED ERROR BARS
+  geom_errorbar(data = climate_summary_long,
+                aes(x = Month_Name, ymin = q05, ymax = q95, 
+                    group = Water_Metric, 
+                    color = Water_Metric), # <-- MOVED INSIDE AES TO COLOR CODE
+                position = position_dodge(width = 0.9), 
+                width = 0.25, 
+                size = 0.6) + # Slightly thicker line makes the colors visible
+  
+  # C. Temperature Quantile Ribbon
+  geom_ribbon(data = climate_summary,
+              aes(x = Month_Name, ymin = Temperature_q05 * scale_factor, ymax = Temperature_q95 * scale_factor, group = 1),
+              fill = "#d95f02", alpha = 0.15) +
+  
+  # D. Temperature Mean Line
+  geom_line(data = climate_summary, 
+            aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature_Line", group = 1), 
+            size = 1) +
+  
+  # Dual Axis Configuration
+  scale_y_continuous(
+    name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), 
+    sec.axis = sec_axis(~. / scale_factor, name = "Temperature (°C)"),
+    expand = expansion(mult = c(0, 0.05))
+  ) +
+  
+  # Set your solid fill colors
+  scale_fill_manual(values = c("Rainfall" = "#1f77b4", "ET0" = "#e6ab02"), 
+                    labels = list("Rainfall" = "Rainfall", "ET0" = expression(bold(ET[0])))) +
+  
+  # UPDATE COLOR MANUAL: Set darker matching outlines for error bars AND the line
+  scale_color_manual(
+    values = c(
+      "Rainfall"         = "#134a70", # Darker blue for rainfall error bars
+      "ET0"              = "#a17703", # Darker gold/ochre for ET0 error bars
+      "Temperature_Line" = "#d95f02"  # Keep your original bright orange for the mean line
+    ), 
+    labels = c(
+      "Temperature_Line" = "Mean Temp",
+      "Rainfall"         = "Rainfall Error Bounds", # These can be hidden in guides if redundant
+      "ET0"              = "ET0 Error Bounds"
+    )
+  ) +
+  
+  labs(x = "Month") +
+  theme_manuscript +
+  
+# Force a clean two-row vertical stack layout for the legends
+  theme(
+    legend.position = "top",
+    legend.box = "vertical",          # Changes the master stack direction to vertical (Row 1 over Row 2)
+    legend.spacing.y = unit(0.1, "cm") # Adds a slight cushion gap between the two legend rows
+  ) +
+  
+  # Map exactly which items are allowed onto each row layout
+  guides(
+    fill = guide_legend(
+      order = 1, 
+      nrow = 1                        # Forces Rainfall and ET0 into exactly 1 row (Row 1)
+    ), 
+    color = guide_legend(
+      order = 2, 
+      nrow = 1,                       # Forces Temperature into exactly 1 row (Row 2)
+      breaks = "Temperature_Line",    # Silences the redundant error bar color keys from showing up
+      labels = "Mean Temp",
+      override.aes = list(linewidth = 2, shape = NA) # Displays a clean thick line with no awkward box overlay
+    )
+  )
+
+ggsave(plot = fig.1_journal, filename = "figures/manuscript/Fig.1_Anantapur_Average_Monthly_Climate_Profile.tiff", width = 180, height = 90, units = "mm", dpi = 300, compression = "lzw")
+
+# PRESENTATION VERSION
+fig.1_slides <- fig.1_journal + 
+  labs(title = "Anantapur Average Monthly Climate Profile (1980–2018)") +
+  theme_presentation
+
+ggsave(plot = fig.1_slides, 
+  filename = "figures/presentation/Fig.1_Anantapur_Climate_Profile.png", width = 10, height = 5.625, units = "in", dpi = 150, bg = "transparent")
+print(fig.1_slides)
 ```
 
 ### 2. Load Soil Parameters
@@ -110,22 +284,46 @@ knitr::kable(head(crop.param))
 ### 4. Load a List of Cropping Systems for Water Budgeting
 
 ```{r, crop-systems}
-crop.systems <- read.csv(file = "data/processed/06_crop.systems.csv", header = TRUE)
-knitr::kable(head(crop.system))
-# This holds by row individual crop and parameters (irrigation) in a given crop system by row
-crop.systems.l <- read.csv(file = "data/processed/07_crop.systems.l.csv", header = TRUE)
+# This holds by row individual crop and parameters (rooting depth, irrigation) in a given crop system by row
+crop.systems.l <- read.csv(file = "data/processed/06_crop.systems.l.csv", header = TRUE)
 knitr::kable(head(crop.systems.l))
+crop.systems <- read.csv(file = "data/processed/07_crop.systems.csv", header = TRUE)
+knitr::kable(head(crop.systems))
 
+crop.systems.distinct <- crop.systems %>%
+  select(crop.system.ID, crop.system, Irrigation, WB) %>%
+  mutate(WB_modified = if_else(crop.system.ID == 4, "WB Grazed_Once", "WB Rice/Napier"))
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# LOAD list: crop system data with root & irri params for water budget function----
+# LOAD list: Crop Rotation data with soil, Crop root, irri and Kc curves for the water budget function ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-load(file = "data/processed/08_crop.systems.ls.Rdata")
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# LOAD list: Crop Kc curves for each Crop System Rotation for the water budget function----
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-load(file = "data/processed/09_kc.doy.crop.rotation.ls.Rdata")
+load(file = "data/processed/08_crop.rotation.kc.ls.Rdata")
 ```
 
+```{r, fig.2, echo = FALSE, fig.align = 'center', fig.cap="Figure 2. Annual Crop Coefficient Curves by Rotation"}
+
+crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
+
+# MANUSCRIPT VERSION
+fig.2_journal <- ggplot(subset(crop.systems.l.kc, crop != "No Crop"), aes(x = doy, y = kc)) +
+  geom_line(aes(color = crop, group = ncrop), size = 0.8, show.legend = FALSE) +
+  facet_wrap(. ~ rotation, ncol = 4, axes = "all_x") +
+  xlab("Day of Year") + 
+  theme_manuscript +
+  scale_y_continuous(name = expression(bold(paste("Crop Coefficient (K"[c], ")"))), limits = c(0, 1.3), breaks = c(0, 0.5, 1)) +
+  theme(panel.grid.major.y = element_line(linewidth = 0.2, color = "#e5e5e5"), 
+        panel.grid.minor.y = element_line(linewidth = 0.2, color = "#e5e5e5"), 
+strip.background = element_rect(fill = "transparent", color = "#cccccc", linewidth = 0.4),
+    strip.text = element_text(face = "bold", size = 8.5, color = "black", margin = margin(t = 3, b = 3)))
+
+ggsave(plot = fig.2_journal, filename = "figures/manuscript/Fig.2_SI_Crop_Coefficient_Curves_by_rotation_SI.png", width = 180, height = 225, units = "mm", dpi = 300)
+
+# PRESENTATION VERSION
+fig.2_slides <- fig.2_journal + labs(title = "Crop Coefficient Curves by Rotation") + theme_presentation + facet_wrap(. ~ rotation)
+ggsave(plot = fig.2_slides, 
+  filename = "figures/presentation/Fig.2_Crop_Coefficient_Curves_by_rotation.png", width = 10, height = 5.625, units = "in", dpi = 150, bg = "transparent")
+
+print(fig.2_journal + facet_wrap(. ~ rotation))
+```
 
 ## 2. A List of Parameters & Input Data for Water Budget Function
 
@@ -133,19 +331,26 @@ load(file = "data/processed/09_kc.doy.crop.rotation.ls.Rdata")
 #~~~~~~~~~~~~~~~
 # Provide Input Parameters & data ----
 #~~~~~~~~~~~~~~~
-p.list <- list(rain = rain,
-               crop.param = crop.param,
+p.list <- list(precip = precip,
+               et0 = et0,
+               et0.timestep = et0.timestep, # weekly/daily
+               CN = 85, # To calculate Peff, Reference Curve Number (CN)
+               # Soil Precip input depending on runoff de/activation:
+               soil.input = "P", # "P"/Peff". Peff is calculated in either case
                soil.param = soil.param,
-               # et0.timestep = "weekly", # weekly/daily
-               # et0.input = et0.week.imd, # For "weekly", choose: et0.week.imd
-               et0.timestep = "daily", # weekly/daily
-               et0.input = et0.daily, # For "daily", choose: et0.daily
-               kc.doy.crops = kc.doy.crops,
-               kc_no_crop = list(summer = 0.005, kr = 0.2),
-               soil.type = "red",
-               CN = 85,
-               sm.init = 0.5)
-met.forcing <- get_peff_et0(p = p.list)
+               sm.init = 0.5,
+               crop.param = crop.param,
+               kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2))
+#~~~~~~~~~~~~~~~
+# Estimate Effective Precip based on soil type with get_peff_et0() ----  
+# Estimated here rather than within get_budget(), because static for each soil type, not varying with crop rotations 
+#~~~~~~~~~~~~~~~
+met.forcing.ls <- lapply(as.list(soil.param$soil), function(x) {
+  met.forcing <- get_peff_et0(p = p.list, soil = x)
+  return(met.forcing)
+  }
+  )
+names(met.forcing.ls) <- soil.param$soil # Named to identify met.forcing by soil
 ```
 
 ## 3. Run Water Budget Function
@@ -167,245 +372,248 @@ cl <- makeCluster(num_cores, type = "PSOCK")
 
 # 3. Export necessary variables/packages to the cluster nodes
 # When using 'spawn', child processes start fresh and don't inherit the parent's environment.
-clusterExport(cl, varlist = c("p.list", "met.forcing", "get_budget", "get_kc", "quantile_df"), envir = environment()) 
+clusterExport(cl, varlist = c("p.list", "met.forcing.ls", "get_budget", "quantile_df"), envir = environment()) 
 
 # 4. Explicitly load the correct package on each node of the cluster. 
 clusterEvalQ(cl, {library(tidyverse); library(ggpubr)})
 
 # 5. Use pblapply with the cluster object 'cl'
-budget <- pblapply(crop.systems.ls, get_budget, cl = cl, p = p.list, ts = met.forcing, get_kc = get_kc)
+budget <- pblapply(crop.rotation.kc.ls, get_budget, cl = cl, p = p.list, ts = met.forcing.ls)
 
 # 6. Stop the cluster when done
 stopCluster(cl)
-names(budget) <- names(crop.systems.ls)
+names(budget) <- names(crop.rotation.kc.ls)
 save(budget, file = "output/water_budgets/Budget.Rdata")
 
-# For debugging:
-# cs <- crop.system.ls[[15]]; p = p.list; ts = met.forcing; get_kc = get_kc
-# for (i in 1:length(crop.systems.ls)) {
+# # ## For debugging:
+# cs <- crop.rotation.kc.ls[[15]]; p = p.list; ts = met.forcing.ls
+# # for (i in 1:length(crop.rotation.kc.ls)) {
+# for (i in 1:1) {
 #   print(i)
-#   budget <- lapply(crop.systems.ls[i], get_budget, p = p.list, ts = met.forcing, get_kc = get_kc)
+#   budget <- lapply(crop.rotation.kc.ls[i], get_budget, p = p.list, ts = met.forcing.ls)
 # }
 ```
 
-## 4. Water Budgeting Outputs for Various Cropping Systems
+## 4. Blue Water Potential & Water Balance for Various Cropping Systems
 
-### 1. Water Supply-Demand of Cropping Systems - Annual Perspective 
+### 1. Load Water Budget & Save Daily and Yearly Outputs
 
-```{r, plot-summary, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of Water Supply Demand for cropping systems. Recharge is depicted in negative terms of the water consumption axis.', eval = TRUE, include = TRUE}
-
+```{r budget}
 load(file = "output/water_budgets/Budget.Rdata")
-crop.systems <- read.csv(file = "data/processed/06_crop.systems.csv", header = TRUE)
-# Debugging for crop kc
+crop.systems <- read.csv(file = "data/processed/07_crop.systems.csv", header = TRUE)
 
-# Save daily outputs ----
-kcr.all.ls <- lapply(budget, function(x) {return(x$kcr)})
-kcr.all <- dplyr::bind_rows(kcr.all.ls, .id = "crop.systems") %>% 
-  left_join(crop.systems, by = "crop.systems") %>%
-  relocate(names(crop.systems), .after = crop.systems)
-kcr.yr.sum <- kcr.all %>% group_by(crop.systems, rotation) %>% 
-  dplyr::summarise(kcr = sum(kcr, na.rm = TRUE), .groups = "drop") %>% arrange(rotation)
-# Kcr by rotation matches well with Excel
-kc.crops.l.ls.budget <- lapply(budget, function(x) {
-  x.l <- x$kc.crops.df %>% pivot_longer(cols = c(-date, -doy), names_to = "crop.rotation", values_to = "kc") %>% subset(!crop.rotation %in% "no_crop")
-  return(x.l)})
-kc.crops.budget <- dplyr::bind_rows(kc.crops.l.ls.budget, .id = "crop.systems") %>% 
-  arrange()
-
-# Save daily outputs ----
+# Save Daily Outputs (Not required for figures)----
 ts.all.ls <- lapply(budget, function(x) {return(x$ts)})
-ts.all <- dplyr::bind_rows(ts.all.ls, .id = "crop.systems") %>% 
-  left_join(crop.systems, by = "crop.systems") %>%
-  relocate(names(crop.systems), .after = crop.systems)
+ts.all <- dplyr::bind_rows(ts.all.ls, .id = "rotation") %>% 
+  left_join(crop.systems, by = "rotation") %>%
+  relocate(names(crop.systems), .after = rotation)
+kcr.yr.sum <- ts.all %>% group_by(crop.system, rotation, year) %>% 
+  dplyr::summarise(kcr = sum(kcr, na.rm = TRUE), .groups = "drop") %>% arrange(rotation)
+
 write.csv(ts.all, file = "output/water_budgets/01_water.budget.daily.csv", row.names = FALSE)
+
 # Save only one year (the first) to share a lighter file
 ts.all.first.yr <- subset(ts.all, year == min(unique(ts.all$year)))
 write.csv(ts.all.first.yr, file = paste0("output/water_budgets/02_water.budget.daily.", min(unique(ts.all$year)),".csv"), row.names = FALSE)
-
-# ts.all.first.yr %>% group_by(crop.systems) %>% dplyr::summarise(irri = sum(irri.needed, na.rm = TRUE))
-
-# Save annual outputs ----
+	
+# Save Yearly Outputs (Not required for figures)--------
 sum.yr.all.ls <- lapply(budget, function(x) {return(x$sum.yr)})
-sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.systems") %>% 
-  left_join(crop.systems, by = "crop.systems") %>%
-  relocate(names(crop.systems), .after = crop.systems)
+sum.yr.all <- dplyr::bind_rows(sum.yr.all.ls, .id = "crop.system") %>% 
+  left_join(crop.systems, by = "crop.system") %>%
+  relocate(names(crop.systems), .after = crop.system)
 write.csv(sum.yr.all, file = "output/water_budgets/03_water.budget.annual.csv", row.names = FALSE)
+```
 
-# Save summary outputs ----
-summary.yr.ls <- lapply(budget, function(x) {return(x$summary.yr)})
+### QA-QC verify-with-excel
 
-summary.crop <- dplyr::bind_rows(summary.yr.ls, .id = "crop.systems") 
-summary.crop <- summary.crop %>% 
-  left_join(crop.systems, by = "crop.systems")  %>%
-  relocate(names(crop.systems), .after = crop.systems)
+```{r, verify-with-excel, echo = FALSE, eval = FALSE}
+#~~~~~~~~~~~~~~~
+# This is a team-internal chunk to verify R output with Excel output. ----
+# To verify with Excel outputs sheet = "All Rotations" in "data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx"----
+#~~~~~~~~~~~~~~~
 
-summ.qs <- summary.crop %>%
-  pivot_wider(names_from = quantile, values_from = value) %>%
-  arrange(var, mean) %>%
-  mutate(var.plot = forcats::fct_recode(factor(var), "Precipitation (mm)" = "P", "Precipitation - Recharge (mm)" = "Peff", "-Recharge (mm)" = "Q", "AET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "Crop ET Supply:Demand" = "aet.to.etc.crop", "NPWR (mm)" = "balance", "Potential ET (mm)" = "et0", "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", "Pumping (mm)" = "irrigation", "Recharge (mm)" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
+# 1. Get Summary Budgets
+summary_yr_budgets <- process_annual_budget(budget, crop.systems)
 
-# arrange factor levels in the order of 'Balance' 
-summ.qs.balance <- summ.qs %>% subset(var %in% c("balance")) %>%
-  arrange(mean) %>%
-  mutate(crop.systems = factor(crop.systems, crop.systems)) # this line reorders the factor in the same order
-summ.qs$crop.systems <- factor(summ.qs$crop.systems,           levels=levels(summ.qs.balance$crop.systems))
+# Rotation columns by mean annual value of Vars by rows
 
-save(summ.qs, file = "output/water_budgets/04_summ.qs.Rdata")
-write.csv(summ.qs, file = "output/water_budgets/05_water.budget.annual.climatology.csv", row.names = FALSE)
+summ.qs.rotation <- summary_yr_budgets$summary_yr_crop %>%
+  group_by(crop.system, WB, var, quantile) %>%
+  summarise(value = mean(value), .groups = "drop") %>%
+  pivot_wider(names_from = quantile, values_from = value)
 
-summ.qs_order <- subset(summ.qs, var == "balance") %>% arrange(desc(mean))
-summ.qs.wide <- summ.qs %>% 
-  select(-c(1, 3:6, var.plot, `0.025`, `0.5`, `0.975`)) %>%
-  mutate(mean = round(mean)) %>% 
+r.result <- summ.qs.rotation %>%
+  select(WB, var, mean) %>%
+  mutate(mean = round(mean)) %>%
   # Ordering by decreasing order of Net Recharge/Balance
-  arrange(match(crop.systems, summ.qs_order$crop.systems)) %>%
-  # subset(var == "aet") %>% 
-  pivot_wider(names_from = "crop.systems", values_from = c("mean")) %>%
-  arrange(match(var, c("P", "Peff", "Q", "et0", "etc", "etc.crop", "aet", "aet.crop", "recharge", "irrigation", "balance", "aet.to.Peff", "aet.to.etc.crop", "runoff.percent", "sm.percent")))
-write.csv(summ.qs.wide, file = "output/water_budgets/06_water.budget.annual.climatology_mean_wide.csv", row.names = FALSE)
+  # arrange(match(crop.system, summ.qs_order$crop.system)) %>%
+  # subset(var == "aet") %>%
+  pivot_wider(names_from = "WB", values_from = c("mean")) %>%
+  arrange(match(var, c("P", "Peff.used", "Q", "et0", "etc", "etc.crop", "aet", "aet.crop", "recharge", "irrigation", "balance", "aet.to.Peff", "aet.to.etc.crop", "runoff.percent", "sm.percent"))) %>%
+    mutate(var.excel = forcats::fct_recode(factor(var), "Total Rf" = "P", "Effective Rf" = "Peff.used", "Runoff" = "Q", "AET (mm)" = "aet", "ET crop cycle" = "aet.crop", "ET:Effective Rainfall" = "aet.to.Peff", "ET Supply:Demand" = "aet.to.etc.crop", "GW BALANCE (Net recharge)" = "balance", "ETo" = "et0", "Etc" = "etc", "ETc crop cycle" = "etc.crop", "Irrigation" = "irrigation", "Recharge" = "recharge", "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
 
-# Plot Annual Climatology of Water Supply Demand & NPWR 
-yr.vars.to.plot.1 <- c("Recharge (mm)", "Pumping (mm)", "Crop ET Supply:Demand")
-summ.qs.select.1 <- summ.qs %>% subset(var.plot %in% yr.vars.to.plot.1) %>%
-    mutate(var.plot = factor(var.plot, levels = c("Pumping (mm)", "Recharge (mm)", "Crop ET Supply:Demand")))
+write.csv(r.result, file = "output/water_budgets/06_water.budget.annual.climatology_mean_wide.csv", row.names = FALSE)
+
+r.result.l <- r.result %>%
+    pivot_longer(-c(var, var.excel), names_to = "WB", values_to = "R.value") %>%
+  mutate(WB.var = paste(WB, var.excel, sep = "_"))
   
-p.yr.budget.base <- ggplot(summ.qs.select.1,
-       aes(y = crop.systems)) +
-  facet_grid(. ~ var.plot, scales = "free_x") +
-  scale_fill_manual(values=c("Rainfed" = "yellow3", "Irrigated" = "skyblue")) +
-  ylab("Cropping System") +
-  theme_baseR + theme(legend.title = element_blank())
+excel.result <- read.csv(file = "data/processed/11_excel.result_sheet_All_Rotations.csv", header = TRUE)
 
-p.yr.budget.median <- p.yr.budget.base +  
-  geom_col(aes(x = `0.5`, fill = Irrigation)) + xlab("Median (95 CI)") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
-ggsave(plot = p.yr.budget.median, file = paste0("figures/water_budgets/01_annual_climatology_water_budget_median.jpg"), width = 9, height = 4)
+excel.result.l <- excel.result %>% 
+  pivot_longer(-c(var, stat), names_to = "WB", values_to = "Excel.value") %>%
+  mutate(WB = sub("WB.", "WB ", WB)) %>%
+  mutate(WB.var = paste(WB, var, sep = "_"))
+excel.result.l.mean <- excel.result.l %>% 
+  subset(stat == "mean")
 
-p.yr.budget.mean <- p.yr.budget.base +  
-  geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
-print(p.yr.budget.mean)
-ggsave(plot = p.yr.budget.mean, file = paste0("figures/water_budgets/02_annual_climatology_water_budget_mean.jpg"), width = 9, height = 4)
+r.excel <- excel.result.l.mean %>% select(-WB, -var, -stat) %>% 
+  left_join(r.result.l, by = "WB.var") %>% select(-WB.var) %>%
+  relocate(WB, 1) %>% relocate(Excel.value, .after = R.value) %>%
+  subset(!is.na(WB)) %>%
+  mutate(diff = Excel.value - R.value) %>%
+  mutate(diff.pc = round(c(Excel.value - R.value)*100/Excel.value))
+
+r.excel.diff <- r.excel %>%
+  select(WB, var.excel, diff) %>%
+  pivot_wider(names_from = "WB", values_from = "diff")
+
+write.csv(r.excel , file = "output/water_budgets/R_vs_Excel_water.budget.annual.climatology_mean.csv", row.names = FALSE)
+write.csv(r.excel.diff , file = "output/water_budgets/diff_R_from_Excel_annual.climatology_mean.csv", row.names = FALSE)
 ```
 
-### 2. Blue Water Potential of Cropping Systems - Annual Perspective
+### 2. Mean Annual Perspective - Water Balance
 
-```{r, ann-npwr, echo = FALSE, fig.align = 'center', fig.cap = 'Annual Climatology of NPWR (mean + 95 CI) for cropping systems.', eval = TRUE, include = TRUE}
-p.yr.npwr.mean <- p.yr.budget.base %+% 
-  subset(summ.qs, var.plot == "NPWR (mm)") +
-  geom_col(aes(x = mean, fill = Irrigation)) + xlab("Mean (95 CI)") +
-  geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30")
-print(p.yr.npwr.mean)
-ggsave(plot = p.yr.npwr.mean, file = paste0("figures/water_budgets/03_annual_climatology_npwr_mean.jpg"), width = 9, height = 4)
+```{r, annual-wb, fig.align='center', eval=TRUE, echo=FALSE, fig.cap = "Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Recharge is depicted in negative terms of the water consumption axis.", include = TRUE}
+
+# 1. Process data
+summary_yr_budgets <- process_annual_budget(budget, crop.systems)
+
+summ.qs.cs <- summary_yr_budgets$summ_qs_cs
+# 2. Plot Supply/Demand
+vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)", "Crop ET Supply:Demand")
+p.mean <- plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean (95 CI)")
+print(p.mean)
+
+# Save outputs
+save(summ.qs.cs, file = "output/water_budgets/04_summ.qs.cs.Rdata")
+write.csv(summ.qs.cs, file = "output/water_budgets/05_water.budget.annual.climatology.cs.csv", row.names = FALSE)
 ```
 
-### 3. Water Budget of Cropping Systems - Monthly Perspective
+### 3. Mean Annual Perspective - Blue Water Potential
 
-```{r, monthly-supply-demand, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of water fluxes (median + 95 CI) for various cropping systems. Note that recharge is depicted in negative terms on the water consumption axis. Cropping systems are organised in order of increasing annual irrigation, followed by decreasing annual recharge.', include=TRUE}
+```{r, annual-bwp, fig.align='center', eval=TRUE, echo=FALSE, fig.cap = "Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur.", include = TRUE}
 
-# Plot monthly----
-# When the functions in .fns return a data frame, you typically get a
-  # "packed" data frame back
+# 3. Plot BWP
+p.bwp <- plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential = Groundwater Recharge - Irrigation Requirement (mm)")
+print(p.bwp)
+```
 
-add_clim.mo <- function (x) {
-  sum.mo <- x[["sum.mo"]] %>%
-    mutate(plot.recharge = -recharge,
-           plot.irri = if_else(irrigation == 0, NA, irrigation),
-           plot.aet = if_else(aet == 0, NA, aet),
-           plot.etc = if_else(etc == 0, NA, etc))
-  
-  clim.mo <- sum.mo %>%
-  select(-year) %>%
-  pivot_longer(-month, names_to = "var", values_to = "value") %>%
-  group_by(var, month) %>%
-  reframe(quantile_df(value)) %>%
-  as.data.frame() %>%
-  pivot_wider(names_from = "quantile", values_from = "value") %>%
-  rename(q025 = `0.025`, q975 = `0.975`, median = `0.5`)
-  x[["clim.mo"]] <- clim.mo
-  return(x)
-}
-budget <- lapply(budget, add_clim.mo)
-# Add crop system names
-clim.mo.ls <- lapply(budget, function(x) {return(x$clim.mo)})
-clim.crop <- dplyr::bind_rows(clim.mo.ls, .id = "crop.systems") 
-clim.crop <- clim.crop %>% 
-  left_join(crop.systems, by = "crop.systems") %>%
-  relocate(names(crop.systems), .after = crop.systems)
-# Save monthly outputs ----
-write.csv(clim.crop, file = "output/water_budgets/07_water.budget.monthly.climatology.csv", row.names = FALSE)
+```{r}
 
-# Select vars to plot
-mo.vars.to.plot.1 <- c("plot.recharge", "plot.aet", "plot.etc", "plot.irri") 
-                       
-clim.crop.select.1 <- clim.crop %>% 
-  subset(var %in% mo.vars.to.plot.1) %>%
-  mutate(var_f = fct_recode(var, "Potential Crop ET" = "plot.etc",
-                            "Actual ET" = "plot.aet", 
-                            "-Recharge" = "plot.recharge",
-                            "Pumping" = "plot.irri"),
+# BWP farm Fig 4 and 5
+```
+
+### 4. Mean Monthly Perspective - Water Balance
+
+```{r, mo-wb, fig.show = 'hold', fig.align='center', eval=TRUE, echo=FALSE, fig.cap='Figure 5. Monthly climatalogy of water fluxes (median + 95 CI) for various cropping systems. Note that recharge is depicted in negative terms on the water consumption axis. Cropping systems are organised in order of increasing annual irrigation, followed by decreasing annual recharge.', include=TRUE}
+
+# 1. Process data
+clim.crop.cs <- process_monthly_climatology(budget, crop.systems)
+
+# 2. Prepare for plotting (Ordering logic)
+mo_plot_data <- clim.crop.cs %>%
+  filter(var %in% c("plot.recharge", "plot.aet", "plot.etc", "plot.irri")) %>%
+  mutate(var_f = fct_recode(var, "Potential Crop ET" = "plot.etc", "Actual ET" = "plot.aet", 
+                            "-Recharge" = "plot.recharge", "Pumping" = "plot.irri"),
          var_f = factor(var_f, levels = c("Potential Crop ET",
-                            "Actual ET", "-Recharge", "Pumping"))) %>%
-  # To order cropping systems by least irrigation, joining total annual irrigation
-  left_join(subset(clim.crop, var %in% "irrigation") %>% group_by(crop.systems) %>% dplyr::summarise(irri.median.sum = sum(median, na.rm = TRUE), .groups = "drop"), by = join_by(crop.systems)) %>%
-  left_join(subset(clim.crop, var %in% "recharge") %>% group_by(crop.systems) %>% dplyr::summarise(recharge.median.sum = sum(median, na.rm = TRUE), .groups = "drop"), by = join_by(crop.systems)) %>%
-  arrange(irri.median.sum, desc(recharge.median.sum)) %>%
-  mutate(crop.systems = fct_reorder(crop.systems, 1:n()))
+                            "Actual ET", "-Recharge", "Pumping")))
+# Add this logic before generating Figure 4
+irri_order <- clim.crop.cs %>%
+  filter(var == "plot.irri") %>%
+  group_by(crop.system) %>%
+  summarise(total_irri = sum(median, na.rm = TRUE)) %>%
+  arrange(total_irri)
 
-p.monthly.budget.base <- ggplot(clim.crop.select.1,
-                            aes(x = month)) +
-  geom_ribbon(aes(ymin = q025, ymax = q975, group = var_f, fill = var_f), alpha = 0.5) +
-  geom_line(aes(y = median, group = var_f, color = var_f), linewidth = 1) +
-  scale_x_continuous(breaks = 1:12, labels = as.character(1:12), limits = c(1, 12)) +
+mo_plot_data$crop.system <- factor(mo_plot_data$crop.system, levels = irri_order$crop.system)
+
+# 3. Plot Water Balance Terms
+p.monthly.budget <- ggplot(mo_plot_data, aes(x = month)) +
+  geom_ribbon(aes(ymin = q025, ymax = q975, fill = var_f), alpha = 0.5) +
+  geom_line(aes(y = median, color = var_f), linewidth = 1) +
+  facet_wrap( ~ crop.system) +
+  scale_x_continuous(breaks = 1:12) +
   theme_baseR +
-  geom_abline(intercept = 0, slope = 0, linewidth = 0.2) +
-  facet_wrap(crop.systems ~ . , scales = "fixed")
-p.monthly.budget <- p.monthly.budget.base +
-  theme(legend.position = "top", legend.title = element_blank()) +
-  ylab("Water Consumption (mm) (median + 95 CI)") + xlab("Month") +
-  ggtitle("Monthly Water Use & Recharge from Various Cropping Systems in Billikere (1970:2022)")
+  theme(legend.position = "top", legend.title = element_blank(),
+        strip.text = element_text(size = 8)) +
+  labs(y = "Water Consumption (mm)", title = "Monthly Water Use & Recharge")
 print(p.monthly.budget)
 ggsave(plot = p.monthly.budget, file = paste0("figures/water_budgets/04_monthly_climatology_water_budget_median.jpg"), width = 11.52 , height = 7.49)
 ```
 
-### 4. Blue Water Potential of Cropping Systems - Monthly Perspective
+### 5. Mean Monthly Perspective - Blue Water Potential
 
-```{r, mo-npwr, eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Monthly climatalogy of NPWR (median + 95 CI) for cropping systems. Positive values are depicted in blue (Blue Water), negative values in red. Cropping systems are organised in decreasing order of annual Blue Water potential.', include=TRUE}
+```{r, mo-bwp, fig.show = 'hold', fig.align='center', eval=TRUE, echo=FALSE, fig.cap = 'Figure 6. Monthly climatalogy of BWP (median + 95 CI) for cropping systems. Positive values are depicted in blue (Blue Water), negative values in red. Cropping systems are organised in decreasing order of annual Blue Water potential.', include=TRUE}
 
-clim.crop.select.2 <- clim.crop %>%
-  subset(var %in% "balance") %>%
-  mutate(var_f = fct_recode(var, "NPWR" = "balance"), 
-         crop.systems = factor(crop.systems, levels = levels(clim.crop.select.1$crop.systems)))   
+# Blue Water Potential
 
-clim.crop.select.2 <- clim.crop.select.2 %>%
-  left_join(clim.crop.select.2 %>% group_by(crop.systems) %>% 
-  dplyr::summarise(balance.median.sum = sum(median, na.rm = TRUE), .groups = "drop"),  by = join_by(crop.systems)) %>%
-  arrange(desc(balance.median.sum))
+clim.crop.cs <- clim.crop.cs %>%
+  mutate(crop.system = factor(crop.system, levels(mo_plot_data$crop.system)))
+                                            
+p.monthly.BWP <- plot_monthly_bwp(clim.crop.cs, years.range.plot)
 
-# p.monthly.npwr <- p.monthly.budget.base %+% clim.crop.select.2 +
-#   theme(legend.position = "none") + 
-#   scale_color_manual(values=c("blue")) + scale_fill_manual(values=c("skyblue")) +
-#   ylab("NPWR (mm)") + xlab("Month") +
-#   ggtitle("Monthly NPWR for Various Crop Systems in Billikere")
-# print(p.monthly.npwr)
-# ggsave(plot = p.monthly.npwr, file = paste0("figures/water_budgets/water_budget_monthly_select.1_crop.systems.jpg"), width = 11.52, height = 7.49)
+# 3. Display and Save
+print(p.monthly.BWP)
+ggsave(plot = p.monthly.BWP, 
+       file = "figures/water_budgets/05_monthly_climatology_BWP_median.jpg", 
+       width = 11.52, height = 7.49)
+```
 
-p.monthly.npwr <- ggplot(mutate(clim.crop.select.2, above_axis = median >= 0),
-                            aes(x = month)) +
-  facet_wrap(crop.systems ~ . , scales = "fixed") +
-  # Ribbon for area below the horizontal axis (y=0)
-  geom_ribbon(aes(ymin = pmin(q025, 0), ymax = 0, fill = "Below axis"), alpha = 0.5) +
-  # Ribbon for area above the horizontal axis (y=0)
-  geom_ribbon(aes(ymin = 0, ymax = pmax(q975, 0), fill = "Above axis"), alpha = 0.5) +
-  theme_baseR +
-  # Manually define the colors for the fill aesthetic
-  scale_fill_manual(values = c("Below axis" = "lightpink", "Above axis" = "skyblue")) +
-  geom_line(aes(y = median, color = above_axis, group = 1), linewidth = 1) +
-  scale_x_continuous(breaks = 1:12, labels = as.character(1:12), limits = c(1, 12)) +
-  geom_abline(intercept = 0, slope = 0, linewidth = 0.2) +
-  theme(legend.position = "none") + 
-  ylab("NPWR (mm) (median + 95 CI)") + xlab("Month") +
-  ggtitle("Monthly Blue Water Potential for Various Cropping Systems in Billikere (1970:2022)")
-print(p.monthly.npwr)
-ggsave(plot = p.monthly.npwr, file = paste0("figures/water_budgets/05_monthly_climatology_npwr_median.jpg"), width = 11.52, height = 7.49)
+## 5. Archetype Village-Level Blue Water Potential 1950 Vs. 2022
+
+```{r}
+
+# 1. CONFIGURATION (Surgical control over typography and lane spacing)
+cfg <- list(
+  v_stagger_in   = 4400,   # Vertical spacing for left-side blue arrows
+  v_stagger_out  = 4600,   # EXPANDED: Wider vertical spacing for right-side red arrows
+  box_width      = 42,     
+  arrow_head_sz  = 0.12,   
+  min_arrow_w    = 1.5,    
+  max_arrow_w    = 13,     
+  text_sz_box    = 5.9,      # Enlarged central box text
+  text_sz_main   = 4.2,    # Enlarged left-side labels
+  text_sz_out    = 4.2,    # ENLARGED: Crisp, readable right-side labels
+  text_sz_year   = 10,    
+  tanker_vol_m3  = 10,     
+  days_in_year   = 365,
+  lpcd           = 100     
+)
+
+# 2. DATA INPUT
+village <- readxl::read_xlsx("data/raw/Model in Excel/For Rutuja_BWP_Farm.xlsx", sheet = "BWP farm Fig 4 and 5")
+village <- village %>%
+  slice(-1) %>%
+  mutate(across(-c(1, 2), as.numeric)) %>%
+  mutate(across(-c(1, 2), round))
+
+village.bwp <- village %>% 
+  select(`Time period`, `Social category of farm`, `BWP/farm...7`)
+
+colnames(village.bwp) <- c("period", "label", "val")
+
+data_list <- list(
+  "1950" = subset(village.bwp, period == "1950s"),
+  "2022" = subset(village.bwp, period == "2022")
+)
+
+display_labels <- list("1950" = "1950s", "2022" = "2022")
+
+# 4. EXECUTE SYSTEM AND EXPORT
+fig.6_journal <- get_village_comparison_plot(data_list, display_labels, cfg)
+ggsave("figures/manuscript/Fig.6_Village Comparison_BWP.png", fig.6_journal, width = 17, height = 9.5, dpi = 300, bg = "white")
+
+# PRESENTATION VERSION
+ggsave("figures/presentation/Fig.6_Village Comparison_BWP.png", fig.6_journal, width = 17, height = 9.5, dpi = 300, bg = "transparent")
+print(fig.6_journal)
 ```
