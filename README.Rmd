@@ -5,7 +5,7 @@ output: github_document
 
 # The Blue Water Potential Calculator
 
-#### This is a Supplementary Information to, and a Computational Implementation-cum- Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
+#### This is a Supplementary Information to, and a Computational Implementation-cum-Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
 
 ## 1. Overview
 

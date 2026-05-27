@@ -8,6 +8,7 @@ output:
   html_document:
     df_print: paged
     toc: true
+    toc_float: true
     toc_depth: 3 # 
   # pdf_document:
   #   toc: yes
@@ -21,9 +22,11 @@ output:
 oa: Rutuja Chitra-Tarak
 ---
 
-**Note**: This is a Supplementary Information to, and a Computational Implementation-cum-Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
+## 1. Overview
 
-This repository provides a generalized computational framework for simulating Blue Water Potential at the village level given area under various Cropping Systems and Climate. While this specific implementation is configured to reproduce the results and figures for **Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets**, the underlying R code is designed to be adaptable for any site with meteorological and cropping system data.
+This is the main reproducible report a Supplementary Information to, and a Computational Implementation-cum-Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
+
+This repository provides a generalized computational framework for simulating Blue Water Potential at the village level given area under various Cropping Systems and Climate. While this specific implementation is configured to reproduce the results and figures for **Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets**, the underlying R code is designed to be adaptable for any site with meteorological and cropping system data. See README for instructions on how to apply this framework to a different study site.
 
 
 ```{r, setup-file, include=FALSE}
