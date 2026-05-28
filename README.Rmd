@@ -5,7 +5,9 @@ output: github_document
 
 # The Blue Water Potential Calculator
 
-#### This is a Supplementary Information to, and a Computational Implementation-cum-Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
+## A Generalized R Toolkit for Quantifying Blue Water Potential given Cropping Systems and Climate
+
+#### A Computational Implementation-cum-Reproducible Workflow for Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
 
 ## 1. Overview
 
@@ -47,21 +49,20 @@ precip <- read.csv("data/processed/01_precipitation.csv") # YYYY-MM-DD, mm
 et0 <- read.csv("data/processed/02_et0.csv") # YYYY-MM-DD, mm
 ```
 
-## 4. Acknowledgements & Funding
+## 4. Development & Attribution
 
-#### Development & Attribution
+* **Model Logic, Data Collection & Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent Ruiz.
 
-* **Model Logic & Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent Ruiz.
 * **R Translation, Framework Design, & Documentation:** Developed by Rutuja Chitra-Tarak.
 
-#### Funding & Disclosure
+## 5. Funding & Disclosure
 
-R. Chitra-Tarak contributed to this work as an independent volunteer researcher receiving no external funding. Author is a long-COVID survivor & advocate. This contribution was developed intermittently over a period of 3 years as health permitted.
+R. Chitra-Tarak contributed to this work as an independent volunteer researcher receiving no external funding. R. Chitra-Tarak is a long-COVID survivor & advocate. This contribution was developed intermittently over a period of 3 years as health permitted.
 
-## 5. How to Cite
+## 6. How to Cite
 
 Users are requested to cite the original manuscript along with this computational implementation:
 
 * **The Model:** Hemingway, C. et al. (2026). Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. *[Journal Name]*. [DOI Link].
 
-* **The Code:** Chitra-Tarak, R. (2026). The Blue Water Potential Calculator: A Generalized R Framework for Quantifying Blue Water Potential given Cropping Systems and Climate (Version 1.0). Zenodo. [Reserved DOI Link].
+* **The Code:** Chitra-Tarak, R, C. Hemingway and L. Ruiz. (2026). The Blue Water Potential Calculator: A Generalized R Toolkit for Quantifying Blue Water Potential given Cropping Systems and Climate (Version 1.0). Zenodo. [Reserved DOI Link].
