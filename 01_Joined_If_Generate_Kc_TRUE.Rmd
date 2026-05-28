@@ -55,17 +55,17 @@ Kc.raw[-1] <- lapply(Kc.raw[-1], function(x) as.numeric(as.character(x)))
 # sapply(Kc.raw, class)
 
 # Save this data as raw input data
-write.csv(Kc.raw, file = "data/raw/01_Crop_Kc_curve_parameters_Table.csv", row.names = FALSE)
+write.csv(Kc.raw, file = "data/processed/06.0_Crop_Kc_curve_parameters_Table.csv", row.names = FALSE)
 ```
 
 ##### 3.2.1.1 (b) Table of Crops Kc by Growth Phase DOY
 
 ```{r, kc-crops, eval=generate_kc, include=generate_kc}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# READ data/raw/01_Crop_Kc_curve_parameters_Table.csv ----
+# READ data/processed/06.0_Crop_Kc_curve_parameters_Table.csv ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Kc.raw <- read.csv(file = "data/raw/01_Crop_Kc_curve_parameters_Table.csv", header = TRUE)
+Kc.raw <- read.csv(file = "data/processed/06.0_Crop_Kc_curve_parameters_Table.csv", header = TRUE)
 
 # Separate crops by Rotation
 Kc.raw.long <- Kc.raw %>% 
@@ -98,7 +98,7 @@ Kc.doy <- left_join(doy, Kc, by = c("Kc_var", "crop")) %>%
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # This is FAO Kc Parameter Table by DOY by Crop 
-# SAVE data/processed/01_Crop_Kc_curve_parameters.csv ----
+# SAVE data/processed/06.0_Crop_Kc_curve_parameters.csv ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Kc.doy.df <- Kc.doy %>% select(crop, doy_var, doy, Kc) %>%
   arrange(crop, doy, Kc) %>%
