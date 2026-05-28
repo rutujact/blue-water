@@ -33,6 +33,7 @@
 !.gitignore
 DESCRIPTION
 !*.Rmd
+!*.md
 !*.Rproj
 !preamble.tex
 # https://stackoverflow.com/questions/44568184/gitignore-everything-except-a-subfolder-with-every-content
