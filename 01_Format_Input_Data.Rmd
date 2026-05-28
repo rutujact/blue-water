@@ -13,7 +13,6 @@ output:
 
 **Note**: This script is provided for reference to show the data processing workflow. It requires specific raw Excel files that are not included in this public repository. Users wishing to adapt the model should ensure their input data matches the formatting seen in the /data/processed/ folder.
 
-
 ```{r, setup-file, include=FALSE}
 rm(list = ls())
 # Set global chunk options
@@ -227,7 +226,7 @@ excel.result <- excel.result %>%
 write.csv(excel.result, file = "data/processed/00_excel.result_sheet_All_Rotations.csv", row.names = FALSE)
 ```
 
-## 4.1 Join Crop Rooting Depth & Irrigation Requirement
+## 4.1 Join Crop Rooting Depth & Irrigation Requirement. SAVE Individual Crop (and Parameters) in a given Crop System by Row
 
 ```{r, join-crop-root-depth}
 crop.systems.l <- crop.systems %>%
@@ -263,7 +262,8 @@ crop.systems.l <- crop.systems.l %>%
 knitr::kable(head(crop.systems.l))
 
 write.csv(crop.systems.l, file = "data/processed/07_crop.systems.l.csv", row.names = FALSE)
-## Add if Crops System is irrigated i any of the crop is irrigated
+
+## Add, if Crop System is irrigated, if any of the crop is irrigated
 cs.rot.irri <- crop.systems.l %>%
   mutate(Irrigation = if_else(irrigation == "irrigated", TRUE, FALSE)) %>%
   group_by(crop.system, rotation) %>%
@@ -274,7 +274,6 @@ crop.systems <- crop.systems %>% left_join(cs.rot.irri, by = c("crop.system", "r
   relocate(Irrigation, .after = crop.system)
 write.csv(crop.systems, file = "data/processed/08_crop.systems.csv", row.names = FALSE)
 ```
-
 
 ## 4.2 Join Crop Kc Curves for each Crop System Rotation
 
@@ -313,6 +312,7 @@ crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
 save(crop.rotation.kc.ls, file = "data/processed/09_crop.rotation.kc.ls.Rdata")
 ```
 
+### 4.2.1 Plot Crop Kc Curves by Rotation - one pager
 
 ```{r, kc-curves-by_rotation, fig.show="hold", out.width="100%", eval=TRUE, echo=FALSE, fig.align='center', fig.cap='Kc curves by Crop System Rotations', include=TRUE}
 
@@ -330,17 +330,13 @@ print(p.crop.systems.l.kc)
 ggsave(plot = p.crop.systems.l.kc, file = paste0("figures/crop_kc_curves/Crop_Coefficient_Curves_by_rotation.jpg"), width = 7, height = 5)
 ```
 
+### 4.2.2 Plot Crop Kc Curves Crop System per page by Rotation
 
 ```{r, kc-curves-by-system-per-page, fig.show=FALSE, eval=TRUE, echo=FALSE, include=TRUE}
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PLOT Kc Curves by Crop System per page by Rotation ----
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 crop.systems.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$crop.system)
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# SAVE list: Crop Rotation data with soil, Crop root, irri and Kc curves ----
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-save(crop.systems.kc.ls, file = "data/processed/10_crop.systems.kc.ls.Rdata")
 
 all.kc.figure.file <- "figures/crop_kc_curves/Crop_System_Kc_Curves_by_Rotation.pdf"
 plot.pdf <- function (x) {
@@ -360,23 +356,76 @@ invisible(dev.off())
 plot.pdf()
 ```
 
+### 4.2.3 Save Crop Rotation Data with Soil Type, Crop Rooting Depth, Irrigation Requirement and Kc curves
+
 ```{r}
-before <- readxl::read_xlsx("data/raw/Model in Excel/3 WB_Anantapur_Farm_Village.xlsx", sheet = "WB Watershed Balance LU 1950")
-after <- readxl::read_xlsx("data/raw/Model in Excel/3 WB_Anantapur_Farm_Village.xlsx", sheet = "WB Watershed Balance LU 2022")
-# Change French headers to English ones in the bottom row
-english.headers.before <- before[nrow(before),][!is.na(before[nrow(before),])]
-names(before)[1: c(length(english.headers.before)+1)] <- c("WB", english.headers.before)
-english.headers.after <- after[nrow(after),][!is.na(after[nrow(after),])]
-names(after)[1: c(length(english.headers.after)+1)] <- c("WB", english.headers.after)
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SAVE list: Crop Rotation Data with Soil Type, Crop Rooting depth, Irrigation Requirement and Kc curves ----
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+save(crop.systems.kc.ls, file = "data/processed/10_crop.systems.kc.ls.Rdata")
+```
 
-# Save Household numbers by Farmer Type 
-before.households <- before[1, 1: c(length(english.headers.before)+1)]
-after.households <- after[1, 1: c(length(english.headers.after)+1)]
+# 5. Production System Composition: Crop Systems by Area
 
-names(after.households)[1] <- names(before.households)[1] <- "Households"
+```{r}
+# This provides the area of each crop system typically cultivated under each Type of Farm, or Production System
+ps_area <- readxl::read_xlsx("data/raw/Model in Excel/For Rutuja_Crop_System_Area_by_Production_System.xlsx", sheet = "Farm Type structure")
 
-# Save Area under Crop Systems by Farmer Type
-before <- before[-1, ]
-after <- after[-1, ]
+# List of curated crop.system & WB columns to replace the Cropping System column
+crop.systems <- read.csv(file = "data/processed/08_crop.systems.csv", header = TRUE)
 
+ps_area <- ps_area %>%
+  subset(!is.na(WB)) %>%
+  full_join(crop.systems %>% select(crop.system, WB), by = "WB") %>% relocate(crop.system, .before = 1) 
+
+# WB without crop.system
+ps_area[is.na(ps_area$crop.system), c("crop.system", "WB")]
+# crop.system not yet assigned
+ps_area[is.na(ps_area$`Cropping system`), c("crop.system", "WB")]
+
+ps_area <- ps_area %>%
+  mutate(crop.system = 
+           if_else(WB == "WB Rice/Banana", "Rice/Banana",
+                   if_else(WB == "WB Grazed_Once", "Grasslands (Grazed Once)",
+                           if_else(WB == "WB Rice/Napier", "Rice/Napier", 
+                                   crop.system))))
+# Unused crop.system: 
+remaining.cs <- ps_area[is.na(ps_area$`Cropping system`), c("crop.system", "WB")]
+ps_area <- ps_area %>%
+  subset(!is.na(`Cropping system`)) 
+# Workbooks unused, or with no corresponding area
+remaining.cs <- remaining.cs %>% subset(!crop.system %in% ha$crop.system)
+#   crop.system         WB                    
+#   <chr>               <chr>                 
+# 1 Grasslands          WB Grasslands         
+# 2 Rice/Rice           WB Rice_Rice          
+# 3 Rice/Groundnut      WB Rice_Groundnut     
+# 4 Groundnut/Groundnut WB Groundnut_Groundnut
+
+ps_area_cleaned <- ps_area %>%
+  subset(!is.na(`Cropping system`)) %>%
+  select(-`Cropping system`, -WB) %>%
+  pivot_longer(cols = -crop.system, names_to = "Production System", values_to = "Area_ha") %>%
+  subset(!is.na(Area_ha) & !Area_ha == 0) %>%
+  mutate(
+    # 1. Extract the digits inside the parentheses (e.g., 1950s)
+    Period = str_extract(`Production System`, "(?<=\\()\\d{4}s?(?=\\))"),
+    
+    # 2. Strip the trailing space and parenthetical part from the original column
+    `Production System` = str_remove(`Production System`, "\\s*\\(\\d{4}s?\\)$")
+  ) %>% 
+  select(`Production System`, Period, crop.system, Area_ha) %>% arrange(`Production System`, Period)
+
+write.csv(ps_area_cleaned, file = "data/processed/Crop_System_Area_By_Production_System.csv", row.names = FALSE)
+```
+
+# 6. Number of Farms under each Production System in 1950s vs 2022 in the village
+
+```{r}
+
+# This provides the number of Farms under each type of Farm, or Production System in 1950s and 2022
+
+ps_period <- readxl::read_xlsx("data/raw/Model in Excel/For Rutuja_Crop_System_Area_by_Production_System.xlsx", sheet = "Archetype Village")
+
+write.csv(ps_period, file = "data/processed/No_of_Farmers_By_Production_System_1950_and_2022.csv", row.names = FALSE)
 ```
