@@ -9,10 +9,8 @@
 # Workflow
 !crop-waterbudget_Workflow.html
 # Input data
-!data/processed/et0.week.imd.csv
-!data/processed/crop.parameters.csv
-!data/processed/Kc_curve_parameters_by_crop_rotation.csv
-!data/processed/soil.parameters.csv
+!data/processed/*.csv
+data/processed/*Excel*.csv
 !data/raw/*.csv
 # Output data
 !output/water_budgets/water.budget.annual.csv
