@@ -327,18 +327,18 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
 #' @param cfg A list containing configuration sizes (e.g., `box_width`, `max_arrow_w`).
 #' @param output_dev The graphics device to use (e.g., `cairo_pdf`, `png`).
 #' @param filename The filepath to save the output.
-plot_village_bwp <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf, filename = "figures/manuscript/Fig.6.pdf") {
+plot_village_bwp <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf, filename = "figures/manuscript/Fig.6.pdf", manuscript_style = FALSE) {
   
   unique_periods <- unique(village_bwp_collapsed$period)
   num_periods <- length(unique_periods)
   
   if (num_periods == 1) {
     message("Detected 1 period. Generating single-panel Blue Water Potential plot...")
-    get_single_village_plot(village_bwp_collapsed, cfg, output_dev, filename)
+    get_single_village_plot(village_bwp_collapsed, cfg, output_dev, filename, manuscript_style = manuscript_style)
     
   } else if (num_periods == 2) {
     message("Detected 2 periods. Generating comparative two-panel plot...")
-    get_village_comparison_plot(village_bwp_collapsed, cfg, output_dev, filename)
+    get_village_comparison_plot(village_bwp_collapsed, cfg, output_dev, filename, manuscript_style = manuscript_style)
     
   } else {
     stop("Error: The dataframe must contain exactly 1 or 2 unique periods. Detected: ", num_periods)
@@ -348,7 +348,8 @@ plot_village_bwp <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf,
 #' Generate Comparative Two-Panel Village Plot (Internal)
 #' @description Visualizes the change in Blue Water Potential (tank size) and the 
 #' influx/outflux dynamics driving that change across two time periods.
-get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf, filename = "figures/manuscript/Fig.6.pdf") {
+get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf,  
+                                        filename = "figures/manuscript/Fig.6.pdf", manuscript_style = FALSE) {
   
   # Ensure the output directory exists
   dir.create(dirname(filename), showWarnings = FALSE, recursive = TRUE)
@@ -477,27 +478,32 @@ get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev =
   plot(NULL, xlim = plot_xlim, ylim = plot_ylim, xaxt = "n", yaxt = "n", bty = "n", xlab = "", ylab = "")
   mtext("B", side = 3, line = 0.5, adj = 0, font = 2, cex = 1.4)
   
-  # Draw the empty tank boundary and fill it to Period 2's (lower) level
-  rect(box_xmin, 0, box_xmax, box_ymax, col = NA, border = "#084594", lwd = 1.5)
-  rect(box_xmin, 0, box_xmax, fill_y_p2, col = "#084594", border = NA)
-  
-  # Draw the 'Ghosted' depletion zone (The water lost between P1 and P2)
-  rect(box_xmin, fill_y_p2, box_xmax, fill_y_p1, col = "#e2ebf3", border = NA)
-  
+  if (!manuscript_style) {
+    # Draw the empty tank boundary and fill it to Period 2's (lower) level
+    rect(box_xmin, 0, box_xmax, box_ymax, col = NA, border = "#084594", lwd = 1.5)
+    rect(box_xmin, 0, box_xmax, fill_y_p2, col = "#084594", border = NA)
+    
+    # Draw the 'Ghosted' depletion zone (The water lost between P1 and P2)
+    rect(box_xmin, fill_y_p2, box_xmax, fill_y_p1, col = "#e2ebf3", border = NA)
+    
+    # Render the absolute drop group (Triangle + Text) centered using the 25% origin
+    empty_space_mid_y <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) / 2)
+    start_x <- box_xmin + (box_xmax - box_xmin) * 0.25
+    text_to_show <- paste0("-", format(abs_drop, big.mark=","), " (", round(pct_change), "%)")
+    
+    # Note: Kept the primary red text bold since it is the key finding of the figure
+    text(start_x, empty_space_mid_y, text_to_show, col = "#bd0026", font = 2, cex = 0.80, adj = 0)
+    polygon(c(start_x - 12, start_x - 2, start_x - 7), 
+            c(empty_space_mid_y + 350, empty_space_mid_y + 350, empty_space_mid_y - 350), 
+            col = "#bd0026", border = NA)
+  } else {
+    rect(box_xmin, 0, box_xmax, fill_y_p2, col = NA, border = "#084594", lwd = 1.5)
+    rect(box_xmin, 0, box_xmax, fill_y_p2, col = "#084594", border = NA)
+  }
+
   # Annotate the inside of the remaining water fill (Label is bold, Number is regular)
   text((box_xmin + box_xmax)/2, fill_y_p2 * 0.65, "Blue Water\nPotential", col = "white", font = 2, cex = 0.85)
   text((box_xmin + box_xmax)/2, fill_y_p2 * 0.32, format(tot_p2, big.mark=","), col = "white", font = 1, cex = 1.1)
-  
-  # Render the absolute drop group (Triangle + Text) centered using the 25% origin
-  empty_space_mid_y <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) / 2)
-  start_x <- box_xmin + (box_xmax - box_xmin) * 0.25
-  text_to_show <- paste0("-", format(abs_drop, big.mark=","), " (", round(pct_change), "%)")
-  
-  # Note: Kept the primary red text bold since it is the key finding of the figure
-  text(start_x, empty_space_mid_y, text_to_show, col = "#bd0026", font = 2, cex = 0.80, adj = 0)
-  polygon(c(start_x - 12, start_x - 2, start_x - 7), 
-          c(empty_space_mid_y + 350, empty_space_mid_y + 350, empty_space_mid_y - 350), 
-          col = "#bd0026", border = NA)
   
   # Render Influx Arrows for Panel B
   n_in_p2 <- nrow(df_in_p2)
@@ -506,11 +512,17 @@ get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev =
     y_s  <- seq(16000, 24500, length.out = n_in_p2)
     x_d  <- seq(box_xmin + 6, box_xmin + (box_xmax - box_xmin)*8/10, length.out = n_in_p2)
     
+    if (!manuscript_style) {
+      target_y <- box_ymax # top_of_white_loss_box
+    } else {
+      target_y <- fill_y_p2 # The top of the standard blue tank
+    }
+    
     for(i in 1:n_in_p2) {
       lwd_val <- scales::rescale(df_in_p2$val[i], to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(village_bwp_collapsed$val)))
-      lines(c(-55, x_d[i], x_d[i]), c(y_s[i], y_s[i], box_ymax + (lwd_val * 75)), lwd = lwd_val, col = cols[i], lend = 1)
+      lines(c(-55, x_d[i], x_d[i]), c(y_s[i], y_s[i], target_y + (lwd_val * 75)), lwd = lwd_val, col = cols[i], lend = 1)
       polygon(c(x_d[i] - (lwd_val * 1.4), x_d[i] + (lwd_val * 1.4), x_d[i]), 
-              c(box_ymax + (lwd_val * 75), box_ymax + (lwd_val * 75), box_ymax), 
+              c(target_y + (lwd_val * 75), target_y + (lwd_val * 75), target_y), 
               col = cols[i], border = NA)
       draw_split_label(-60, y_s[i], df_in_p2$label[i], df_in_p2$val[i], 1)
     }
@@ -524,16 +536,23 @@ get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev =
       abs_val <- abs(df_out_p2$val[i])
       lwd_val <- scales::rescale(abs_val, to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(abs(village_bwp_collapsed$val))))
       
-      # Added a 2-unit gap to prevent outflux arrows from bleeding over the tank border
-      x_origin <- box_xmax + 2  
+      # Added a 1-unit gap to prevent outflux arrows from bleeding over the tank border
+      x_origin <- box_xmax + 1  
       
       # Map routing geometries
       x_s <- box_xmax + ((n_out_p2 - i) * 8) + 5            
       y_f <- box_ymax + 1000 + (i * cfg$v_stagger_out)      
       x_t <- box_xmax + 40                                  
       
-      # Arrows originate strictly from the ghosted depletion zone
-      y_start <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) * (i / (n_out_p2 + 1)))
+      if (!manuscript_style) {
+        # Arrows originate strictly from the ghosted depletion zone
+        y_start <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) * (i / (n_out_p2 + 1)))
+        
+      } else {
+        # Arrows originate from The bottom of the standard blue tank
+        y_start <- ((fill_y_p2*20/100) * (i / (n_out_p2 + 1)))
+      }
+      
       
       # Draw the zig-zag outflux line originating from the gap
       lines(c(x_origin, x_s, x_s, x_t), c(y_start, y_start, y_f, y_f), lwd = lwd_val, col = cols[i], lend = 1)
