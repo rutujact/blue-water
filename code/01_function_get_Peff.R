@@ -1,59 +1,97 @@
-# ---
-# title: "Function to get Effective Rainfall (Precip-Runoff) time series"
-# subtitle: ""
+# ==============================================================================
+# title: "SCS Curve Number Effective Rainfall and Runoff Engine"
 # author: "Rutuja Chitra-Tarak"
-# date: "2024-08-12"
-# input: (1) Precipitation time series: 
-#            data.frame(date=Date, p=numeric), class=data.frame, dim=n,2 
-#        (2) CN value, class=numeric, length=1
-#        (3) Soil type, class=numeric, length=1 
-# output: data.frame(date=Date, P=numeric, Q=numeric, Peff=numeric), class=data.frame, dim=n,3 
-# example:
-# source("code/02_function_get_Peff.R")
-# ---
+# description: Implements the USDA Soil Conservation Service (SCS) Curve Number
+#              method to convert daily raw precipitation series into localized
+#              surface runoff (Q) and effective moisture infiltration (Peff)
+#              conditioned on explicit Curve Numbers and localized soil archetypes.
+# references: Reddy K. S. et al. (2012). Farm Ponds: A Climate Resilient Technology.
+# input: (1) precip - A data frame containing 'date' and numeric 'p' or 'P' rows.
+#        (2) CN - An atomic numeric Curve Number parameter (default: 85).
+#        (3) soil - An integer scalar flag: 1 for Red soil, 2 for Black soil.
+# output: A structured data frame mapping chronological date, raw rainfall (P),
+#         computed surface runoff (Q), and remaining effective rainfall (Peff).
+# ==============================================================================
+
+#' Compute Daily Effective Rainfall and Runoff via SCS Curve Number Method
+#' 
+#' @param precip A data.frame containing daily rainfall with at least \code{date} (Date or Character) and \code{p} (or \code{P}, numeric rainfall in mm).
+#' @param CN A numeric scalar specifying the SCS Curve Number coefficient. Defaults to \code{85}.
+#' @param soil An integer specifying the structural soil classification framework. Use \code{1} for Red soil (initial abstraction threshold = 0.3*S) or \code{2} for Black soil (initial abstraction threshold = 0.2*S). Defaults to \code{1}.
+#' 
+#' @return A data.frame with explicit chronological columns: \code{date} (class \code{Date}), \code{P} (raw precipitation), \code{Q} (computed runoff), and \code{Peff} (effective precipitation).
+#' @export
+#' 
+#' @examples
+#' # rain_data <- data.frame(date = seq(as.Date("2020-01-01"), by="day", length.out=3), p = c(5.0, 45.2, 0.0))
+#' # effective_rain <- get_Peff(precip = rain_data, CN = 85, soil = 1)
 get_Peff <- function(precip, CN = 85, soil = 1) {
-  # precip <- read.csv(file = "data/processed/01_precipitation.csv", header = TRUE)
-  colnames(precip) <- tolower(colnames(precip))
-  ts <- precip[, c("date", "p")]
-  colnames(ts)[2] <- "P"
-  ts$date <- as.Date(ts$date)
-  ts$P <- as.numeric(ts$P)
-  # Reference parametrisation Curve number
-  # Reddy K. S., Manoranjan Kumar., Rao, K.V., Maruthi, V., Reddy, B.M.K., Umesh B., Ganesh
-  # Babu R., Srinivasa Reddy K., Vijayalakshmi and Venkateswarlu, B. (2012). Farm Ponds: A
-  # Climate Resilient Technology for Rainfed Agriculture; Planning, Design and Construction.
-  # Central Research Institute for Dryland Agriculture, Santoshnagar, Saidabad, Hyderabad-
-  # 500059, Andhra Pradesh, India. 60p
   
-  # cn = 25400 / c(254 + s) 
-  
-  S <- c(25400 / CN) - 254
-  
-  ts$Q <- NA
-  
-  if (soil == 2) { # "black"
-
-    thresh <- 0.2*S
-    
-  } else if (soil == 1) { # "red"
-
-    thresh <- 0.3*S
+  # 1. Input Guarding and Structural Validations
+  if (!is.data.frame(precip)) {
+    stop("Argument 'precip' must be a structured data.frame object.")
   }
   
-  # If P is below a threshold, Q is zero
-  P.below.thresh <- c(ts$P < thresh)
-  ts$Q[P.below.thresh] <- 0
+  colnames(precip) <- tolower(colnames(precip))
   
-  # If P is above the threshold, Q is based on a formula
-  # 𝑄= (𝑃 − thresh)^2/(𝑃 - thresh + S)
+  if (!"date" %in% colnames(precip)) {
+    stop("Input data must contain an explicit 'date' column vector.")
+  }
+  if (!any(c("p", "p") %in% colnames(precip))) {
+    # Handle implicit 'p' variants gracefully
+    if ("p" %in% colnames(precip)) {
+      colnames(precip)[colnames(precip) == "p"] <- "p"
+    } else {
+      stop("Input data must contain an explicit numeric precipitation column named 'p' or 'P'.")
+    }
+  }
   
-  ts$Q[!P.below.thresh] <- 
-    c(ts$P[!P.below.thresh] - thresh)^2/ c(ts$P[!P.below.thresh] - thresh + S)
+  if (!soil %in% c(1, 2)) {
+    stop("Invalid 'soil' argument parameter specified. Select 1 (Red Soil) or 2 (Black Soil).")
+  }
   
+  # 2. Type Mapping and Time Isolation
+  ts <- data.frame(
+    date = as.Date(precip$date),
+    P    = as.numeric(precip$p),
+    stringsAsFactors = FALSE
+  )
+  
+  # 3. Derive Maximum Soil Water Retention Capacity Parameter (S)
+  # Formula: S = (25400 / CN) - 254
+  S <- (25400 / CN) - 254
+  
+  # 4. Set Initial Abstraction Wetting Thresholds (lambda * S) Based on Soil Type
+  if (soil == 2) { 
+    # Black soil archetype (Typically 0.2)
+    thresh <- 0.2 * S
+  } else if (soil == 1) { 
+    # Red soil loamy archetype (Adjusted to 0.3 based on regional calibration text)
+    thresh <- 0.3 * S
+  }
+  
+  # Initialize runoff vector tracking
+  ts$Q <- stats::setNames(numeric(nrow(ts)), NULL)
+  
+  # 5. Execute Core SCS-CN Segment Splitting Matrix Math
+  # Case A: Precipitation is below or equal to the initial abstraction threshold (Q = 0)
+  P_below_thresh <- ts$P <= thresh
+  ts$Q[P_below_thresh] <- 0
+  
+  # Case B: Precipitation exceeds threshold. Compute empirical runoff curve: Q = (P - thresh)^2 / (P - thresh + S)
+  P_above_thresh <- !P_below_thresh
+  if (any(P_above_thresh)) {
+    numerator <- (ts$P[P_above_thresh] - thresh)^2
+    denominator <- (ts$P[P_above_thresh] - thresh) + S
+    ts$Q[P_above_thresh] <- numerator / denominator
+  }
+  
+  # 6. Final Hydrological Balance Equation
   ts$Peff <- ts$P - ts$Q
   
-  write.csv(ts, file = paste0("data/processed/10_Peffective_soil_", soil, ".csv"), row.names = FALSE)
-  # summary(ts)
-  # plot(x = ts$date, y = ts$Peff)
+  # 7. Write standard output asset tracking record
+  dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
+  utils::write.csv(ts, file = paste0("data/processed/10_Peffective_soil_", soil, ".csv"), row.names = FALSE)
+  
   return(ts)
 }

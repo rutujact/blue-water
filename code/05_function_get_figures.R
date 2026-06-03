@@ -1,30 +1,46 @@
-# ===
-# title: "Functions to get Key figures Blue Water Potential (Recharge - Irrigation) for each crop rotation"
-# author: "Rutuja Chitra-Tarak"
-# assistance: Google Gemini 3
-# date: "2026-05-09"
-# ===
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Title:        Water Budgeting & Visualization Utility Functions
+# Author:       Rutuja Chitra-Tarak
+# Description:  A comprehensive suite of functions to process, aggregate, and 
+#               visualize Blue Water Potential (Recharge - Irrigation) across 
+#               crop systems, farm types, and landscape scales.
+# Dependencies: ggplot2, dplyr, tidyr, forcats, stringr, scales
+#               (Note: Required libraries are handled and sourced externally)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# WATER BUDGETING UTILITY FUNCTIONS ----
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# Add ggplot theme to use ----
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SECTION 1: GENERAL UTILITIES & THEMES
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' Standardized Base Theme for ggplot2 Visualizations
+#' @description A clean, minimalistic theme optimized for scientific publications.
 theme_baseR <- theme_bw() +
   theme(
-    panel.grid.major = element_blank(), # Remove major grid lines
+    panel.grid.major = element_blank(), # Remove major grid lines to reduce clutter
     panel.grid.minor = element_blank(), # Remove minor grid lines
-    panel.background = element_rect(fill = "white", colour = "black"), # Ensure white background and add a border
-    strip.background = element_blank() # Remove background from facet labels if applicable
+    panel.background = element_rect(fill = "white", colour = "black"), # Solid border
+    strip.background = element_blank()  # Clean facet headers
   )
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SECTION 2: CROP SYSTEM LEVEL (Temporal Climatology)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Process Annual Water Budget Data
-#' @description Merges budget lists with metadata and prepares climatology summaries.
+#' @description Extracts annual summaries from the raw budget list, merges them 
+#' with crop system metadata, and calculates mean climatology quantiles.
+#' @param budget_ls A list containing raw water budget outputs for each crop rotation.
+#' @param crop_systems_df A dataframe containing metadata for each cropping system.
+#' @return A list containing the raw merged data (`summary_yr_crop`) and the 
+#' aggregated quantile data (`summ_qs_cs`).
 process_annual_budget <- function(budget_ls, crop_systems_df) {
-  # Bind annual summaries and join with crop system metadata
+  
+  # Extract just the 'summary.yr' dataframe from each list element
   summary_yr_ls <- lapply(budget_ls, function(x) x$summary.yr)
   
+  # Bind all rotations into one large dataframe and join with their metadata
   summary_yr_crop <- dplyr::bind_rows(summary_yr_ls, .id = "rotation") %>%
     dplyr::left_join(crop_systems_df, by = "rotation") %>%
+    # Rename internal variables to clean, publication-ready strings for the plot labels
     dplyr::mutate(var.plot = forcats::fct_recode(factor(var), 
                                                  "Precipitation (mm)" = "P", "Precipitation - Runoff (mm)" = "Peff", 
                                                  "Effective Precip Used" = "Peff.used", "Runoff (mm)" = "Q", 
@@ -35,34 +51,44 @@ process_annual_budget <- function(budget_ls, crop_systems_df) {
                                                  "Irrigation Requirement (mm)" = "irrigation", "Groundwater Recharge (mm)" = "recharge", 
                                                  "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
   
-  # Calculate mean climatology across quantiles
+  # Calculate mean climatology across quantiles (averaging all rotations within a crop system)
   summ_qs_cs <- summary_yr_crop %>%
     dplyr::group_by(crop.system, Irrigation, var, var.plot, quantile) %>%
     dplyr::summarise(value = mean(value), .groups = "drop") %>%
+    # Pivot so that quantiles (0.025, 0.5, 0.975, mean) become their own columns
     tidyr::pivot_wider(names_from = quantile, values_from = value)
   
-  # Logic to order cropping systems by the 'balance' (BWP) mean
+  # Determine the factor levels (plot order) by sorting systems by their mean BWP
   order_logic <- summ_qs_cs %>% 
     dplyr::filter(var == "balance") %>% 
     dplyr::arrange(mean)
   
-  summ_qs_cs$crop.system <- factor(summ_qs_cs$crop.system, 
-                                   levels = order_logic$crop.system)
+  # Apply this sorting logic to the main dataframe so ggplot renders them sequentially
+  summ_qs_cs$crop.system <- factor(summ_qs_cs$crop.system, levels = order_logic$crop.system)
   
   return(list(summary_yr_crop = summary_yr_crop, summ_qs_cs = summ_qs_cs))
 }
 
+
 #' Plot Annual Climatology
-#' @description Generates the faceted column plots for supply/demand or BWP.
+#' @description Generates faceted column plots to visualize supply/demand or BWP metrics.
+#' @param data The `summ_qs_cs` dataframe generated by `process_annual_budget`.
+#' @param vars_to_plot A character vector of the variables to include in the plot.
+#' @param x_var The variable used for the x-axis (default: "mean").
+#' @param title_x The label for the x-axis.
+#' @return A ggplot2 object.
 plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)") {
   
+  # Filter data to only include the metrics the user wants to plot
   plot_data <- data %>% 
     dplyr::filter(var.plot %in% vars_to_plot) %>%
     dplyr::mutate(var.plot = factor(var.plot, levels = vars_to_plot))
   
   p <- ggplot(plot_data, aes(y = crop.system)) +
     facet_grid(. ~ var.plot, scales = "free_x") +
+    # Draw main bars mapped to Irrigated vs Rainfed colors
     geom_col(aes(x = .data[[x_var]], fill = Irrigation)) +
+    # Overlay the 95% Confidence Interval error bars
     geom_errorbar(aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30") +
     scale_fill_manual(values = c("Rainfed" = "yellow3", "Irrigated" = "skyblue")) +
     labs(x = title_x, y = "Cropping System") +
@@ -72,22 +98,29 @@ plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x 
   return(p)
 }
 
+
 #' Process Monthly Climatology
-#' @description Transforms budget data into monthly medians and 95% CI.
+#' @description Transforms raw budget data into monthly medians and 95% Confidence Intervals.
+#' @param budget_ls A list containing raw water budget outputs for each crop rotation.
+#' @param crop_systems_df A dataframe containing metadata for each cropping system.
+#' @return A dataframe (`clim_crop_cs`) aggregated by crop system and month.
 process_monthly_climatology <- function(budget_ls, crop_systems_df) {
   
-  # Helper to add climatology to each list element
+  # Internal Helper: Calculate monthly quantiles for a single rotation list
   add_clim_mo <- function(x) {
+    # Isolate monthly sums and reverse the sign for recharge so it plots downwards
     sum_mo <- x[["sum.mo"]] %>%
       mutate(plot.recharge = -recharge,
              plot.irri = if_else(irrigation == 0, NA, irrigation),
              plot.aet = if_else(aet == 0, NA, aet),
              plot.etc = if_else(etc == 0, NA, etc))
     
+    # Simple quantile wrapper
     quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
       tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
     }
     
+    # Pivot to long format, apply quantile math per month, and pivot back to wide
     clim_mo <- sum_mo %>%
       select(-year) %>%
       pivot_longer(-month, names_to = "var", values_to = "value") %>%
@@ -100,14 +133,15 @@ process_monthly_climatology <- function(budget_ls, crop_systems_df) {
     return(x)
   }
   
+  # Apply helper over all rotations
   budget_updated <- lapply(budget_ls, add_clim_mo)
   
-  # Combine and join with metadata
+  # Combine into one master dataframe and append metadata
   clim_mo_ls <- lapply(budget_updated, function(x) x$clim.mo)
   clim_crop <- dplyr::bind_rows(clim_mo_ls, .id = "rotation") %>%
     dplyr::left_join(crop_systems_df, by = "rotation")
   
-  # Aggregate by crop system
+  # Average the rotation quantiles up to the broader crop system level
   clim_crop_cs <- clim_crop %>%
     group_by(var, crop.system, Irrigation, month) %>%
     summarise(across(q025:q975, mean, na.rm = TRUE), .groups = "drop")
@@ -115,36 +149,37 @@ process_monthly_climatology <- function(budget_ls, crop_systems_df) {
   return(clim_crop_cs)
 }
 
-#' Plot Monthly Blue Water Potential ----
-#' @description Generates the faceted monthly BWP plot with dual-color ribbons 
-#' (Blue for positive, Red for negative).
+
+#' Plot Monthly Blue Water Potential
+#' @description Generates a faceted monthly BWP plot with dual-color ribbons 
+#' (Blue for positive potential, Red for negative potential/debt).
+#' @param clim_crop_cs The monthly climatology dataframe generated by `process_monthly_climatology`.
+#' @param years_range_text A character string specifying the year range for the title (e.g., "1980-2018").
+#' @return A ggplot2 object.
 plot_monthly_bwp <- function(clim_crop_cs, years_range_text) {
   
-  # 1. Prepare and Sort Data by Annual BWP (Sum of Medians)
+  # Filter down to just the BWP balance and flag if the median is above 0
   bwp_data <- clim_crop_cs %>%
     dplyr::filter(var == "balance") %>%
     dplyr::mutate(above_axis = median >= 0)
-
-  # 2. Generate Plot with Dynamic Group-Based Ribbons
+  
   ggplot(bwp_data, aes(x = month, group = 1)) +
     facet_wrap(~crop.system, scales = "fixed") +
     
-    # Ribbon for area below the horizontal axis (y=0)
+    # RIBBON TRICK: We use pmin and pmax to slice the ribbon cleanly at the 0 axis.
+    # Below axis ribbon fills light pink for ecological debt
     geom_ribbon(aes(ymin = pmin(q025, 0), ymax = 0, fill = "Below axis"), alpha = 0.5) +
-    # Ribbon for area above the horizontal axis (y=0)
+    # Above axis ribbon fills sky blue for surplus
     geom_ribbon(aes(ymin = 0, ymax = pmax(q975, 0), fill = "Above axis"), alpha = 0.5) +
-  
-    # Central median line matching the ribbon state
+    
+    # Draw the central median line
     geom_line(aes(y = median, color = above_axis, group = 1), linewidth = 1) +
     
-    # Color Configurations matching rutuja.jpg
     scale_fill_manual(values = c("Below axis" = "lightpink", "Above axis" = "skyblue")) +
-    # 
-    # scale_color_manual(values = c("TRUE" = "skyblue", "FALSE" = "lightpink")) +
+    scale_color_manual(values = c("TRUE" = "skyblue", "FALSE" = "lightpink")) +
     
-    # Axes and layout structures
     scale_x_continuous(breaks = 1:12, labels = as.character(1:12), limits = c(1, 12)) +
-    geom_hline(yintercept = 0, linewidth = 0.4, color = "black") +
+    geom_hline(yintercept = 0, linewidth = 0.4, color = "black") + # Draw the zero line
     theme_baseR +
     theme(
       legend.position = "none",
@@ -157,148 +192,495 @@ plot_monthly_bwp <- function(clim_crop_cs, years_range_text) {
     )
 }
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# VILLAGE WATER BALANCE PLOTTING ENGINE
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-# --- INTERNAL INDIVIDUAL PLOTTER ---
-# This function creates a single year's plot (either 1950 or 2022).
-generate_village_plot <- function(df, year_key, global_y_max, cfg, display_labels) {
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SECTION 3: PRODUCTION SYSTEM LEVEL (Spatial Aggregation)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' Compute Area-Weighted Production System Budgets
+#' @description Computes area-weighted water budgets at the Production System 
+#' level from annual rotation data. It calculates climate risk quantiles and 
+#' splits specific budget depth and volumetric contributions across land types.
+#' @param budget_yr_l A long-format dataframe containing annual rotation water budgets.
+#' @param ps_by_cs_area A dataframe containing production systems, time periods, crop systems, and area (ha).
+#' @param farms_count_df (Optional) A dataframe containing the number of farms per production system to scale to volumetric totals.
+#' @return A list containing `ps_budget_summary` (true quantiles) and `ps_bwp_volumetric` (land type contributions).
+get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_count_df = NULL) {
   
-  df_in  <- df %>% filter(val >= 0) %>% arrange(desc(val))
-  df_out <- df %>% filter(val < 0) %>% mutate(abs_val = abs(val)) %>% arrange(desc(abs_val)) 
-  
-  net_balance <- sum(df_in$val) - sum(df_out$abs_val)
-  
-  wrap_labels <- function(text, width = 24) {
-    str_wrap(text, width = width)
-  }
-  
-  box_xmin <- -1
-  box_xmax <- box_xmin + cfg$box_width
-  box_ymax <- 12000 
-  
-  box_color <- if(year_key == "1950") "#084594" else "#7f0000"
-  box_title <- if(year_key == "1950") "Blue Water Potential" else "Water Deficit\n(Ecological Debt)"
-  
-  get_colors <- function(n, base_colors) {
-    if(n <= 1) return(base_colors[1])
-    colorRampPalette(base_colors)(n)
-  }
-  cols_in  <- get_colors(nrow(df_in), c("#084594", "#a1dab4"))   
-  cols_out <- get_colors(nrow(df_out), c("#bd0026", "#fecc5c")) 
-  
-  # Influx Paths
-  make_influx_coords <- function(i) {
-    row <- df_in[i, ]
-    y_start <- box_ymax + 3500 + (i * cfg$v_stagger_in) 
-    x_drop  <- box_xmin + 1.5 + (i * 3) 
-    data.frame(
-      x = c(box_xmin - 5, x_drop, x_drop),
-      y = c(y_start, y_start, box_ymax + 150),
-      group = row$label, val = row$val, col = cols_in[i]
+  # 1. Combine datasets and classify land types cleanly based on rotation names/irrigation
+  ps_annual_data <- budget_yr_l %>%
+    dplyr::select(rotation, crop.system, Irrigation, year, var, value) %>%
+    dplyr::left_join(ps_by_cs_area, by = "crop.system", relationship = "many-to-many") %>%
+    dplyr::filter(!is.na(production_system_period)) %>%
+    dplyr::mutate(
+      land_type = dplyr::case_when(
+        stringr::str_detect(rotation, "(?i)grassland|grazed") | 
+          stringr::str_detect(crop.system, "(?i)grassland|grazed") ~ "grazed",
+        Irrigation == "Irrigated" ~ "irrigated",
+        TRUE ~ "rainfed"
+      )
     )
-  }
   
-  # Outflux Paths (Staircase engine honoring vertical terminal alignment)
-  make_outflux_coords <- function(i) {
-    row <- df_out[i, ]
-    x_spine <- box_xmax + ((nrow(df_out) - i) * 2.2)
-    y_box_exit <- box_ymax * 0.15 + ((i - 1) * (box_ymax * 0.7 / max(1, nrow(df_out) - 1)))
-    y_final_stagger <- box_ymax + 3500 + (i * cfg$v_stagger_out)
-    x_end <- box_xmax + 24  # Shared fixed wall coordinate for arrow tips
-    
-    data.frame(
-      x = c(box_xmax - 0.1, x_spine, x_spine, x_end),
-      y = c(y_box_exit,  y_box_exit, y_final_stagger, y_final_stagger),
-      group = row$label, val = row$abs_val, col = cols_out[i]
+  # 2. Compute true area-weighted depth for each production system per year
+  # (Total Volume / Total Area)
+  ps_weighted_annual <- ps_annual_data %>%
+    dplyr::group_by(production_system, time_period, Irrigation, year, var, crop.system) %>%
+    dplyr::mutate(rotations_count = dplyr::n_distinct(rotation)) %>%
+    dplyr::group_by(production_system, time_period, Irrigation, year, var) %>%
+    dplyr::summarise(
+      weighted_value = sum(value * (area_ha / rotations_count), na.rm = TRUE) / 
+        sum(area_ha / rotations_count, na.rm = TRUE),
+      .groups = "drop"
     )
+  
+  # 3. Calculate true final Quantiles over the timeline data
+  ps_budget_summary <- ps_weighted_annual %>%
+    dplyr::group_by(production_system, time_period, Irrigation, var) %>%
+    dplyr::summarise(
+      mean = mean(weighted_value, na.rm = TRUE),
+      p25  = quantile(weighted_value, 0.25, na.rm = TRUE),
+      p50  = quantile(weighted_value, 0.50, na.rm = TRUE), 
+      p75  = quantile(weighted_value, 0.75, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    # Relabel for clean plotting
+    dplyr::mutate(var.plot = forcats::fct_recode(factor(var), 
+                                                 "Precipitation (mm)" = "P", "Precipitation - Runoff (mm)" = "Peff", 
+                                                 "Effective Precip Used" = "Peff.used", "Runoff (mm)" = "Q", 
+                                                 "AET (mm)" = "aet", "Crop ET (mm)" = "aet.crop", 
+                                                 "ET:Effective Rainfall" = "aet.to.Peff", "ET Supply:Demand" = "aet.to.etc.crop", 
+                                                 "Blue Water Potential (mm)" = "balance", "Potential ET (mm)" = "et0", 
+                                                 "Potential Crop ET (mm)" = "etc", "etc.crop (mm)" = "etc.crop", 
+                                                 "Irrigation Requirement (mm)" = "irrigation", "Groundwater Recharge (mm)" = "recharge", 
+                                                 "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent")) %>%
+    dplyr::relocate(var.plot, .after = var)  %>%
+    dplyr::arrange(time_period, production_system)
+  
+  # 4. Generate the accurate, area-weighted land contribution matrix
+  # First, get total system area to use as a consistent denominator
+  ps_total_areas <- ps_by_cs_area %>%
+    dplyr::group_by(production_system, time_period) %>%
+    dplyr::summarise(total_system_area = sum(area_ha, na.rm = TRUE), .groups = "drop")
+  
+  ps_bwp_volumetric <- ps_annual_data %>%
+    dplyr::filter(var == "balance") %>%
+    dplyr::group_by(production_system, time_period, land_type, year, crop.system) %>%
+    dplyr::mutate(rotations_count = dplyr::n_distinct(rotation)) %>%
+    dplyr::group_by(production_system, time_period, land_type, year) %>%
+    # Sum up the absolute depth-area volume footprint for each land type per year
+    dplyr::summarise(
+      type_volumetric_depth = sum(value * (area_ha / rotations_count), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    # Join total area and divide to get true distributed depth component (mm)
+    dplyr::left_join(ps_total_areas, by = c("production_system", "time_period")) %>%
+    dplyr::mutate(weighted_contribution = type_volumetric_depth / total_system_area) %>%
+    # Average the years to find the climate mean
+    dplyr::group_by(production_system, time_period, land_type) %>%
+    dplyr::summarise(mean_contribution = mean(weighted_contribution, na.rm = TRUE), .groups = "drop") %>%
+    # Pivot wider into side-by-side columns (rainfed, irrigated, grazed)
+    tidyr::pivot_wider(names_from = land_type, values_from = mean_contribution, values_fill = 0) %>%
+    dplyr::mutate(
+      bwp_mean_mm = rowSums(dplyr::across(dplyr::any_of(c("rainfed", "irrigated", "grazed"))), na.rm = TRUE)
+    ) %>%
+    dplyr::left_join(ps_total_areas, by = c("production_system", "time_period")) %>%
+    # Convert depth (mm) to volume (m3) -> 1 mm * 1 ha = 10 m3
+    dplyr::mutate(
+      bwp_mean_m3 = bwp_mean_mm * total_system_area * 10
+    )
+  
+  # Scale up to Regional Total Volume if farm counts are provided
+  has_farm_counts <- !is.null(farms_count_df)
+  if (has_farm_counts) {
+    ps_bwp_volumetric <- ps_bwp_volumetric %>%
+      dplyr::left_join(
+        farms_count_df %>% dplyr::select(production_system, time_period, number_of_farms),
+        by = c("production_system", "time_period")
+      ) %>%
+      dplyr::mutate(
+        number_of_farms = tidyr::replace_na(number_of_farms, 0),
+        total_bwp_m3 = bwp_mean_m3 * number_of_farms
+      ) %>%
+      dplyr::select(time_period, production_system, bwp_mean_mm, 
+                    dplyr::any_of(c("rainfed", "irrigated", "grazed")), 
+                    bwp_mean_m3, number_of_farms, total_bwp_m3)
+  } else {
+    ps_bwp_volumetric <- ps_bwp_volumetric %>%
+      dplyr::select(time_period, production_system, bwp_mean_mm, 
+                    dplyr::any_of(c("rainfed", "irrigated", "grazed")), bwp_mean_m3)
   }
   
-  paths_in  <- if(nrow(df_in) > 0) do.call(rbind, lapply(seq_len(nrow(df_in)), make_influx_coords)) else data.frame()
-  paths_out <- if(nrow(df_out) > 0) do.call(rbind, lapply(seq_len(nrow(df_out)), make_outflux_coords)) else data.frame()
+  ps_bwp_volumetric <- ps_bwp_volumetric %>% dplyr::arrange(time_period, production_system)
   
-  # FIX: Uniform structural coordinates preserve 1:1 box width scaling and stop text truncation
-  x_min_limit <- -45
-  x_max_limit <- 95
-  
-  g <- ggplot() +
-    # Draw central structural box
-    annotate("rect", xmin = box_xmin, xmax = box_xmax, ymin = 0, ymax = box_ymax, 
-             fill = box_color, color = "white", linewidth = 0.5) +
-    
-    # Influx Paths
-    geom_path(data = paths_in, aes(x = x, y = y, group = group, color = col, linewidth = val),
-              arrow = arrow(length = unit(cfg$arrow_head_sz, "inches"), type = "closed"),
-              lineend = "butt", linejoin = "mitre") +
-    
-    # Outflux Paths
-    {if(nrow(paths_out) > 0) geom_path(data = paths_out, aes(x = x, y = y, group = group, color = col, linewidth = val),
-                                       arrow = arrow(length = unit(cfg$arrow_head_sz, "inches"), type = "closed"),
-                                       lineend = "butt", linejoin = "mitre")} +
-    
-    # Left Labels (Influx)
-    geom_text(data = paths_in %>% group_by(group) %>% slice(1),
-              aes(x = x - 2.0, y = y, label = paste0(wrap_labels(group, 28), "\n(", format(val, big.mark=","), ")")), 
-              hjust = 1, size = cfg$text_sz_main, fontface = "bold", lineheight = 0.85, color = "#222222") +
-    
-    # Right Labels (Outflux - perfectly vertically aligned with safe structural margins)
-    {if(nrow(paths_out) > 0) geom_text(data = paths_out %>% group_by(group) %>% slice(n()),
-                                       aes(x = x + 3.5, y = y, label = paste0(wrap_labels(group, 22), "\n(-", format(val, big.mark=","), ")")), 
-                                       hjust = 0, size = cfg$text_sz_out, fontface = "bold", lineheight = 0.85, color = "#99000d")} +
-    
-    # Central Container Text
-    annotate("text", x = (box_xmin + box_xmax)/2, y = 7500, 
-             label = box_title, color = "white", fontface = "bold", size = cfg$text_sz_box, lineheight = 0.9) +
-    
-    annotate("text", x = (box_xmin + box_xmax)/2, y = 4000, 
-             label = paste0("bold('", format(net_balance * 1000, big.mark=","), "') ~ bold(m^3)"), 
-             parse = TRUE, color = "white", size = cfg$text_sz_box) +
-    
-    # Timeline Era Axis Indicator
-    annotate("text", x = (box_xmin + box_xmax)/2, y = -3500, label = display_labels[[year_key]], 
-             size = cfg$text_sz_year, fontface = "bold") +
-    
-    scale_linewidth(range = c(cfg$min_arrow_w, cfg$max_arrow_w), guide = "none") +
-    scale_color_identity() +
-    theme_void() + 
-    coord_cartesian(xlim = c(x_min_limit, x_max_limit), ylim = c(-5000, global_y_max), clip = "off")
-  
-  return(g)
+  return(list(ps_budget_summary = ps_budget_summary, ps_bwp_volumetric = ps_bwp_volumetric))
 }
 
-# --- MASTER WRAPPER FUNCTION (With Person-Year Equivalence) ---
-# This is the function you actually call from your Rmd.
 
-get_village_comparison_plot <- function(data_list, display_labels, cfg) {
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SECTION 4: LANDSCAPE LEVEL (Village Water Balance Sankey Diagrams)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' Plot Village Blue Water Potential (Master Wrapper)
+#' @description Automatically detects if the data contains 1 or 2 periods and routes
+#' the rendering to the appropriate layout function (single tank vs comparative panels).
+#' @param village_bwp_collapsed A dataframe containing 'period', 'label', and 'val'.
+#' @param cfg A list containing configuration sizes (e.g., `box_width`, `max_arrow_w`).
+#' @param output_dev The graphics device to use (e.g., `cairo_pdf`, `png`).
+#' @param filename The filepath to save the output.
+plot_village_bwp <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf, filename = "figures/manuscript/Fig.6.pdf") {
   
-  global_y_max <- map_dbl(data_list, function(df) {
-    df_in  <- df %>% filter(val >= 0)
-    df_out <- df %>% filter(val < 0)
+  unique_periods <- unique(village_bwp_collapsed$period)
+  num_periods <- length(unique_periods)
+  
+  if (num_periods == 1) {
+    message("Detected 1 period. Generating single-panel Blue Water Potential plot...")
+    get_single_village_plot(village_bwp_collapsed, cfg, output_dev, filename)
     
-    # Check if either subset is empty and default to 0 rows for calculation
-    n_in  <- if(is.null(df_in))  0 else nrow(df_in)
-    n_out <- if(is.null(df_out)) 0 else nrow(df_out)
+  } else if (num_periods == 2) {
+    message("Detected 2 periods. Generating comparative two-panel plot...")
+    get_village_comparison_plot(village_bwp_collapsed, cfg, output_dev, filename)
     
-    max_in_y  <- 12000 + 3500 + (n_in * cfg$v_stagger_in)
-    max_out_y <- 12000 + 3500 + (n_out * cfg$v_stagger_out)
+  } else {
+    stop("Error: The dataframe must contain exactly 1 or 2 unique periods. Detected: ", num_periods)
+  }
+}
+
+#' Generate Comparative Two-Panel Village Plot (Internal)
+#' @description Visualizes the change in Blue Water Potential (tank size) and the 
+#' influx/outflux dynamics driving that change across two time periods.
+get_village_comparison_plot <- function(village_bwp_collapsed, cfg, output_dev = cairo_pdf, filename = "figures/manuscript/Fig.6.pdf") {
+  
+  # Ensure the output directory exists
+  dir.create(dirname(filename), showWarnings = FALSE, recursive = TRUE)
+  
+  # Initialize the graphics device (handles both PDF and standard image formats)
+  if (identical(output_dev, cairo_pdf)) {
+    output_dev(file = filename, width = 10.0, height = 4.2, family = "Helvetica")
+  } else {
+    # Using pointsize = 18 scales up the base text for high-res PNG rendering
+    output_dev(filename = filename, width = 4000, height = 1680, res = 300, pointsize = 18)
+  }
+  
+  # Set precise margins to accommodate long labels on the right (mar) and bottom (oma)
+  par(mfrow = c(1, 2), mar = c(1.0, 3.5, 1.5, 7.5), oma = c(0, 0, 1.4, 1))
+  
+  # Extract the two periods for comparison (Panel A vs Panel B)
+  unique_periods <- unique(village_bwp_collapsed$period)
+  p1 <- unique_periods[1]; p2 <- unique_periods[2]
+  df_p1 <- village_bwp_collapsed[village_bwp_collapsed$period == p1, ]
+  df_p2 <- village_bwp_collapsed[village_bwp_collapsed$period == p2, ]
+  
+  # Calculate net water potential for each period (Sum of positive - Sum of absolute negative)
+  tot_p1 <- sum(df_p1$val[df_p1$val >= 0]) - sum(abs(df_p1$val[df_p1$val < 0]))
+  tot_p2 <- sum(df_p2$val[df_p2$val >= 0]) - sum(abs(df_p2$val[df_p2$val < 0]))
+  
+  # Determine the maximum volume to standardize the 'tank' height across both panels
+  max_tot <- max(tot_p1, tot_p2)
+  abs_drop <- tot_p1 - tot_p2
+  pct_change <- -(abs_drop / tot_p1) * 100
+  
+  # Helper function to generate color gradients based on the number of flows
+  get_flow_colors <- function(n, base_colors) { 
+    if(n <= 1) return(base_colors[1])
+    colorRampPalette(base_colors)(n) 
+  }
+  
+  # Helper function to format and draw the split text labels
+  draw_split_label <- function(x, y, label, val, adj, is_outflux = FALSE) {
+    # Isolate text inside and outside parentheses
+    main_txt <- trimws(sub("\\(.*\\)", "", label))
+    bracket_txt <- if (grepl("\\(", label)) regmatches(label, regexpr("\\(.*\\)", label)) else ""
     
-    return(max(max_in_y, max_out_y) + 3000)
-  }) %>% max()
+    # Format the numeric value with commas (and a minus sign if it's an outflux)
+    val_txt <- if(is_outflux) paste0("-", format(abs(val), big.mark=",")) else format(val, big.mark=",")
+    
+    # Text spacing and sizing adjustments
+    line_drop <- 950 
+    cex_main  <- 0.65 
+    cex_sub   <- 0.55 
+    
+    # TYPOGRAPHY FIX: Labels are Bold (stark black) to draw attention to crop types. 
+    # Numbers are Regular (grey) to recede into the background, as visuals already show magnitude.
+    # xpd = NA forces R to render the text into the margins instead of cutting it off
+    text(x, y + line_drop, main_txt, adj = adj, font = 2, cex = cex_main, col = "#111111", xpd = NA)
+    
+    if(bracket_txt != "") {
+      text(x, y, bracket_txt, adj = adj, font = 1, cex = cex_sub, col = "#555555", xpd = NA)
+      text(x, y - line_drop, val_txt, adj = adj, font = 1, cex = cex_main, col = "#777777", xpd = NA)
+    } else {
+      text(x, y, val_txt, adj = adj, font = 1, cex = cex_main, col = "#777777", xpd = NA)
+    }
+  }
   
-  plots <- imap(data_list, ~generate_village_plot(.x, .y, global_y_max, cfg, display_labels))
+  # Tank Geometry Setup
+  box_xmin <- -10
+  box_xmax <- box_xmin + cfg$box_width 
+  box_ymax <- 12000
   
-  pub_caps <- map_chr(names(plots), function(nm) {
-    total_bwp_m3 <- (sum(data_list[[nm]]$val[data_list[[nm]]$val >= 0]) - sum(abs(data_list[[nm]]$val[data_list[[nm]]$val < 0]))) * 1000
-    prefix <- if(nm == "2022") "B. " else "A. "
-    term <- " Blue Water Potential = "
-    return(paste0(prefix, nm, " Archetype Village", term, format(total_bwp_m3, big.mark=","), " m³"))
-  })
+  # Calculate dynamic water fill heights proportional to the maximum volume
+  fill_y_p1 <- box_ymax * (tot_p1 / max_tot)
+  fill_y_p2 <- box_ymax * (tot_p2 / max_tot)
   
-  # Symmetric 1:1 distribution preserves matching sizes for both boxes without compression
-  final_plot <- (plots[[1]] + labs(caption = pub_caps[1])) + (plots[[2]] + labs(caption = pub_caps[2])) +
-    plot_layout(widths = c(1, 1)) & 
-    theme(plot.caption = element_text(hjust = 0, size = 18, face = "bold", margin = margin(t = 20)))
+  # Fixed plot boundaries to ensure both panels perfectly align
+  plot_xlim <- c(-100, 135) 
+  plot_ylim <- c(-3000, 25500)
   
-  return(final_plot)
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # --- Panel A (Baseline Period) ----
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Subset and sort influxes (largest on top)
+  df_in_p1 <- df_p1[df_p1$val >= 0, ][order(-df_p1$val[df_p1$val >= 0]), ]
+  
+  plot(NULL, xlim = plot_xlim, ylim = plot_ylim, xaxt = "n", yaxt = "n", bty = "n", xlab = "", ylab = "")
+  mtext("A", side = 3, line = 0.5, adj = 0, font = 2, cex = 1.4)
+  
+  # Draw the empty tank boundary and fill it to Period 1's level
+  rect(box_xmin, 0, box_xmax, box_ymax, col = NA, border = "#084594", lwd = 1.5)
+  rect(box_xmin, 0, box_xmax, fill_y_p1, col = "#084594", border = NA)
+  
+  # Annotate the inside of the tank (Label is bold, Number is regular)
+  text((box_xmin + box_xmax)/2, fill_y_p1 * 0.65, "Blue Water\nPotential", col = "white", font = 2, cex = 0.85)
+  text((box_xmin + box_xmax)/2, fill_y_p1 * 0.32, format(tot_p1, big.mark=","), col = "white", font = 1, cex = 1.1)
+  
+  # Render Influx Arrows for Panel A
+  n_in_p1 <- nrow(df_in_p1)
+  if(n_in_p1 > 0) {
+    cols <- get_flow_colors(n_in_p1, c("#084594", "#a1dab4")) 
+    y_s  <- seq(16000, 24500, length.out = n_in_p1) # Vertical origins of the lines
+    x_d  <- seq(box_xmin + 6, box_xmin + (box_xmax - box_xmin)*8/10, length.out = n_in_p1) # Horizontal entry points
+    
+    for(i in 1:n_in_p1) {
+      # Scale line width proportional to data value
+      lwd_val <- scales::rescale(df_in_p1$val[i], to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(village_bwp_collapsed$val)))
+      
+      # Draw the 90-degree bent line
+      lines(c(-55, x_d[i], x_d[i]), c(y_s[i], y_s[i], box_ymax + (lwd_val * 75)), lwd = lwd_val, col = cols[i], lend = 1)
+      
+      # Draw the downward-pointing arrowhead (polygon)
+      polygon(c(x_d[i] - (lwd_val * 1.4), x_d[i] + (lwd_val * 1.4), x_d[i]), 
+              c(box_ymax + (lwd_val * 75), box_ymax + (lwd_val * 75), box_ymax), 
+              col = cols[i], border = NA)
+      
+      draw_split_label(-60, y_s[i], df_in_p1$label[i], df_in_p1$val[i], 1)
+    }
+  }
+  
+  # X-axis label
+  text((box_xmin + box_xmax)/2, -2000, paste0(p1, " Archetype Village"), font = 2, cex = 0.95, xpd = NA)
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # --- Panel B (Comparison Period) ----
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  df_in_p2  <- df_p2[df_p2$val >= 0, ][order(-df_p2$val[df_p2$val >= 0]), ]
+  df_out_p2 <- df_p2[df_p2$val < 0, ][order(abs(df_p2$val[df_p2$val < 0]), decreasing = TRUE), ]
+  
+  plot(NULL, xlim = plot_xlim, ylim = plot_ylim, xaxt = "n", yaxt = "n", bty = "n", xlab = "", ylab = "")
+  mtext("B", side = 3, line = 0.5, adj = 0, font = 2, cex = 1.4)
+  
+  # Draw the empty tank boundary and fill it to Period 2's (lower) level
+  rect(box_xmin, 0, box_xmax, box_ymax, col = NA, border = "#084594", lwd = 1.5)
+  rect(box_xmin, 0, box_xmax, fill_y_p2, col = "#084594", border = NA)
+  
+  # Draw the 'Ghosted' depletion zone (The water lost between P1 and P2)
+  rect(box_xmin, fill_y_p2, box_xmax, fill_y_p1, col = "#e2ebf3", border = NA)
+  
+  # Annotate the inside of the remaining water fill (Label is bold, Number is regular)
+  text((box_xmin + box_xmax)/2, fill_y_p2 * 0.65, "Blue Water\nPotential", col = "white", font = 2, cex = 0.85)
+  text((box_xmin + box_xmax)/2, fill_y_p2 * 0.32, format(tot_p2, big.mark=","), col = "white", font = 1, cex = 1.1)
+  
+  # Render the absolute drop group (Triangle + Text) centered using the 25% origin
+  empty_space_mid_y <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) / 2)
+  start_x <- box_xmin + (box_xmax - box_xmin) * 0.25
+  text_to_show <- paste0("-", format(abs_drop, big.mark=","), " (", round(pct_change), "%)")
+  
+  # Note: Kept the primary red text bold since it is the key finding of the figure
+  text(start_x, empty_space_mid_y, text_to_show, col = "#bd0026", font = 2, cex = 0.80, adj = 0)
+  polygon(c(start_x - 12, start_x - 2, start_x - 7), 
+          c(empty_space_mid_y + 350, empty_space_mid_y + 350, empty_space_mid_y - 350), 
+          col = "#bd0026", border = NA)
+  
+  # Render Influx Arrows for Panel B
+  n_in_p2 <- nrow(df_in_p2)
+  if(n_in_p2 > 0) {
+    cols <- get_flow_colors(n_in_p2, c("#084594", "#a1dab4"))
+    y_s  <- seq(16000, 24500, length.out = n_in_p2)
+    x_d  <- seq(box_xmin + 6, box_xmin + (box_xmax - box_xmin)*8/10, length.out = n_in_p2)
+    
+    for(i in 1:n_in_p2) {
+      lwd_val <- scales::rescale(df_in_p2$val[i], to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(village_bwp_collapsed$val)))
+      lines(c(-55, x_d[i], x_d[i]), c(y_s[i], y_s[i], box_ymax + (lwd_val * 75)), lwd = lwd_val, col = cols[i], lend = 1)
+      polygon(c(x_d[i] - (lwd_val * 1.4), x_d[i] + (lwd_val * 1.4), x_d[i]), 
+              c(box_ymax + (lwd_val * 75), box_ymax + (lwd_val * 75), box_ymax), 
+              col = cols[i], border = NA)
+      draw_split_label(-60, y_s[i], df_in_p2$label[i], df_in_p2$val[i], 1)
+    }
+  }
+  
+  # Render Outflux Arrows for Panel B
+  n_out_p2 <- nrow(df_out_p2)
+  if(n_out_p2 > 0) {
+    cols <- get_flow_colors(n_out_p2, c("#bd0026", "#fecc5c")) 
+    for(i in 1:n_out_p2) {
+      abs_val <- abs(df_out_p2$val[i])
+      lwd_val <- scales::rescale(abs_val, to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(abs(village_bwp_collapsed$val))))
+      
+      # Added a 2-unit gap to prevent outflux arrows from bleeding over the tank border
+      x_origin <- box_xmax + 2  
+      
+      # Map routing geometries
+      x_s <- box_xmax + ((n_out_p2 - i) * 8) + 5            
+      y_f <- box_ymax + 1000 + (i * cfg$v_stagger_out)      
+      x_t <- box_xmax + 40                                  
+      
+      # Arrows originate strictly from the ghosted depletion zone
+      y_start <- fill_y_p2 + ((fill_y_p1 - fill_y_p2) * (i / (n_out_p2 + 1)))
+      
+      # Draw the zig-zag outflux line originating from the gap
+      lines(c(x_origin, x_s, x_s, x_t), c(y_start, y_start, y_f, y_f), lwd = lwd_val, col = cols[i], lend = 1)
+      
+      # Draw the right-pointing arrowhead (polygon)
+      polygon(c(x_t, x_t, x_t + 12), 
+              c(y_f - (lwd_val * 60 + 200), y_f + (lwd_val * 60 + 200), y_f), 
+              col = cols[i], border = NA)
+      
+      draw_split_label(x_t + 15, y_f, df_out_p2$label[i], abs_val, 0, TRUE)
+    }
+  }
+  
+  text((box_xmin + box_xmax)/2, -2000, paste0(p2, " Archetype Village"), font = 2, cex = 0.95, xpd = NA)
+  
+  # Add global unit subtitle across the top right
+  mtext(expression(italic(paste("All units in ", 10^3, " m"^3))), side = 3, line = 0.2, adj = 1, outer = TRUE, cex = 0.9)
+  
+  dev.off()
+}
+
+#' Generate Single-Panel Village Plot (Internal)
+#' @description A standalone version of the Sankey visualization for datasets 
+#' with only a single time period (distributes outfluxes across the full tank).
+get_single_village_plot <- function(df, cfg, output_dev, filename) {
+  
+  # Ensure the output directory exists
+  dir.create(dirname(filename), showWarnings = FALSE, recursive = TRUE)
+  
+  # Initialize graphics device with a squarer aspect ratio for a single panel
+  if (identical(output_dev, cairo_pdf)) {
+    output_dev(file = filename, width = 6.0, height = 5.0, family = "Helvetica")
+  } else {
+    # pointsize = 18 ensures text is readable on massive high-resolution canvases
+    output_dev(filename = filename, width = 2400, height = 2000, res = 300, pointsize = 18)
+  }
+  
+  # Single panel margins: Wide right margin (7.5) prevents outflux text from being cut off
+  par(mfrow = c(1, 1), mar = c(1.0, 3.5, 1.5, 7.5), oma = c(0, 0, 1.4, 1))
+  
+  # Calculate the net volume (Sum of influxes minus sum of absolute outfluxes)
+  tot_val <- sum(df$val[df$val >= 0]) - sum(abs(df$val[df$val < 0]))
+  period_name <- unique(df$period)[1]
+  
+  # Helper to generate flow gradients based on how many arrows are drawn
+  get_flow_colors <- function(n, base_colors) { 
+    if(n <= 1) return(base_colors[1])
+    colorRampPalette(base_colors)(n) 
+  }
+  
+  # Helper function to format and draw the split text labels
+  draw_split_label <- function(x, y, label, val, adj, is_outflux = FALSE) {
+    # Separate the main label from the sub-label (anything in parentheses)
+    main_txt <- trimws(sub("\\(.*\\)", "", label))
+    bracket_txt <- if (grepl("\\(", label)) regmatches(label, regexpr("\\(.*\\)", label)) else ""
+    val_txt <- if(is_outflux) paste0("-", format(abs(val), big.mark=",")) else format(val, big.mark=",")
+    
+    # Text positioning offsets
+    line_drop <- 950; cex_main <- 0.65; cex_sub <- 0.55 
+    
+    # TYPOGRAPHY: Crop Labels are Bold (black). Data values are Regular (grey) to act as secondary information.
+    # xpd = NA forces R to render the text into the margins instead of cutting it off
+    text(x, y + line_drop, main_txt, adj = adj, font = 2, cex = cex_main, col = "#111111", xpd = NA)
+    
+    if(bracket_txt != "") {
+      text(x, y, bracket_txt, adj = adj, font = 1, cex = cex_sub, col = "#555555", xpd = NA)
+      text(x, y - line_drop, val_txt, adj = adj, font = 1, cex = cex_main, col = "#777777", xpd = NA)
+    } else {
+      text(x, y, val_txt, adj = adj, font = 1, cex = cex_main, col = "#777777", xpd = NA)
+    }
+  }
+  
+  # Base Tank Geometry
+  box_xmin <- -10
+  box_xmax <- box_xmin + cfg$box_width 
+  box_ymax <- 12000
+  plot_xlim <- c(-100, 135) 
+  plot_ylim <- c(-3000, 25500)
+  
+  # Split data into positive (influx) and negative (outflux)
+  df_in <- df[df$val >= 0, ][order(-df$val[df$val >= 0]), ]
+  df_out <- df[df$val < 0, ][order(abs(df$val[df$val < 0]), decreasing = TRUE), ]
+  
+  plot(NULL, xlim = plot_xlim, ylim = plot_ylim, xaxt = "n", yaxt = "n", bty = "n", xlab = "", ylab = "")
+  
+  # Draw the primary water tank outline and fill it completely
+  rect(box_xmin, 0, box_xmax, box_ymax, col = NA, border = "#084594", lwd = 1.5)
+  rect(box_xmin, 0, box_xmax, box_ymax, col = "#084594", border = NA)
+  
+  # Center text inside the tank (Label bold, Number regular)
+  text((box_xmin + box_xmax)/2, box_ymax * 0.65, "Blue Water\nPotential", col = "white", font = 2, cex = 0.85)
+  text((box_xmin + box_xmax)/2, box_ymax * 0.32, format(tot_val, big.mark=","), col = "white", font = 1, cex = 1.1)
+  
+  # Render Influx Arrows (Entering from top left)
+  n_in <- nrow(df_in)
+  if(n_in > 0) {
+    cols <- get_flow_colors(n_in, c("#084594", "#a1dab4"))
+    y_s  <- seq(16000, 24500, length.out = n_in) # Vertical stagger for origins
+    x_d  <- seq(box_xmin + 6, box_xmin + (box_xmax - box_xmin)*8/10, length.out = n_in) # Horizontal entry points
+    
+    for(i in 1:n_in) {
+      # Line thickness scaled proportionally to data value
+      lwd_val <- scales::rescale(df_in$val[i], to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(df$val)))
+      
+      lines(c(-55, x_d[i], x_d[i]), c(y_s[i], y_s[i], box_ymax + (lwd_val * 75)), lwd = lwd_val, col = cols[i], lend = 1)
+      polygon(c(x_d[i] - (lwd_val * 1.4), x_d[i] + (lwd_val * 1.4), x_d[i]), 
+              c(box_ymax + (lwd_val * 75), box_ymax + (lwd_val * 75), box_ymax), 
+              col = cols[i], border = NA)
+      
+      draw_split_label(-60, y_s[i], df_in$label[i], df_in$val[i], 1)
+    }
+  }
+  
+  # Render Outflux Arrows (Exiting from the right side)
+  n_out <- nrow(df_out)
+  if(n_out > 0) {
+    cols <- get_flow_colors(n_out, c("#bd0026", "#fecc5c")) 
+    for(i in 1:n_out) {
+      abs_val <- abs(df_out$val[i])
+      lwd_val <- scales::rescale(abs_val, to = c(cfg$min_arrow_w, cfg$max_arrow_w), from = c(0, max(abs(df$val))))
+      
+      # 2-unit gap prevents outflux arrows from bleeding over the tank outline
+      x_origin <- box_xmax + 2  
+      
+      # Map routing geometries
+      x_s <- box_xmax + ((n_out - i) * 8) + 5            # Horizontal stagger exiting the tank
+      y_f <- box_ymax + 1000 + (i * cfg$v_stagger_out)   # Vertical stagger for the text labels
+      x_t <- box_xmax + 40                               # Final horizontal resting point
+      
+      # In the single plot, outfluxes are distributed evenly across the height of the full tank
+      y_start <- box_ymax * (i / (n_out + 1)) 
+      
+      # Draw the outflux line originating from the gap
+      lines(c(x_origin, x_s, x_s, x_t), c(y_start, y_start, y_f, y_f), lwd = lwd_val, col = cols[i], lend = 1)
+      polygon(c(x_t, x_t, x_t + 12), 
+              c(y_f - (lwd_val * 60 + 200), y_f + (lwd_val * 60 + 200), y_f), 
+              col = cols[i], border = NA)
+      
+      draw_split_label(x_t + 15, y_f, df_out$label[i], abs_val, 0, TRUE)
+    }
+  }
+  
+  # X-axis label
+  text((box_xmin + box_xmax)/2, -2000, paste0(period_name, " Archetype Village"), font = 2, cex = 0.95, xpd = NA)
+  
+  # Add global unit subtitle across the top right
+  mtext(expression(italic(paste("All units in ", 10^3, " m"^3))), side = 3, line = 0.2, adj = 1, outer = TRUE, cex = 0.9)
+  
+  dev.off()
 }
