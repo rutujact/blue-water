@@ -703,3 +703,107 @@ get_single_village_plot <- function(df, cfg, output_dev, filename) {
   
   dev.off()
 }
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SECTION 5: VILLAGE WATER BALANCE (networkD3 Two-Panel Layout)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' Generate networkD3 Sankey Diagram
+#' @description Creates an HTML-based Sankey diagram mapping Precipitation to ET and BWP.
+#' @param ps_volumetric_summary Raw volumetric dataframe.
+#' @param target_period String specifying which era to plot (e.g., "1950s" or "2022").
+#' @param font_size Numeric base font size for labels.
+get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) {
+  
+  # 1. Filter and extract exact volumes for the target period
+  tp_data <- ps_volumetric_summary %>% dplyr::filter(time_period == target_period) %>%
+    dplyr::group_by(var) %>%
+    dplyr::summarise(
+      total_m3     = sum(total_vol_m3, na.rm = TRUE),
+      irrigated_m3 = sum(irrigated * (total_vol_m3 / mean_mm), na.rm = TRUE),
+      rainfed_m3   = sum(rainfed * (total_vol_m3 / mean_mm), na.rm = TRUE),
+      grazed_m3    = sum(grazed * (total_vol_m3 / mean_mm), na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(dplyr::across(ends_with("_m3"), ~ ifelse(is.nan(.) | is.na(.), 0, .)))
+  
+  # 2. Volumetric Aggregations (in 10^3 m3)
+  p_vol   <- round(sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE) / 1000)
+  bwp_vol <- round(sum(tp_data$total_m3[tp_data$var == "balance"], na.rm = TRUE) / 1000)
+  
+  aet_row      <- tp_data %>% dplyr::filter(var == "aet")
+  aet_tot      <- sum(aet_row$total_m3, na.rm = TRUE)
+  et_rainfed   <- if(aet_tot > 0) round((sum(aet_row$rainfed_m3) / aet_tot) * (aet_tot / 1000)) else 0
+  et_irrigated <- if(aet_tot > 0) round((sum(aet_row$irrigated_m3) / aet_tot) * (aet_tot / 1000)) else 0
+  et_grazed    <- if(aet_tot > 0) round((sum(aet_row$grazed_m3) / aet_tot) * (aet_tot / 1000)) else 0
+  
+  # Ensure strict mathematical closure (Precipitation = ETs + BWP)
+  total_out <- bwp_vol + et_rainfed + et_irrigated + et_grazed
+  if (p_vol != total_out && total_out > 0) { 
+    et_rainfed <- et_rainfed + (p_vol - total_out) 
+  }
+  
+  # 3. Define Nodes using an escaping-immune pipeline delimiter "|"
+  nodes_df <- data.frame(
+    name = c(
+      paste0("Precipitation|", format(p_vol, big.mark=","), " k m³"),
+      paste0("ET: Rainfed Crops|", format(et_rainfed, big.mark=","), " k m³"),
+      paste0("ET: Irrigated Crops|", format(et_irrigated, big.mark=","), " k m³"),
+      paste0("ET: Grazed Areas|", format(et_grazed, big.mark=","), " k m³"),
+      paste0("Blue Water Potential|", format(bwp_vol, big.mark=","), " k m³")
+    ),
+    group = c("Rain", "Rainfed", "Irrigated", "Grazed", "BWP")
+  )
+  
+  # 4. Define Links (Strict 1-to-4 Routing)
+  outflow_vols <- c(et_rainfed, et_irrigated, et_grazed, bwp_vol)
+  outflow_indices <- 1:4 
+  
+  links_list <- list()
+  for (i in seq_along(outflow_vols)) {
+    if (outflow_vols[i] > 0) {
+      links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = outflow_vols[i], group = "Flow_Rain")
+    }
+  }
+  links_df <- do.call(rbind, links_list)
+  
+  # 5. Color Scale Domain Configuration
+  color_scale <- 'd3.scaleOrdinal()
+    .domain(["Rain", "Rainfed", "Irrigated", "Grazed", "BWP", "Flow_Rain"])
+    .range(["#4c9b9b", "#7cb342", "#0288d1", "#c0ca33", "#0d47a1", "#7bbcb0"])'
+  
+  # 6. Generate D3 Widget Layout with locked hard dimensions to stop viewport drift
+  sankey <- networkD3::sankeyNetwork(
+    Links = links_df, Nodes = nodes_df, Source = "source", Target = "target",
+    Value = "value", NodeID = "name", NodeGroup = "group", LinkGroup = "group",
+    units = "k m³", fontSize = font_size, nodeWidth = 30, nodePadding = 40, 
+    colourScale = color_scale, sinksRight = TRUE, 
+    width = 720, height = 480, # Strict boundary limit per widget
+    margin = list(top = 25, left = 130, right = 140, bottom = 25)
+  )
+  
+  # 7. JavaScript Token Splitter Fix
+  sankey <- htmlwidgets::onRender(sankey, '
+    function(el, x) {
+      d3.select(el).selectAll(".node text")
+        .style("fill", "#1a1a1a")
+        .style("font-family", "sans-serif")
+        .style("font-weight", "600");
+
+      d3.select(el).selectAll(".node text").each(function(d) {
+        if (!d.name) return;
+        var txt = d3.select(this);
+        var parts = d.name.split("|"); 
+        if (parts.length > 1) {
+          var x_pos = txt.attr("x");
+          txt.text(""); 
+          txt.append("tspan").attr("x", x_pos).attr("dy", "0.1em").text(parts[0]);
+          txt.append("tspan").attr("x", x_pos).attr("dy", "1.3em")
+             .style("font-weight", "normal").style("fill", "#555555").text(parts[1]);
+        }
+      });
+    }
+  ')
+  
+  return(sankey)
+}

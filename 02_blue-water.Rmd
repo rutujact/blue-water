@@ -27,7 +27,7 @@ options(width = 80)
 
 # Load core dependencies
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow)
+pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow, networkD3, htmlwidgets, webshot2, htmltools)
 
 # Generate directory framework if missing
 required_dirs <- list(
@@ -320,7 +320,7 @@ When interpreting the $BWP$ output at a farm production system scale, distinct p
 ps_results <- get_production_system_budgets(budget.yr.l, ps_by_cs_area, farms_count_df)
 
 ps_budget_summary  <- ps_results$ps_budget_summary
-ps_bwp_volumetric <- ps_results$ps_bwp_volumetric
+ps_volumetric_summary <- ps_results$ps_volumetric_summary
 
 write.csv(ps_bwp_volumetric, file = "output/water_budgets/production_system_bwp_contributions.csv", row.names = FALSE)
 
@@ -410,6 +410,8 @@ print(fig_disparity)
 
 Finally, we aggregate farm-level balances to model a full archetype village. This visualization illustrates the net shift in regional water sustainability over the last several decades, comparing the village hydrology of the 1950s against modern configurations.
 
+Crucially, this macro-level aggregation highlights a structural tipping point in regional water security. The baseline 1950s archetype demonstrates a robust hydrological surplus, acting as a net contributor to the underlying aquifer. In contrast, the 2022 configuration illustrates a system inverted by agricultural intensification. The cumulative extraction demands of intensive cropping typologies now overwhelmingly outpace the buffering capacity of rainfed systems, driving the village into a severe, systemic groundwater deficit.
+
 ```{r, village-bwp, eval=TRUE, echo=TRUE, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure. 7 Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
 
 village.bwp_collapsed <- ps_bwp_volumetric %>%
@@ -456,3 +458,81 @@ plot_village_bwp(
 )
 knitr::include_graphics("figures/presentation/Fig.8_Historical_Village_Water_Tank_Comparison_MS_Style.png")
 ```
+
+# Village Water Balance
+
+While the previous analysis evaluates net potential, Figure 8 employs a strict water accounting framework (Inflows = Outflows) to trace the absolute volumetric movement of water through the village ecosystem. This flow visualization demonstrates how the partitioning of relatively constant atmospheric input (Precipitation) has been fundamentally altered by shifting agricultural practices. 
+
+In the 1950s, a substantial fraction of incoming rainfall bypassed the evapotranspiration demands of rainfed crops and native grasslands, generating a robust regional Blue Water Potential (BWP). By 2022, the transition toward water-intensive agriculture drastically reroutes this hydrology. While precipitation remains stable, the massive evapotranspiration demands of irrigated crops now consume a significantly larger slice of the incoming water budget. Consequently, the village-level surplus is severely diminished, illustrating how modern agricultural production in the region physically constricts long-term aquifer replenishment.
+
+
+```{r, village-bwp, eval=TRUE, echo=TRUE, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure. 8 Average annual water balance of the archetype village in the 1950s (A) and 2022 (B), based on 37 years of climate data (1980–2018) and following a ‘water accounting’ approach. Values are rounded to the nearest ten thousand cubic metres and expressed in thousands (10³ m³)."}
+# ==============================================================================
+# 8. Village Average Annual Water Balance Two-Panel Comparative Layout (Figure 8)
+# ==============================================================================
+
+# System environment patch to secure local browser port streaming under macOS
+Sys.setenv(CHROMOTE_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+Sys.setenv(CHROMOTE_ARGS = "--disable-gpu --no-sandbox --disable-dev-shm-usage")
+
+# 1. Build Individual Synchronized Panels
+sankey_1950s <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 12)
+sankey_2022  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 12)
+
+# 2. Bind Into a Unified Comparative HTML Tag List containing a CSS Reset
+combined_water_balance_panels <- htmltools::tagList(
+  htmltools::tags$head(
+    htmltools::tags$style("
+      body { margin: 0 !important; padding: 0 !important; background-color: white; }
+      .master-canvas { display: flex; justify-content: space-between; align-items: flex-start; width: 1560px; padding: 20px; box-sizing: border-box; }
+      .panel-column { width: 760px; }
+    ")
+  ),
+  htmltools::tags$div(
+    class = "master-canvas",
+    # Left Column: Panel A (1950s)
+    htmltools::tags$div(
+      class = "panel-column",
+      style = "border-right: 2px dashed #e0e0e0; padding-right: 15px;",
+      htmltools::tags$h3(style = "text-align: center; margin-bottom: 20px; font-size: 18px; color: #2c3e50; font-family: sans-serif; font-weight: bold;", 
+                          "A) 1950s Baseline Village Water Balance"),
+      sankey_1950s
+    ),
+    # Right Column: Panel B (2022)
+    htmltools::tags$div(
+      class = "panel-column",
+      style = "padding-left: 15px;",
+      htmltools::tags$h3(style = "text-align: center; margin-bottom: 20px; font-size: 18px; color: #2c3e50; font-family: sans-serif; font-weight: bold;", 
+                          "B) 2022 Intensified Village Water Balance"),
+      sankey_2022
+    )
+  )
+)
+
+# Render live seamlessly inside your knitted HTML workflow documentation
+htmltools::browsable(combined_water_balance_panels)
+
+# 3. Export Consolidated Multi-Panel Layout to Publication Files
+htmltools::save_html(combined_water_balance_panels, "temp_combined_sankey.html")
+
+# Take snapshot with expanded vwidth boundary envelope to prevent cutting off Panel B
+webshot2::webshot(
+  url = "temp_combined_sankey.html", 
+  file = "figures/presentation/Fig.8_Village_Water_Balance_Sankey_2Panels.png", 
+  vwidth = 1620, 
+  vheight = 600, 
+  zoom = 2
+)
+
+webshot2::webshot(
+  url = "temp_combined_sankey.html", 
+  file = "figures/manuscript/Fig.8_Village_Water_Balance_Sankey_2Panels.pdf", 
+  vwidth = 1620, 
+  vheight = 600
+)
+
+# Erase intermediate temporary workspace file
+unlink("temp_combined_sankey.html")
+knitr::include_graphics("figures/presentation/Fig.8_Village_Water_Balance_Sankey_2Panels.png")
+```
+
