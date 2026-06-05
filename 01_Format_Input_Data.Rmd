@@ -1,6 +1,6 @@
 ---
 title: "Format Input Data for Blue Water Potential Toolkit" 
-subtitle: "Climatic Data, Crop and Soil Parameters, Cropping Systems, and area under cropping systems at village, or micro-regional level"
+subtitle: "Climatic Data, Crop and Soil Parameters, Cropping Systems, and Area Demographics"
 author:  |
   | Rutuja Chitra-Tarak (Code)
   | Charlotte Hemingway (Data and Kc Calculations)
@@ -16,32 +16,60 @@ output:
     number_sections: true
     theme: flatly
     highlight: tango
-description: "This script acts as a data preparation cookbook. It translates raw Excel data into clean, standardized CSVs required by the BWP analytical engine."
+    code_folding: show
+description: "This script acts as a data preparation cookbook. It translates raw site data into clean, standardized inputs required by the BWP analytical engine."
 ---
 
-**Note to Users**: This script is provided for methodological transparency. It demonstrates our exact workflow for processing raw site files into clean inputs. Use this document as a blueprint to format your own data to match the structures defined in the Data Dictionaries below.
+**Note to Users**: The primary requirement to run the BWP Analytical Engine (`02_blue-water.Rmd`) is the set of standardized CSV outputs produced by this script.
 
+Because raw field data is often messy and idiosyncratic, this script is provided for **methodological transparency**. It shows exactly how *we* transformed our raw project data into the required final structures. **You do not need to format your raw data to match our starting point.** Instead, use this document as a blueprint: your goal is simply to produce data files that match the **Target Output Dictionaries** defined at the beginning of each section.
+
+### 🗂️ Workflow & Data Summary
+This script processes and standardizes six distinct categories of input data required by the hydrological model:
+1. **Climatic Forcings**: Daily Precipitation and Reference Evapotranspiration (ET0).
+2. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
+3. **Crop Parameters**: Rooting depths and irrigation constraints.
+4. **Crop Coefficients (Kc)**: Dynamic daily vegetative growth curves.
+5. **Crop Systems**: Multi-season crop rotation definitions.
+6. **Landscape Demographics**: Cultivated area (hectares) broken down by production system and historical period.
+
+### 📂 Directory Setup & Data Placement
+
+This script automatically generates the required folder structure for all processed outputs and figures. However, before running the script, you must ensure your raw data and code dependencies are placed in the correct starting locations:
+
+```text
+project_root/
+├── data/
+│   ├── raw/                 <- Place your original data here (if adapting this script)
+│   └── processed/           <- TARGET: Standardized CSV outputs are saved here
+│       └── supplementary/   <- TARGET: Intermediary and diagnostic tables
+├── figures/
+│   └── manuscript/          <- TARGET: Output location for generated plots
+├── code/
+│   ├── 02_function_get_kc.R <- Required biophysical function dependency
+│   └── 01_Format_Input_Data.Rmd (This file)
+```
 ```{r setup-file, include=FALSE}
 rm(list = ls())
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, readxl, here)
+pacman::p_load(tidyverse, readxl, here, knitr)
 
-new.dirs <- list("data", "data/raw", "data/processed", "data/processed/supplementary", "figures", "figures/validation")
+new.dirs <- list(here("data"), here("data/raw"), here("data/processed"), here("data/processed/supplementary"), here("figures"), here("figures/manuscript"))
 lapply(new.dirs, function (x) if (!dir.exists(x)) {dir.create(x, recursive = TRUE, showWarnings = FALSE)})
 
-FILE_CLIMATE      <- "data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx"
-FILE_KC_RAW       <- "data/raw/Model in Excel/1 Kc Anantapur.xlsx"
-FILE_FARM_DEMOS   <- "data/raw/Model in Excel/For Rutuja_Crop_System_Area_by_Production_System.xlsx"
+FILE_CLIMATE      <- here("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx")
+FILE_KC_RAW       <- here("data/raw/Model in Excel/1 Kc Anantapur.xlsx")
+FILE_FARM_DEMOS   <- here("data/raw/Model in Excel/For Rutuja_Crop_System_Area_by_Production_System.xlsx")
 
 # ==============================================================================
-# MODEL CALIBRATION CONSTANTS
-# Note: These values are not standard FAO-56 published parameters. They were 
-# derived and calibrated to explicitly match the legacy Excel mathematical 
-# behaviors for Grassland grazing regrowth and Napier grass decline.
+# BIOPHYSICAL CALIBRATION CONSTANTS
+# Note: These parameters define biophysical constraints for grazing and 
+# automated harvesting regimes, including regrowth rates and baseline 
+# bare-soil configurations.
 # ==============================================================================
-legacy_calibrations <- list(
+biophysical_parameters <- list(
   grazing_growth_rate   = 0.00458333333333333,
   grazing_drop_kc       = 0.20,
   grazing_max_kc        = 0.75,
@@ -49,22 +77,26 @@ legacy_calibrations <- list(
   napier_decline_rate_2 = 0.000153846153846154
 )
 
-source("code/02_function_get_kc.R")
+source(here("code/02_function_get_kc.R"))
 
 theme_baseR <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = "white", colour = "black"), strip.background = element_blank())
+
+
 ```
 
 # Climatic Data (Forcing Variables)
 
-The foundation of the water balance model requires continuous, daily forcing variables. Here, we extract daily Precipitation (P) and Reference Evapotranspiration (ET0) from our raw climate sheets. We also generate a monthly climatology summary to use for later visualizations.
+The foundation of the water balance model requires continuous, daily forcing variables. Here, we extract daily Precipitation (P) and Reference Evapotranspiration (ET0).
 
-### 📖 Data Dictionary: Climate Inputs
+> *📝 **Author's Raw Data (Reference Only)**: Our raw data originated from a sheet named `Climate` containing columns for `Date`, `Rainfall (mm)`, `Moy Temp`, and `ET0`.*
 
-| Variable | Expected Constraints |
-| --- | --- |
-| **Date** | Continuous sequential dates (YYYY-MM-DD) |
-| **Rainfall (mm)** | Numeric ($\geq 0$) |
-| **ET0** | Numeric ($\geq 0$) |
+### 🎯 Target Output Dictionary: Climate Time Series (`01_precipitation.csv` & `02_et0.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **date** | Date | Continuous sequential dates (YYYY-MM-DD) |
+| **p** | Numeric | Daily Precipitation in millimeters ($\geq 0$) |
+| **et0** | Numeric | Daily Reference Evapotranspiration ($\geq 0$) |
 
 ```{r clim}
 clim <- readxl::read_xlsx(FILE_CLIMATE, sheet = "Climate")
@@ -74,13 +106,12 @@ precip <- clim %>%
   select(date = Date, p = `Rainfall (mm)`) %>%
   mutate(date = as.Date(date), p = as.numeric(p))
 
-# Defensive Data Validation
 stopifnot(
   "Error: Precipitation contains missing values (NA)." = !any(is.na(precip$p)),
   "Error: Precipitation cannot be negative." = all(precip$p >= 0, na.rm = TRUE)
 )
 
-write.csv(precip, file = "data/processed/01_precipitation.csv", row.names = FALSE)
+write.csv(precip, file = here("data/processed/01_precipitation.csv"), row.names = FALSE)
 
 # Extract ET0
 et0.daily <- clim %>% 
@@ -88,14 +119,13 @@ et0.daily <- clim %>%
   mutate(date = as.Date(date), et0 = as.numeric(et0))
 
 stopifnot("Error: ET0 contains missing values (NA)." = !any(is.na(et0.daily$et0)))
-write.csv(et0.daily, file = "data/processed/02_et0.csv", row.names = FALSE)
+write.csv(et0.daily, file = here("data/processed/02_et0.csv"), row.names = FALSE)
 
-# Create Climatology Summary
+# Create Climatology Summary for visualizations
 climate_summary <- clim %>% 
   select(date = Date, p = `Rainfall (mm)`, temp = `Moy Temp`, et0 = ET0) %>%
   mutate(
-    date = as.Date(date), p = as.numeric(p), 
-    temp = as.numeric(temp), et0 = as.numeric(et0), 
+    date = as.Date(date), p = as.numeric(p), temp = as.numeric(temp), et0 = as.numeric(et0), 
     Year = format(date, "%Y"), Month = format(date, "%m")
   ) %>%
   group_by(Year, Month) %>%
@@ -103,45 +133,70 @@ climate_summary <- clim %>%
   group_by(Month) %>%
   summarise(across(where(is.numeric), .fns = list(avg = ~ mean(.x, na.rm = TRUE), q05 = ~ quantile(.x, probs = 0.05, na.rm = TRUE), q95 = ~ quantile(.x, probs = 0.95, na.rm = TRUE)), .names = "{.col}_{.fn}"))
 
-write.csv(climate_summary, file = "data/processed/03_climatology_for_figure.csv", row.names = FALSE)
+write.csv(climate_summary, file = here("data/processed/03_climatology_for_figure.csv"), row.names = FALSE)
+
+
+```
+
+#### Verification: Precipitation Preview
+
+```{r preview-precip, echo=FALSE}
+knitr::kable(head(precip, 5), caption = "Target Precipitation Format")
+
+
 ```
 
 # Soil Parameters
 
-The hydrological model requires specific soil properties to determine infiltration and drainage dynamics. We extract the local soil type, its Water Holding Capacity (WHC), and Readily Available Water (RAW) constraints.
+The hydrological model requires specific soil properties to determine infiltration and drainage dynamics.
 
-### 📖 Data Dictionary: Soil Properties
+> *📝 **Author's Raw Data (Reference Only)**: We mapped soil classifications directly from an excel grid containing ID, Type, WHC, and RAW.*
 
-| Variable | Expected Constraints |
-| --- | --- |
-| **whc.mmpercm** | Numeric (Water Holding Capacity) |
-| **raw** | Numeric (Readily Available Water limit) |
+### 🎯 Target Output Dictionary: Soil Properties (`04_soil.parameters.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **soil** | Integer | Soil identifier code (e.g., 1, 2) |
+| **soil.type** | Character | Descriptive classification (e.g., "Red", "Black") |
+| **whc.mmpercm** | Numeric | Water Holding Capacity (mm of water per cm of soil) |
+| **raw** | Numeric | Readily Available Water threshold |
 
 ```{r soil-param}
 soil.param <- readxl::read_xlsx(FILE_CLIMATE, sheet = "crop Kc _ param SOILS", range = "A2:D4")
 colnames(soil.param) <- c("soil", "soil.type", "whc.mmpercm", "raw")
 
-# Defensive Data Validation
 stopifnot(
   "Error: Soil WHC must be numeric." = is.numeric(soil.param$whc.mmpercm),
   "Error: Soil RAW must be numeric." = is.numeric(soil.param$raw)
 )
 
-write.csv(soil.param, file = "data/processed/04_soil.parameters.csv", row.names = FALSE)
+write.csv(soil.param, file = here("data/processed/04_soil.parameters.csv"), row.names = FALSE)
+
+
+```
+
+#### Verification: Soil Parameter Matrix
+
+```{r preview-soil, echo=FALSE}
+knitr::kable(soil.param, caption = "Target Soil Parameter Format")
+
+
 ```
 
 # Crop Parameters & Coefficients (Kc)
 
-To model water demand, we need the physical constraints of the crops (rooting depth, irrigation) and their daily Crop Coefficient (Kc​) curves.
-
 ## Rooting Depth and Irrigation Constraints
 
-### 📖 Data Dictionary: Crop Parameters
+> *📝 **Author's Raw Data (Reference Only)**: Our raw setup used `1` for irrigated and `2` for rainfed flags.*
 
-| Variable | Expected Constraints |
-| --- | --- |
-| **irrigation** | Categorical constraint: strictly `"irrigated"` or `"rainfed"` |
-| **rooting_depth_cm** | Numeric constraint representing absolute depth |
+### 🎯 Target Output Dictionary: Crop Parameters (`05_crop.parameters.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **crop.ID** | Integer | Unique identifier for the crop |
+| **crop** | Character | Standardized crop name in Title Case |
+| **irrigation** | Character | Strictly `"irrigated"` or `"rainfed"` |
+| **rooting_depth_cm** | Numeric | Maximum effective rooting depth in cm |
 
 ```{r crop-param}
 crop.param <- readxl::read_xlsx(FILE_CLIMATE, sheet = "CROP parameters")
@@ -157,23 +212,42 @@ crop.param <- crop.param %>%
   mutate(crop.ID = match(crop, unique(crop))) %>%
   select(crop.ID, everything())
 
-# Defensive Data Validation
 stopifnot(
   "Error: Rooting depth must be numeric." = is.numeric(crop.param$rooting_depth_cm),
   "Error: Irrigation strings mismatch." = all(crop.param$irrigation %in% c("irrigated", "rainfed", NA))
 )
 
-write.csv(crop.param, file = "data/processed/05_crop.parameters.csv", row.names = FALSE)
+write.csv(crop.param, file = here("data/processed/05_crop.parameters.csv"), row.names = FALSE)
+
+
+```
+
+#### Verification: Crop Constraints
+
+```{r preview-crop-param, echo=FALSE}
+knitr::kable(head(crop.param, 5), caption = "Target Crop Constraints Format")
+
+
 ```
 
 ## Crop Coefficient (Kc) Generation
 
-Evapotranspiration is scaled based on the crop's growth stage. Here we use a hybrid approach: we dynamically generate mathematically defined Kc curves in R (FAO Segmented and Polynomials).
+Evapotranspiration relies heavily on accurate scaling by the crop's vegetative stage. Our framework generates these daily curves dynamically based on underlying mathematical definitions (FAO segmented logic, polynomials, and linear regrowth rules).
 
-### Generate FAO Segmented Curves (R Native)
+### 🎯 Target Output Dictionary: Master Kc File (`04_crop_kc_by_doy_all_crops.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **crop** | Character | Standardized crop name matching crop parameters |
+| **doy** | Integer | Day of Year (1-366) |
+| **kc** | Numeric | The daily Crop Coefficient scalar for that specific DOY |
+
+### Standard FAO-56 Segmented Curves
+
+We first build standard FAO-56 segmented curves for the majority of standard agricultural crops. This implementation relies on explicitly defined day-of-year (DOY) transitions for initial, development, mid, and late season stages.
 
 ```{r generate-fao-kc}
-# Wrap the read_xlsx call to silently suppress formatting warnings
+# Suppress formatting warnings during raw data ingestion
 kc.raw <- suppressWarnings(suppressMessages(
   readxl::read_xlsx(FILE_KC_RAW, sheet = "Crop cycles Kc", range = "A2:AK16")
 ))
@@ -188,20 +262,17 @@ colnames(kc.raw)[1] <- "var"; colnames(kc.raw)[2] <- "FORMULE"
 kc.raw$FORMULE <- as.numeric(as.character(kc.raw$FORMULE))
 kc.raw[-1] <- lapply(kc.raw[-1], function(x) as.numeric(as.character(x)))
 
-# Dynamically locate fruit trees
 pome_idx <- which(colnames(kc.raw) == "Pomegranate")
 names(kc.raw)[pome_idx - 1] <- "Month"
 kc.raw.fruit <- kc.raw[, c("Month", "Pomegranate", "Sweet lime")]
 
-# Use literal dot escaping (\\.) to clean readxl suffixes safely
 colnames(kc.raw) <- gsub("\\.\\.\\.[0-9]+$", "", colnames(kc.raw))
 
-# Safely drop columns
 kc.raw <- kc.raw %>% 
   dplyr::select(-dplyr::any_of(c("Month", "Pomegranate", "Sweet lime", "Groundnut_monsoon", "Groundnut_summer")))
 
-write.csv(kc.raw, file = "data/processed/supplementary/01_crop_kc_curve_parameters_table.csv", row.names = FALSE)
-write.csv(kc.raw.fruit, file = "data/processed/supplementary/02_fruit_kc_curve_parameters_table.csv", row.names = FALSE)
+write.csv(kc.raw, file = here("data/processed/supplementary/01_crop_kc_curve_parameters_table.csv"), row.names = FALSE)
+write.csv(kc.raw.fruit, file = here("data/processed/supplementary/02_fruit_kc_curve_parameters_table.csv"), row.names = FALSE)
 
 kc.raw.long <- kc.raw %>% pivot_longer(cols = -1, names_to = "crop") %>% mutate(crop = str_to_title(gsub("_|\\.", " ", crop, perl = TRUE)))
 
@@ -219,7 +290,6 @@ kc.doy.crops <- kc.doy %>% select(crop, doy_var, doy, Kc) %>%
   mutate(doy_var = factor(doy_var, levels = c("Sowing", "End of ini", "End of Dev", "End of Mid", "Harvest"))) %>%
   arrange(crop, doy, doy_var)
 
-# Build FAO Curves using the external engine function
 kc_wide_build <- kc.doy.crops %>%
   pivot_wider(names_from = doy_var, values_from = c(doy, Kc)) %>%
   rename(
@@ -231,73 +301,71 @@ kc_wide_build <- kc.doy.crops %>%
 kc_segmented_ls <- lapply(1:nrow(kc_wide_build), function(i) build_fao_curve(kc_wide_build[i, ]))
 kc_segmented <- bind_rows(kc_segmented_ls) %>%
   mutate(crop = str_to_title(gsub("_", " ", crop, perl = TRUE)))
+
+
 ```
 
-### Generate Polynomial Curves (Groundnuts)
+### Polynomial Curves
+
+For Groundnuts, a crop characterized by continuous, rapid growth rates, we utilize derived 4th-order polynomial equations to capture their smooth daily progression rather than discrete segments.
 
 ```{r generate-poly-kc}
-### Generate Polynomial Curves (Groundnuts)
-
-# Groundnut Summer (Sown on Jan 10th: DOY 10)
+# Groundnut Summer
 gs <- data.frame(doy = 1:366) %>%
-  mutate(crop = "Groundnut Summer", 
-         d = doy - 10, 
-         kc = if_else(d >= 0 & d <= 104,
-                      1.25*10^(-7)*d^4 - 2.82*10^(-5)*d^3 + 1.8*10^(-3)*d^2 - 2.49*10^(-2)*d + 0.3792, 0))
+  mutate(crop = "Groundnut Summer", d = doy - 10, kc = if_else(d >= 0 & d <= 104, 1.25*10^(-7)*d^4 - 2.82*10^(-5)*d^3 + 1.8*10^(-3)*d^2 - 2.49*10^(-2)*d + 0.3792, 0))
 
-# Groundnut Monsoon (Sown on July 1st: DOY 183)
+# Groundnut Monsoon
 gm <- data.frame(doy = 1:366) %>%
-  mutate(crop = "Groundnut Monsoon",
-         d = doy - 182,  
-         kc = if_else(d >= 0 & d <= 104, 
-                      1.32*10^(-7)*d^4 - 2.99*10^(-5)*d^3 + 1.96*10^(-3)*d^2 - 3.02*10^(-2)*d + 0.4, 0))
+  mutate(crop = "Groundnut Monsoon", d = doy - 182, kc = if_else(d >= 0 & d <= 104, 1.32*10^(-7)*d^4 - 2.99*10^(-5)*d^3 + 1.96*10^(-3)*d^2 - 3.02*10^(-2)*d + 0.4, 0))
 
 kc_polynomial <- bind_rows(gm, gs) %>% select(-d)
+
+
 ```
 
-### Generate Fruit Tree Curves (Monthly to Daily)
+### Fruit Tree Curves
 
-```{r generate-fruit-kc}
-### Generate Fruit Tree Curves (Monthly to Daily)
+Fruit trees demonstrate gradual vegetative shifts evaluated on a monthly basis. This chunk converts those discrete calendar-month states into continuous daily sequences.
 
-raw_params <- read.csv("data/processed/supplementary/02_fruit_kc_curve_parameters_table.csv", check.names = FALSE)
-
-# FIX: Standardize parameter column headers to Title Case to prevent case-mismatches down the pipeline
+```{r, fruit-trees}
+# Fruits
+raw_params <- read.csv(here("data/processed/supplementary/02_fruit_kc_curve_parameters_table.csv"), check.names = FALSE)
 colnames(raw_params) <- stringr::str_to_title(gsub("_|\\.", " ", colnames(raw_params)))
+kc_fruits <- bind_rows(generate_fruit_step("Pomegranate", raw_params), generate_fruit_step("Sweet Lime", raw_params)) 
 
 
-kc_fruits <- bind_rows(
-  generate_fruit_step("Pomegranate", raw_params),
-  generate_fruit_step("Sweet Lime", raw_params)) # "Sweet lime" -> "Sweet Lime" to align with title case
 ```
 
-### Generate Complex Schedules Natively & Merge
+### Complex Harvesting & Regrowth Schedules
+
+Pastures and continuously harvested grasses (e.g., Napier) deviate from single-season logic. Their curves are modeled dynamically based on defined daily linear regrowth rates and specific calendar-day harvesting events. The 0.01 threshold strictly enforces the baseline physical reality of dry-season bare soil.
 
 ```{r kc-complex}
-# Re-introduce No Crop with a strict 0 baseline
 no_crop <- tibble(doy = 1:366, crop = "No Crop", kc = 0)
 grassland_base <- kc_segmented %>% filter(crop == "Grasslands") %>% pull(kc)
 
-# Pull calibrated logic from the configuration block
-growth_rate  <- legacy_calibrations$grazing_growth_rate
-napier_dec_1 <- legacy_calibrations$napier_decline_rate_1
-napier_dec_2 <- legacy_calibrations$napier_decline_rate_2
-graze_drop   <- legacy_calibrations$grazing_drop_kc 
-max_bound    <- legacy_calibrations$grazing_max_kc  
-
+growth_rate  <- biophysical_parameters$grazing_growth_rate
+napier_dec_1 <- biophysical_parameters$napier_decline_rate_1
+napier_dec_2 <- biophysical_parameters$napier_decline_rate_2
+graze_drop   <- biophysical_parameters$grazing_drop_kc 
+max_bound    <- biophysical_parameters$grazing_max_kc  
 grassland_sow <- kc_wide_build$Sow[kc_wide_build$crop == "Grasslands"]
 
-# Apply parameterized logic using the external engine function
-# The 0.01 baseline is now natively handled by the function defaults
 grazed_thrice <- generate_grazed_legacy("Grazed Thrice", c(182, 243, 304), grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_aug  <- generate_grazed_legacy("Grazed 1 Aug", 213, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_sept <- generate_grazed_legacy("Grazed 1 Sept", 244, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_oct  <- generate_grazed_legacy("Grazed 1 Oct", 274, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_nov  <- generate_grazed_legacy("Grazed 1 Nov", 306, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 
-# Napier functions automatically apply the 0.01 baseline before their respective start dates
 napier       <- generate_napier("Napier", 1, napier_dec_1, napier_dec_2)
 napier_short <- generate_napier("Napier Short", 211, napier_dec_1, napier_dec_2)
+
+
+```
+
+### Final Kc Merge
+
+```{r, kc-merge}
 
 kc.doy.crop.all <- bind_rows(
   kc_segmented, kc_polynomial, kc_fruits, no_crop,
@@ -305,89 +373,51 @@ kc.doy.crop.all <- bind_rows(
   napier, napier_short
 ) %>% arrange(crop, doy)
 
-write.csv(kc.doy.crop.all, file = "data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv", row.names = FALSE)
+write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv"), row.names = FALSE)
+
+
 ```
 
-### Validation: R-Generated vs. Excel Legacy
+#### Verification: Continuous Daily Kc Formats
 
-Let's visually verify that our dynamic R calculations perfectly match the legacy Excel formulas for overlapping crops.
+```{r preview-kc, echo=FALSE}
+knitr::kable(head(kc.doy.crop.all %>% filter(crop == "Banana 1"), 5), caption = "Target Daily Kc Format")
 
-```{r validate-kc, fig.width=10, fig.height=8, out.width="100%"}
-### Validation: R-Generated vs. Excel Legacy
 
-kc.wide <- readxl::read_xlsx("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx", 
-                             sheet = "crop Kc _ param SOILS", 
-                             range = "B19:AL387")
-kc.wide <- as.data.frame(kc.wide[-c(1:2), ]) %>%
-  select(where(~ !all(is.na(.)))) %>%
-  select(-starts_with("0.."))
+```
 
-names(kc.wide)[1] <- "doy"
+#### Visual Summary of Generated Kc Curves
 
-kc_excel_fallback <- kc.wide %>%
-  pivot_longer(cols = -doy, names_to = "crop", values_to = "kc") %>%
-  mutate(
-    crop = str_to_title(gsub("_", " ", crop, perl = TRUE)),
-    doy = as.numeric(doy),
-    kc = as.numeric(kc)
-  )
+To review the biophysical behaviors implemented above, visualize the daily Kc dynamics for all crops.
 
-# Identify crops that exist in BOTH our generated dataset and the legacy excel sheet
-overlap_crops <- intersect(unique(kc.doy.crop.all$crop), unique(kc_excel_fallback$crop))
+```{r plot-all-kc, fig.width=14, fig.height=10, out.width="100%", echo=FALSE, results='hide'}
+# Generate and save the publication figure silently.
+p_kc_all <- ggplot(kc.doy.crop.all, aes(x = doy, y = kc)) +
+  geom_line(color = "#005b96", linewidth = 0.8) +
+  facet_wrap(~ crop, scales = "free_x", ncol = 5) +
+  theme_bw(base_size = 12) +
+  theme(panel.grid.major = element_line(color = "grey90"), panel.grid.minor = element_blank(), strip.background = element_rect(fill = "#f5f5f5", color = "black"), strip.text = element_text(face = "bold", size = 10), axis.text = element_text(color = "black"), axis.title = element_text(face = "bold"), plot.title = element_text(face = "bold", hjust = 0.5)) +
+  labs(x = "Day of Year (DOY)", y = expression(Crop~Coefficient~(K[c])))
+print(p_kc_all)
+ggsave(plot = p_kc_all, filename = here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), width = 14, height = 10, units = "in", dpi = 300, device = cairo_pdf)
 
-validation_df <- kc.doy.crop.all %>%
-  filter(crop %in% overlap_crops) %>%
-  mutate(Source = "Native R Code") %>%
-  bind_rows(
-    kc_excel_fallback %>%
-      filter(crop %in% overlap_crops) %>%
-      mutate(Source = "Legacy Excel")
-  )
 
-p_validate <- ggplot(validation_df, aes(x = doy, y = kc, color = Source, linetype = Source)) +
-  geom_line(alpha = 0.7, linewidth = 1) +
-  facet_wrap(~ crop, scales = "fixed") +
-  theme_baseR +
-  scale_color_manual(values = c("Legacy Excel" = "red", "Native R Code" = "blue")) +
-  labs(title = "Validation: R-Generated vs. Legacy Excel Kc Curves", 
-       subtitle = "Blue and Red lines should perfectly overlap, appearing purple.",
-       x = "Day of Year", y = "Kc") +
-  theme(legend.position = "top")
-
-print(p_validate)
-ggsave(plot = p_validate, 
-       filename = "figures/validation/R-Generated vs. Legacy Excel Kc Curves.pdf", width = 10, height = 5.625, units = "in")
-
-# FIX: Use rounding tolerance to eliminate floating point noise (e.g., 6.8e-08 machine differences)
-kc_mismatch_summary <- validation_df %>%
-  pivot_wider(names_from = Source, values_from = kc) %>%
-  mutate(abs_diff = round(abs(`Native R Code` - `Legacy Excel`), 5)) %>%
-  group_by(crop) %>%
-  summarise(
-    max_mismatch  = max(abs_diff, na.rm = TRUE),
-    mean_mismatch = mean(abs_diff, na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  filter(max_mismatch > 0.01) %>%
-  arrange(desc(max_mismatch))
-
-cat("--- Crops with True Mismatching Kc Curves ---\n")
-print(kc_mismatch_summary)
-
-mismatching_crop_names <- kc_mismatch_summary %>% pull(crop)
-
-kc_mismatch_crops <- validation_df %>%
-  pivot_wider(names_from = Source, values_from = kc) %>%
-  mutate(abs_diff = abs(`Native R Code` - `Legacy Excel`)) %>%
-  subset(crop %in% mismatching_crop_names) %>% 
-  arrange(desc(abs_diff))
-
-write.csv(kc_mismatch_crops, file = "kc_mismatch_crops.csv", row.names = FALSE)
 ```
 
 # Crop Systems by Rotations
 
-A single field rarely grows just one crop. We must map complex multi-crop rotations (e.g., Groundnut/Tomato). This step links those rotations to their required soils and crop profiles.
+A single field rarely grows just one crop. We must map complex multi-crop rotations and link them to their required soils and crop profiles.
+
+> *📝 **Author's Raw Data (Reference Only)**: We mapped sequences via string splitting (e.g., separating "Groundnut-Tomato" strings).*
+
+### 🎯 Target Output Dictionary: Rotation Systems (`07_crop.systems.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **crop.system** | Character | The overarching management system name |
+| **rotation** | Character | The specific crop rotation sequence |
+| **soil** | Integer | Required soil type for the rotation (1 or 2) |
+| **crop_1, 2, 3** | Character | Constituent crops within the rotation |
 
 ```{r crop-systems}
 crop.systems <- readxl::read_xlsx(FILE_CLIMATE, sheet = "All rotations")
@@ -405,11 +435,7 @@ crop.systems <- crop.systems %>%
   select(crop.system.ID, crop.system, n.rotation, rotation, rotation.ID, soil, crop1_crop2_crop3, WB, everything()) %>% 
   relocate(crop1_crop2_crop3, .after = crop_3) %>% 
   relocate(WB, .after = last_col())
-```
 
-## Join Crop Rooting Depth & Irrigation Requirements
-
-```{r join-crop-root-depth}
 crop.systems.l <- crop.systems %>%
   select(-WB) %>%
   pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
@@ -417,7 +443,7 @@ crop.systems.l <- crop.systems %>%
   relocate(crop.ID, .after = crop) %>%
   mutate(crop.rotation.ID = paste0(crop, ".", rotation.ID))
 
-write.csv(crop.systems.l, file = "data/processed/06_crop.systems.l.csv", row.names = FALSE)
+write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), row.names = FALSE)
 
 cs.rot.irri <- crop.systems.l %>%
   mutate(Irrigation = if_else(irrigation == "irrigated", TRUE, FALSE)) %>%
@@ -427,28 +453,42 @@ cs.rot.irri <- crop.systems.l %>%
 
 crop.systems <- crop.systems %>% left_join(cs.rot.irri, by = c("crop.system", "rotation")) %>% relocate(Irrigation, .after = crop.system)
 
-write.csv(crop.systems, file = "data/processed/07_crop.systems.csv", row.names = FALSE)
+write.csv(crop.systems, file = here("data/processed/07_crop.systems.csv"), row.names = FALSE)
+
+
 ```
 
-## Map Final Kc Curves to Systems
+#### Verification: Crop Systems Definitions
 
-We now map our newly merged kc.doy database to the physical rotation schedules.
+```{r preview-crop-systems, echo=FALSE}
+knitr::kable(head(crop.systems %>% select(crop.system, rotation, Irrigation, soil, crop_1, crop_2, crop_3), 5), caption = "Target Crop Rotations Format")
 
-```{r map-kc-curves}
-crop.systems.l.kc <- crop.systems.l %>% 
-  select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>%
-  left_join(kc.doy %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
 
+```
+
+```{r map-kc-curves, echo=FALSE, results='hide'}
+# Internal .Rdata structures are saved here for the downstream engine.
+crop.systems.l.kc <- crop.systems.l %>% select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>% left_join(kc.doy %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
 crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
-save(crop.rotation.kc.ls, file = "data/processed/08_crop.rotation.kc.ls.Rdata")
+save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
 
-crop.systems.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$crop.system)
-save(crop.systems.kc.ls, file = "data/processed/supplementary/05_crop.systems.kc.ls.Rdata")
+
 ```
 
-# Production System Composition: Crop Systems by Area
+# Landscape Composition
 
-To evaluate water potential at the macro level, we scale field-level data up using landscape demographics (area in hectares of each crop system).
+To evaluate Blue Water Potential (or Net Recharge) at the macro level, we scale field-level data up using landscape demographics (area in hectares of each crop system).
+
+> *📝 **Author's Raw Data (Reference Only)**: Our demographics were gathered in a matrix of crop systems against historical time periods.*
+
+### 🎯 Target Output Dictionary: Production Systems Area (`09_crop_system_area_by_production_system.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **time_period** | Character | Historical grouping (e.g., "1950s", "2022") |
+| **production_system** | Character | The farm classification archetype |
+| **crop.system** | Character | The implemented crop rotation |
+| **area_ha** | Numeric | Total area cultivated in hectares |
 
 ```{r ps-composition}
 ps_area <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Farm Type structure")
@@ -473,16 +513,24 @@ ps_by_cs_area <- ps_area %>%
   group_by(production_system_period, time_period, production_system, crop.system) %>%
   summarise(area_ha = sum(area_ha), .groups = "drop")
 
-write.csv(ps_by_cs_area, file = "data/processed/09_crop_system_area_by_production_system.csv", row.names = FALSE)
+write.csv(ps_by_cs_area, file = here("data/processed/09_crop_system_area_by_production_system.csv"), row.names = FALSE)
+
+
 ```
 
-# Landscape Composition: Number of Farms
+#### Verification: Landscape Demographics
 
-To evaluate water potential at the macro level, we scale field-level data up using landscape demographics (area in hectares of each crop system).
+```{r preview-area, echo=FALSE}
+knitr::kable(head(ps_by_cs_area, 5), caption = "Target Area (ha) Format")
 
-```{r farm-counts}
+
+```
+
+```{r farm-counts, echo=FALSE, results='hide'}
+# Extract macroscopic farm counts and save seamlessly.
 farms_count_df <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Archetype Village") %>%
   rename(production_system = `Production System`, time_period = Period, number_of_farms = Number_of_Farms)
+write.csv(farms_count_df, file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), row.names = FALSE)
 
-write.csv(farms_count_df, file = "data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv", row.names = FALSE)
+
 ```
