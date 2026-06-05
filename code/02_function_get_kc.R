@@ -5,6 +5,7 @@
 #               and simulate dynamic daily Crop Coefficient (Kc) time series.
 #               Explicitly designed to match legacy agricultural model baselines.
 # Dependencies: dplyr, lubridate, stringr
+#               (Note: Required libraries are handled and sourced externally)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,11 +31,17 @@
 #'
 #' @param row A one-row data frame or named list containing crop parameters: 
 #' `crop`, `Sow`, `E_ini`, `E_dev`, `E_mid`, `Harv`, `K_ini`, `K_mid`, `K_end`.
+#' @param base_val Numeric baseline value for the off-season (default 0).
 #' @return A tibble containing columns 'crop', 'doy', and the computed 'kc'.
 #' @export
-build_fao_curve <- function(row) {
+build_fao_curve <- function(row, base_val = 0) {
   crop_name <- row$crop
   Sow <- row$Sow
+  
+  # Scientific correction: Grasslands drop to 0.01 in the dry season
+  if (crop_name == "Grasslands") {
+    base_val <- 0.01
+  }
   
   # Calculate absolute durations from the sowing day to mimic Excel formulas
   dur_ini  <- if(row$E_ini < Sow) row$E_ini + 365 - Sow else row$E_ini - Sow
@@ -61,7 +68,7 @@ build_fao_curve <- function(row) {
     
     # Mathematical IF/AND Simulation for Segmented Growth
     if (d_eff < 0 || d_eff > dur_harv) {
-      out_kc[doy] <- 0
+      out_kc[doy] <- base_val # Apply the baseline here
     } else if (d_eff <= dur_ini) {
       out_kc[doy] <- row$K_ini
     } else if (d_eff <= dur_dev) {
@@ -166,7 +173,6 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 4. GRAZED PASTURE CURVES
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 #' Generate Grazed Pasture Curve (Legacy Match)
 #'
 #' @description Generates a grazed grassland curve that explicitly mimics the discrete 
@@ -180,15 +186,16 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
 #' @param g_drop Numeric Kc value to drop to immediately after grazing (default 0.20).
 #' @param m_bound Numeric maximum upper bound for regrowth (default 0.75).
 #' @param sow_doy Numeric Day of Year representing the start of the season (default 122).
+#' @param base_val Numeric baseline value for the off-season (default 0.01 for dry season).
 #' @return A tibble containing columns 'crop', 'doy', and the computed 'kc'.
 #' @export
-generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_drop = 0.20, m_bound = 0.75, sow_doy = 122) {
+generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_drop = 0.20, m_bound = 0.75, sow_doy = 122, base_val = 0.01) {
   kc_array <- numeric(366)
   
   for (i in 1:365) {
     if (i < sow_doy) {
-      # Phase 1: STRICT lock to 0 before sowing
-      kc_array[i] <- 0
+      # Phase 1: STRICT lock to baseline before sowing
+      kc_array[i] <- base_val
     } else {
       # Find grazing history
       past_grazes <- graze_doys[graze_doys <= i]
@@ -204,7 +211,7 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
           kc_array[i] <- g_drop
         } else {
           # Phase 4: Daily linear regrowth capped at max bound
-          if (kc_array[i-1] == 0) {
+          if (kc_array[i-1] == base_val) { # Update to check against baseline
             kc_array[i] <- base_kc[i]
           } else {
             kc_array[i] <- min(m_bound, kc_array[i-1] + g_rate)
@@ -220,7 +227,6 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
   return(dplyr::tibble(doy = 1:366, crop = crop_name, kc = kc_array))
 }
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 5. NAPIER GRASS CURVES
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -234,9 +240,10 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
 #' @param start_doy Numeric representation of the initial calendar day harvesting begins.
 #' @param decline_rate_1 Numeric slope parameter for Phase 1 biomass or senescence decay.
 #' @param decline_rate_2 Numeric slope parameter for subsequent recurring harvesting cycles.
+#' @param base_val Numeric baseline value for the off-season (default 0.01 for dry season).
 #' @return A tibble containing columns 'doy', 'crop', and the computed timeline 'kc'.
 #' @export
-generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2) {
+generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2, base_val = 0.01) {
   
   if (!is.numeric(c(start_doy, decline_rate_1, decline_rate_2))) {
     stop("Parameters 'start_doy', 'decline_rate_1', and 'decline_rate_2' must be purely numeric.")
@@ -245,7 +252,7 @@ generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2
   out_df <- dplyr::tibble(doy = 1:366, crop = crop_name) %>%
     dplyr::mutate(
       kc = dplyr::case_when(
-        doy < start_doy ~ 0,
+        doy < start_doy ~ base_val, # Apply the baseline correction here
         start_doy == 1 & doy <= 50 ~ dplyr::case_when(
           doy <= 11 ~ 0.5,
           doy <= 45 ~ 0.9,

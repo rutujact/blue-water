@@ -248,7 +248,7 @@ gs <- data.frame(doy = 1:366) %>%
 # Groundnut Monsoon (Sown on July 1st: DOY 183)
 gm <- data.frame(doy = 1:366) %>%
   mutate(crop = "Groundnut Monsoon",
-         d = doy - 183,  
+         d = doy - 182,  
          kc = if_else(d >= 0 & d <= 104, 
                       1.32*10^(-7)*d^4 - 2.99*10^(-5)*d^3 + 1.96*10^(-3)*d^2 - 3.02*10^(-2)*d + 0.4, 0))
 
@@ -274,6 +274,7 @@ kc_fruits <- bind_rows(
 ### Generate Complex Schedules Natively & Merge
 
 ```{r kc-complex}
+# Re-introduce No Crop with a strict 0 baseline
 no_crop <- tibble(doy = 1:366, crop = "No Crop", kc = 0)
 grassland_base <- kc_segmented %>% filter(crop == "Grasslands") %>% pull(kc)
 
@@ -287,12 +288,14 @@ max_bound    <- legacy_calibrations$grazing_max_kc
 grassland_sow <- kc_wide_build$Sow[kc_wide_build$crop == "Grasslands"]
 
 # Apply parameterized logic using the external engine function
+# The 0.01 baseline is now natively handled by the function defaults
 grazed_thrice <- generate_grazed_legacy("Grazed Thrice", c(182, 243, 304), grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_aug  <- generate_grazed_legacy("Grazed 1 Aug", 213, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_sept <- generate_grazed_legacy("Grazed 1 Sept", 244, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_oct  <- generate_grazed_legacy("Grazed 1 Oct", 274, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 grazed_1_nov  <- generate_grazed_legacy("Grazed 1 Nov", 306, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)
 
+# Napier functions automatically apply the 0.01 baseline before their respective start dates
 napier       <- generate_napier("Napier", 1, napier_dec_1, napier_dec_2)
 napier_short <- generate_napier("Napier Short", 211, napier_dec_1, napier_dec_2)
 
@@ -365,7 +368,7 @@ kc_mismatch_summary <- validation_df %>%
     mean_mismatch = mean(abs_diff, na.rm = TRUE),
     .groups = "drop"
   ) %>%
-  filter(max_mismatch > 0.01) %>% 
+  filter(max_mismatch > 0.01) %>%
   arrange(desc(max_mismatch))
 
 cat("--- Crops with True Mismatching Kc Curves ---\n")
@@ -375,8 +378,9 @@ mismatching_crop_names <- kc_mismatch_summary %>% pull(crop)
 
 kc_mismatch_crops <- validation_df %>%
   pivot_wider(names_from = Source, values_from = kc) %>%
-  mutate(abs_diff = abs(`Native R Code` - `Legacy Excel`)) #%>%
-  # subset(crop %in% mismatching_crop_names)
+  mutate(abs_diff = abs(`Native R Code` - `Legacy Excel`)) %>%
+  subset(crop %in% mismatching_crop_names) %>% 
+  arrange(desc(abs_diff))
 
 write.csv(kc_mismatch_crops, file = "kc_mismatch_crops.csv", row.names = FALSE)
 ```
