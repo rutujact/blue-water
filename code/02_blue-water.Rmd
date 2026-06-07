@@ -1,0 +1,483 @@
+---
+title: "The Blue Water Potential Toolkit"
+subtitle: "An R Framework for Multi-Scale Socio-Hydrologic Water Budgeting"
+author: "Rutuja Chitra-Tarak"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = file.path(dirname(dirname(inputFile)), paste0(tools::file_path_sans_ext(basename(inputFile)), '_Workflow.html'))) })
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+    number_sections: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+    code_folding: show
+---
+
+# Overview
+
+This document serves as the main reproducible report and Computational Workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
+
+This repository provides a generalized computational framework for simulating **Blue Water Potential (BWP)** at the village level, driven by area-specific cropping systems and historical meteorological forcing. While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any watershed globally, provided you have local meteorological and cropping system data. 
+
+> 💡 **Using this Toolkit:** See the repository `README.md` for full instructions on how to adapt this framework using your own processed site data (generated via `01_Format_Input_Data.Rmd`).
+
+---
+
+# Directory Setup & Configuration
+
+For this analytical engine to run seamlessly, ensure your R project directory matches the structure defined below. 
+
+```text
+project_root/
+├── data/
+│   └── processed/           <- Required: Output data from the 01_Format script
+├── code/
+│   ├── functions/           <- Required: Core engine dependencies
+│   │   ├── 01_get_Peff.R
+│   │   ├── 03_expand_kc.R
+│   │   ├── 04_get_budget.R
+│   │   └── 05_get_figures.R
+│   └── 02_blue-water.Rmd    <- (This file)
+├── output/
+│   └── water_budgets/       <- Generated: Processed Rdata and CSV budget summaries
+└── figures/                 <- Generated: Root folder for all visualizations
+    ├── crop_kc_curves/      <- Generated: Individual Kc curve outputs
+    ├── water_budgets/       <- Generated: Individual field-level budget plots
+    ├── manuscript/          <- Generated: High-res print-ready PDFs/TIFFs
+    └── presentation/        <- Generated: Screen-ready PNGs and web layouts
+
+```
+
+```{r setup, include=FALSE}
+rm(list = ls(all.names = TRUE)); gc()
+knitr::opts_chunk$set(
+  echo = TRUE,      
+  message = FALSE,  
+  warning = FALSE
+)
+
+options(width = 80)
+
+# Load core dependencies
+if (!require("pacman")) install.packages("pacman"); library(pacman)
+pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow, networkD3, htmlwidgets, webshot2, htmltools, here)
+
+# Generate directory framework if missing
+required_dirs <- list(
+  here("figures"), here("figures/crop_kc_curves"), here("figures/water_budgets"), 
+  here("figures/manuscript"), here("figures/presentation"), here("output"), here("output/water_budgets")
+)
+lapply(required_dirs, function(x) if (!dir.exists(x)) {dir.create(x, recursive = TRUE, showWarnings = FALSE)})
+
+# Set global ggplot2 aesthetics for publication-quality figures
+theme_set(
+  theme_classic(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+    plot.subtitle = element_text(size = 12, color = "grey30", hjust = 0.5),
+    plot.caption = element_text(size = 10, color = "grey50", hjust = 0),
+    axis.title = element_text(face = "bold"),
+    legend.position = "bottom",
+    legend.title = element_text(face = "bold"),
+    strip.background = element_rect(fill = "#f8f9fa", color = "black"),
+    strip.text = element_text(face = "bold")
+  )
+)
+
+```
+
+## Load Engine Dependencies
+
+These external modular scripts handle the mathematical heavy lifting behind the scenes, processing parameters such as daily reference evapotranspiration ($ET_0$), effective precipitation ($P_{eff}$), and generating the core plot architectures.
+
+```{r load-functions}
+source(here("code/functions/01_get_Peff.R"))
+source(here("code/functions/03_expand_kc.R"))
+source(here("code/functions/04_get_budget.R"))
+source(here("code/functions/05_get_figures.R"))
+
+# Helper function for statistical summarization
+quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
+    tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
+}
+
+```
+
+---
+
+# Data Ingestion & Climatology Validation
+
+The foundation of the water balance is driven by high-resolution daily meteorological forcing. Below, we ingest the processed climate series and provide brief data previews.
+
+```{r load-met}
+# 1. Meteorological Forcing
+precip <- read.csv(file = here("data/processed/01_precipitation.csv"), header = TRUE) 
+years.range <- range(as.numeric(format(strptime(precip$date, format = "%Y-%m-%d"), format = "%Y")))
+years.range.plot <- paste(years.range[1], ":", years.range[2])
+
+et0 <- read.csv(file = here("data/processed/02_et0.csv"), header = TRUE) 
+et0.timestep = "daily" 
+
+# Display Previews
+knitr::kable(head(precip, 3), caption = "Preview: Precipitation Data Sample")
+knitr::kable(head(et0, 3), caption = "Preview: Reference ET0 Data Sample")
+
+```
+
+## Climatological Profile Summary
+
+To visually validate our meteorological inputs before running the engine, we plot the baseline monthly metrics representing the overarching water supply and evaporative demand.
+
+```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Monthly baseline metrics showing mean rainfall, temperature, and reference evapotranspiration.'}
+climate_summary <- read.csv(file = here("data/processed/03_climatology_for_figure.csv"), header = TRUE)
+
+fig.1_journal <- plot_climate_profile(climate_summary)
+print(fig.1_journal)
+
+# Save PDF for Manuscript
+ggsave(plot = fig.1_journal, filename = here("figures/manuscript/Fig.1_Regional_Monthly_Climate_Profile.pdf"), width = 180, height = 90, units = "mm", device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regional_Monthly_Climate_Profile.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white")
+
+```
+
+## Landscape & Cropping Parameter Ingestion
+
+Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific rotational systems cultivated in the region.
+
+```{r load-soil-and-crop}
+# Soil Parameter Matrix
+soil.param <- read.csv(file = here("data/processed/04_soil.parameters.csv"), header = TRUE)
+knitr::kable(soil.param, caption = "Preview: Soil Parameter Matrix")
+
+# Crop Phenology Parameters
+crop.param <- read.csv(file = here("data/processed/05_crop.parameters.csv"), header = TRUE)
+knitr::kable(head(crop.param, 3), caption = "Preview: Crop Phenology Matrix")
+
+# Cropping Systems Definitions
+crop.systems.l <- read.csv(file = here("data/processed/06_crop.systems.l.csv"), header = TRUE)
+crop.systems <- read.csv(file = here("data/processed/07_crop.systems.csv"), header = TRUE)
+load(file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
+
+knitr::kable(head(crop.systems, 3), caption = "Preview: Active Cropping Systems")
+
+```
+
+```{r fig.2, echo = FALSE, fig.align = 'center', fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations."}
+crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
+
+fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
+print(fig.2_journal)
+
+# Save PDF for Manuscript
+ggsave(plot = fig.2_journal, filename = here("figures/manuscript/Fig.2_Crop_Coefficient_Curves_by_Rotation.pdf"), width = 180, height = 225, units = "mm", device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Crop_Coefficient_Curves_by_Rotation.png"), width = 180, height = 225, units = "mm", dpi = 300, bg = "white")
+
+```
+
+## Production Systems & Socio-Agricultural Composition
+
+These files map the physical crop rotations to socioeconomic actors (e.g., smallholder pastoralists vs. commercial fruit growers). They track historical changes in land use structure over time.
+
+```{r social-ingestion}
+ps_by_cs_area <- read.csv(file = here("data/processed/09_crop_system_area_by_production_system.csv"), header = TRUE)
+farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), header = TRUE)
+
+knitr::kable(head(ps_by_cs_area, 3), caption = "Preview: Production System Area Splits")
+knitr::kable(head(farms_count_df, 3), caption = "Preview: Historical Household Counts")
+
+```
+
+---
+
+# Core Hydrology Execution Engine
+
+We first transform crude precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) to account for surface runoff, before initializing the core water balance engine.
+
+```{r set_param_budget}
+p.list <- list(
+  precip = precip,
+  et0 = et0,
+  et0.timestep = et0.timestep, 
+  CN = 85, 
+  soil.input = "P", 
+  soil.param = soil.param,
+  sm.init = 0.5,
+  crop.param = crop.param,
+  kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2)
+)
+
+# Vectorized generation of effective precipitation models across targeted soil horizons
+met.forcing.ls <- lapply(as.list(soil.param$soil), function(x) {
+  get_peff_et0(p = p.list, soil = x)
+})
+names(met.forcing.ls) <- soil.param$soil 
+
+```
+
+> ⚡ **Pro-Tip: Parallel Processing**
+> Simulating multi-decadal daily water fluxes across dozens of crop rotations is computationally expensive. The code block below detects the number of available physical cores on your machine and parallelizes the tasks, drastically reducing execution time.
+
+```{r engine, eval = FALSE}
+# Multi-Core Setup
+num_cores <- parallel::detectCores(logical = FALSE) 
+cl <- makeCluster(num_cores, type = "PSOCK") 
+
+clusterExport(cl, varlist = c("p.list", "met.forcing.ls", "get_budget", "quantile_df"), envir = environment()) 
+clusterEvalQ(cl, {library(tidyverse); library(ggpubr)})
+
+# Process budget arrays iteratively
+budget <- pblapply(crop.rotation.kc.ls, get_budget, cl = cl, p = p.list, ts = met.forcing.ls)
+stopCluster(cl)
+
+names(budget) <- names(crop.rotation.kc.ls)
+save(budget, file = here("output/01_processed_water_budgets.Rdata"))
+
+```
+
+```{r load-precalculated-budgets, include=FALSE}
+# Internal loading mechanism to bypass lengthy re-calculations during document knitting
+# (Ensure the engine block has been run at least once locally)
+load(file = here("output/01_processed_water_budgets.Rdata"))
+
+```
+
+---
+
+# Output Processing & BWP Calculations
+
+We transform the heavy daily flux lists into clean, aggregated annual summaries. These outputs form the basis for all downstream socio-hydrological evaluations.
+
+```{r compile-outputs}
+budget.daily.ls <- lapply(budget, function(x) {return(x$ts)})
+budget.daily <- dplyr::bind_rows(budget.daily.ls, .id = "rotation") %>% 
+  left_join(crop.systems, by = "rotation")
+
+# Save detailed daily data metrics
+write.csv(budget.daily, file = here("output/02_export_detailed_daily_water_budgets.csv"), row.names = FALSE)
+
+# Generate annual long-format metrics
+budget.yr.ls <- lapply(budget, function(x) {return(x$sum.yr)})
+budget.yr.l <- dplyr::bind_rows(budget.yr.ls, .id = "rotation") %>% 
+    pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
+  left_join(crop.systems, by = "rotation")
+write.csv(budget.yr.l, file = here("output/03_export_annual_water_budgets_long.csv"), row.names = FALSE)
+
+# Process the Blue Water Potential (BWP)
+summary_yr_budgets <- process_annual_budget(budget, crop.systems)
+summ.qs.cs <- summary_yr_budgets$summ_qs_cs
+
+bwp <- summ.qs.cs %>% 
+  subset(var == "balance") %>%
+  select(-var, -var.plot)
+colnames(bwp)[-c(1,2)] <- paste0("BWP_", colnames(bwp)[-c(1,2)])
+
+write.csv(bwp, file = here("output/04_calculated_crop_system_blue_water_potential.csv"), row.names = FALSE)
+
+```
+
+---
+
+# Visualizing Cropping System Fluxes
+
+## Annual Climatology: Supply vs. Demand
+
+The following chart compares the irrigation requirements of different cropping choices against their natural groundwater recharge capacity.
+
+```{r annual-wb, fig.align='center', echo=FALSE, fig.cap = "Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Groundwater Recharge is depicted in negative terms of the water fluxes axis."}
+vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)", "Crop ET Supply:Demand")
+
+# Added file_prefix to save as "Fig3_Supply_vs_Demand"
+plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (95% CI)", file_prefix = "Fig3_Supply_vs_Demand")
+
+```
+
+## Blue Water Potential ($BWP$) by Cropping System
+
+This plot isolates the core metric: **Blue Water Potential**. It visualizes the absolute net impact of a specific land use decision on the underlying aquifer.
+
+```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = "Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur."}
+# Added file_prefix to save as "Fig4_Blue_Water_Potential"
+plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Recharge - Irrigation] (mm)", file_prefix = "Fig4_Blue_Water_Potential")
+
+```
+
+---
+
+# Socio-Hydrological Aggregation: Production System Impact
+
+By coupling the physical water fluxes with farm survey demographics, we aggregate individual cropping footprints into broader socio-economic archetypes. This critical step reveals how human social structures drive local water availability.
+
+> 🔍 **Understanding Net Consumers vs. Net Contributors**
+> * **Irrigated Farms ($BWP < 0$):** Commercial systems focusing on cash crops (e.g., grape vines or sweet lime) rely heavily on groundwater extraction. Because their artificial irrigation demand exceeds natural recharge over their area, they act as chronic hydrological **Net Consumers**.
+> * **Rainfed Farms & Grasslands ($BWP > 0$):** Traditional smallholders and pastoralists operate without active groundwater pumping. A substantial fraction of seasonal monsoon precipitation infiltrates past the root zone, actively recharging the aquifer. These act as **Net Contributors**.
+> 
+> 
+
+```{r Run_Aggregation}
+ps_results <- get_production_system_budgets(budget.yr.l, ps_by_cs_area, farms_count_df)
+
+ps_budget_summary  <- ps_results$ps_budget_summary
+ps_volumetric_summary <- ps_results$ps_volumetric_summary
+ps_bwp_volumetric <- ps_results$ps_bwp_volumetric
+
+write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contributions.csv"), row.names = FALSE)
+
+```
+
+```{r ann-social, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 5. Comparative annual Blue Water Potential ($BWP$) across farm types (1950s vs. 2022).'}
+fig.3_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
+print(fig.3_social)
+
+# Save PDF for Manuscript
+ggsave(here("figures/manuscript/Fig.5_Socio_Economic_Group_BWP.pdf"), fig.3_social, width = 10, height = 5.65, device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.3_social, width = 10, height = 5.65, dpi = 300, bg = "white")
+
+```
+
+## Farm-Level BWP Disparity: Demographics vs. Impact
+
+Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically subsidized by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
+
+```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
+fig_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric)
+print(fig_disparity)
+
+# Save PDF for Manuscript
+ggsave(here("figures/manuscript/Fig.6_Farm_BWP_Disparity.pdf"), fig_disparity, width = 11, height = 5.5, device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(here("figures/presentation/Fig.6_Farm_BWP_Disparity.png"), fig_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
+
+```
+
+---
+
+# Macro Landscape Analysis
+
+## Historical Village Comparison
+
+Finally, we aggregate farm-level balances to model a full archetype village. This visualization illustrates the net shift in regional water sustainability over the last several decades.
+
+Crucially, this macro-level aggregation highlights a structural tipping point in regional water security. The baseline 1950s archetype demonstrates a robust hydrological surplus. In contrast, the 2022 configuration illustrates a system inverted by agricultural intensification. The extraction demands of intensive cropping now overwhelmingly outpace the buffering capacity of rainfed systems.
+
+```{r village-bwp, eval=TRUE, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+village.bwp_collapsed <- ps_bwp_volumetric %>%
+  mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
+  select(time_period, production_system, bwp_thousand_m3) %>%
+  mutate(production_system = case_when(
+    production_system == "Landless pastoralists" ~ "Pastoralists",
+    production_system == "Sheep fatteners" ~ "Pastoralists",
+    production_system %in% c("Rainfed groundnut growers (with buffaloes)", "Rainfed groundnut growers (with bulls)", "Rainfed groundnut growers (with local cows)") ~ "Groundnut growers (with livestock)",
+    production_system %in% c("Rainfed groundnut growers (no livestock)", "Rainfed redgram growers (no livestock)") ~ "Groundnut growers (no livestock)",
+    production_system == "Rice growers" ~ "Rice growers", 
+    production_system %in% c("Small-scale fruit growers (banana)", "Small-scale fruit growers (grape vines)", "Small-scale fruit growers (pomegranate)", "Small-scale fruit growers (sweet lime)") ~ "Small-scale fruit growers (+ dairy)",
+    production_system %in% c("Vegetable growers (no livestock)", "Vegetable growers with dairy farming") ~ "Vegetable growers",
+    TRUE ~ as.character(production_system)
+  )) %>%
+  group_by(time_period, production_system) %>%
+  summarise(bwp_thousand_m3 = sum(bwp_thousand_m3), .groups = "drop")
+
+colnames(village.bwp_collapsed) <- c("period", "label", "val")
+
+cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
+
+# Build comprehensive system maps
+invisible(plot_village_bwp(
+  village_bwp_collapsed = village.bwp_collapsed, 
+  cfg = cfg, 
+  output_dev = cairo_pdf, 
+  filename = here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
+  manuscript_style = TRUE
+))
+invisible(plot_village_bwp(
+  village_bwp_collapsed = village.bwp_collapsed, 
+  cfg = cfg, 
+  output_dev = png, 
+  filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
+  manuscript_style = FALSE
+))
+
+knitr::include_graphics(here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"))
+
+```
+
+## Village Water Balance
+
+Figure 8 employs a strict water accounting framework (Inflows = Outflows) to trace the absolute volumetric movement of water through the village ecosystem. This flow visualization demonstrates how the partitioning of relatively constant atmospheric input (Precipitation) has been fundamentally altered.
+
+By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.
+
+```{r village-budget, eval=TRUE, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village in the 1950s (A) and 2022 (B), based on 37 years of climate data (1980–2018) and following a ‘water accounting’ approach. Values are rounded to the nearest ten thousand cubic metres and expressed in thousands (10³ m³)."}
+# ==============================================================================
+# Village Average Annual Water Balance Two-Panel Comparative Layout (Figure 8)
+# ==============================================================================
+
+# 1. System environment patch for headless browser stability
+options(chromote.timeout = 60)
+Sys.setenv(CHROMOTE_ARGS = "--disable-gpu --no-sandbox --disable-dev-shm-usage")
+try(Sys.setenv(CHROMOTE_CHROME = chromote::find_chrome()), silent = TRUE)
+
+# 2. Build Individual Synchronized Panels
+sankey_1950s <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14) # Magnified font
+sankey_2022  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14)
+
+# 3. Bind Into a Unified Comparative HTML Tag List
+combined_water_balance_panels <- htmltools::tagList(
+  htmltools::tags$head(
+    htmltools::tags$style("
+      body { margin: 0 !important; padding: 0 !important; background-color: white; }
+      .master-canvas { display: flex; justify-content: center; align-items: flex-start; width: 100%; gap: 10px; }
+      .panel-column { width: 45%; }
+      .panel-header { text-align: center; font-size: 20px; color: #2c3e50; font-family: sans-serif; font-weight: bold; margin-bottom: 10px; }
+    ")
+  ),
+  htmltools::tags$div(
+    class = "master-canvas",
+    htmltools::tags$div(
+      class = "panel-column",
+      htmltools::tags$div(class = "panel-header", "A. 1950s Archetype Village Water Balance"),
+      sankey_1950s
+    ),
+    htmltools::tags$div(
+      class = "panel-column",
+      htmltools::tags$div(class = "panel-header", "B. 2022 Archetype Village Water Balance"),
+      sankey_2022
+    )
+  )
+)
+
+# 4. Export Consolidated Multi-Panel Layout
+html_path <- here("temp_combined_sankey.html")
+png_path  <- here("figures/presentation/Fig.8_Village_Water_Balance_Sankey_2Panels.png")
+pdf_path  <- here("figures/manuscript/Fig.8_Village_Water_Balance_Sankey_2Panels.pdf")
+
+htmltools::save_html(combined_water_balance_panels, html_path)
+Sys.sleep(3) 
+
+# 5. Robust Snapshot Execution (Increased magnification via reduced viewport)
+try({
+  invisible(webshot2::webshot(url = html_path, file = png_path, vwidth = 1200, vheight = 500, zoom = 2))
+  invisible(webshot2::webshot(url = html_path, file = pdf_path, vwidth = 1200, vheight = 500))
+}, silent = TRUE)
+
+unlink(html_path)
+
+if (file.exists(png_path)) {
+  knitr::include_graphics(png_path)
+} else {
+  message("Notice: webshot2 failed to capture the static PNG image.")
+}
+```
+
+```
+
+```
