@@ -229,10 +229,9 @@ process_annual_budget <- function(budget_ls, crop_systems_df) {
 #' @param vars_to_plot Character vector listing standardized clean string metrics to display.
 #' @param x_var Character string referencing the statistical focus metric to plot on X-axis. Default is `"mean"`.
 #' @param title_x Character title string label for the X-axis. Default is `"Mean (95 CI)"`.
-#' @param file_prefix Character string used to name the exported PDF and PNG files. Default is `"Plot_Export"`.
 #' @return A ggplot object.
 #' @export
-plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)", file_prefix = "Plot_Export") {
+plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)") {
   
   plot_data <- data %>% 
     dplyr::filter(var.plot %in% vars_to_plot) %>%
@@ -246,31 +245,6 @@ plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x 
     ggplot2::labs(x = title_x, y = "Cropping System") +
     theme_baseR + 
     ggplot2::theme(legend.title = ggplot2::element_blank())
-  
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # EXPORT FIGURES
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!dir.exists("figures")) { dir.create("figures", recursive = TRUE) }
-  
-  # Save as PDF using the dynamic file_prefix
-  ggplot2::ggsave(
-    filename = paste0("figures/", file_prefix, ".pdf"), 
-    plot = p,  
-    width = 10, 
-    height = 6, 
-    units = "in"
-  )
-  
-  # Save as PNG using the dynamic file_prefix
-  ggplot2::ggsave(
-    filename = paste0("figures/", file_prefix, ".png"), 
-    plot = p,  
-    width = 10, 
-    height = 6, 
-    units = "in", 
-    dpi = 300  
-  )
-  
   return(p)
 }
 

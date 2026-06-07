@@ -294,8 +294,14 @@ The following chart compares the irrigation requirements of different cropping c
 vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)", "Crop ET Supply:Demand")
 
 # Added file_prefix to save as "Fig3_Supply_vs_Demand"
-plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (95% CI)", file_prefix = "Fig3_Supply_vs_Demand")
+fig.3_supply_demand <- plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (95% CI)")
+print(fig.3_supply_demand)
 
+# Save PDF for Manuscript
+ggsave(here("figures/manuscript/Fig.3_Supply_vs_Demand.pdf"), fig.3_supply_demand, width = 10, height = 5.65, device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(here("figures/presentation/Fig.3_Supply_vs_Demand.png"), fig.3_supply_demand, width = 10, height = 5.65, dpi = 300, bg = "white")
 ```
 
 ## Blue Water Potential ($BWP$) by Cropping System
@@ -304,8 +310,14 @@ This plot isolates the core metric: **Blue Water Potential**. It visualizes the 
 
 ```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = "Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur."}
 # Added file_prefix to save as "Fig4_Blue_Water_Potential"
-plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Recharge - Irrigation] (mm)", file_prefix = "Fig4_Blue_Water_Potential")
+fig.4_cs_bwp <- plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Recharge - Irrigation] (mm)")
+print(fig.4_cs_bwp)
 
+# Save PDF for Manuscript
+fig.4_cs_bwp <- ggsave(here("figures/manuscript/Fig.4_Crop_System_Blue_Water_Potential.pdf"), fig.4_cs_bwp, width = 10, height = 5.65, device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(here("figures/presentation/Fig4_Crop_System_Blue_Water_Potential.png"), fig.4_cs_bwp, width = 10, height = 5.65, dpi = 300, bg = "white")
 ```
 
 ---
@@ -332,14 +344,14 @@ write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contri
 ```
 
 ```{r ann-social, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 5. Comparative annual Blue Water Potential ($BWP$) across farm types (1950s vs. 2022).'}
-fig.3_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
-print(fig.3_social)
+fig.5_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
+print(fig.5_social)
 
 # Save PDF for Manuscript
-ggsave(here("figures/manuscript/Fig.5_Socio_Economic_Group_BWP.pdf"), fig.3_social, width = 10, height = 5.65, device = cairo_pdf)
+ggsave(here("figures/manuscript/Fig.5_Socio_Economic_Group_BWP.pdf"), fig.5_social, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.3_social, width = 10, height = 5.65, dpi = 300, bg = "white")
+ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.5_social, width = 10, height = 5.65, dpi = 300, bg = "white")
 
 ```
 
@@ -348,14 +360,14 @@ ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.3_so
 Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically subsidized by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
 
 ```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
-fig_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric)
-print(fig_disparity)
+fig.6_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric)
+print(fig.6_disparity)
 
 # Save PDF for Manuscript
-ggsave(here("figures/manuscript/Fig.6_Farm_BWP_Disparity.pdf"), fig_disparity, width = 11, height = 5.5, device = cairo_pdf)
+ggsave(here("figures/manuscript/Fig.6_Farm_BWP_Disparity.pdf"), fig.6_disparity, width = 11, height = 5.5, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.6_Farm_BWP_Disparity.png"), fig_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
+ggsave(here("figures/presentation/Fig.6_Farm_BWP_Disparity.png"), fig.6_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
 
 ```
 
