@@ -90,8 +90,8 @@ get_Peff <- function(precip, CN = 85, soil = 1) {
   ts$Peff <- ts$P - ts$Q
   
   # 7. Write standard output asset tracking record
-  dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
-  utils::write.csv(ts, file = paste0("data/processed/10_Peffective_soil_", soil, ".csv"), row.names = FALSE)
+  dir.create(here("data/processed"), showWarnings = FALSE, recursive = TRUE)
+  utils::write.csv(ts, file = here(paste0("data/processed/11_met.forcing_soil_", soil, ".csv")), row.names = FALSE)
   
   return(ts)
 }

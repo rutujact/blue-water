@@ -46,22 +46,26 @@ project_root/
 ├── figures/
 │   └── manuscript/          <- TARGET: Output location for generated plots
 ├── code/
-│   ├── 02_function_get_kc.R <- Required biophysical function dependency
+│   ├── functions/
+│   │   └── 02_get_kc.R      <- Required biophysical function dependency
 │   └── 01_Format_Input_Data.Rmd (This file)
+
 ```
+
 ```{r setup-file, include=FALSE}
-rm(list = ls())
+rm(list = ls(all.names = TRUE)); gc()
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
 if (!require("pacman")) install.packages("pacman"); library(pacman)
 pacman::p_load(tidyverse, readxl, here, knitr)
 
-new.dirs <- list(here("data"), here("data/raw"), here("data/processed"), here("data/processed/supplementary"), here("figures"), here("figures/manuscript"))
+new.dirs <- list(here("data"), here("data/raw"), here("data/processed"), here("data/processed/supplementary"), here("figures"), here("figures/manuscript"), here("figures/presentation"))
 lapply(new.dirs, function (x) if (!dir.exists(x)) {dir.create(x, recursive = TRUE, showWarnings = FALSE)})
 
 FILE_CLIMATE      <- here("data/raw/Model in Excel/2 WB_Anantapur_Crop_Level.xlsx")
 FILE_KC_RAW       <- here("data/raw/Model in Excel/1 Kc Anantapur.xlsx")
-FILE_FARM_DEMOS   <- here("data/raw/Model in Excel/For Rutuja_Crop_System_Area_by_Production_System.xlsx")
+FILE_FARM_AREA    <- here("data/raw/Model in Excel/For rutuja.xlsx")
+FILE_FARM_DEMOS   <- here("data/raw/Model in Excel/For rutuja(1).xlsx")
 
 # ==============================================================================
 # BIOPHYSICAL CALIBRATION CONSTANTS
@@ -77,7 +81,7 @@ biophysical_parameters <- list(
   napier_decline_rate_2 = 0.000153846153846154
 )
 
-source(here("code/02_function_get_kc.R"))
+source(here("code/functions/02_get_kc.R"))
 
 theme_baseR <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = "white", colour = "black"), strip.background = element_blank())
 
@@ -391,16 +395,20 @@ knitr::kable(head(kc.doy.crop.all %>% filter(crop == "Banana 1"), 5), caption = 
 To review the biophysical behaviors implemented above, visualize the daily Kc dynamics for all crops.
 
 ```{r plot-all-kc, fig.width=14, fig.height=10, out.width="100%", echo=FALSE, results='hide'}
-# Generate and save the publication figure silently.
 p_kc_all <- ggplot(kc.doy.crop.all, aes(x = doy, y = kc)) +
   geom_line(color = "#005b96", linewidth = 0.8) +
   facet_wrap(~ crop, scales = "free_x", ncol = 5) +
   theme_bw(base_size = 12) +
   theme(panel.grid.major = element_line(color = "grey90"), panel.grid.minor = element_blank(), strip.background = element_rect(fill = "#f5f5f5", color = "black"), strip.text = element_text(face = "bold", size = 10), axis.text = element_text(color = "black"), axis.title = element_text(face = "bold"), plot.title = element_text(face = "bold", hjust = 0.5)) +
   labs(x = "Day of Year (DOY)", y = expression(Crop~Coefficient~(K[c])))
-print(p_kc_all)
-ggsave(plot = p_kc_all, filename = here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), width = 14, height = 10, units = "in", dpi = 300, device = cairo_pdf)
 
+print(p_kc_all)
+
+# Save PDF for Manuscript
+ggsave(plot = p_kc_all, filename = here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), width = 14, height = 10, units = "in", device = cairo_pdf)
+
+# Save PNG for Presentation
+ggsave(plot = p_kc_all, filename = here("figures/presentation/Figure_Kc_Curves_All_Crops.png"), width = 14, height = 10, units = "in", dpi = 300, bg = "white")
 
 ```
 
@@ -468,18 +476,20 @@ knitr::kable(head(crop.systems %>% select(crop.system, rotation, Irrigation, soi
 
 ```{r map-kc-curves, echo=FALSE, results='hide'}
 # Internal .Rdata structures are saved here for the downstream engine.
-crop.systems.l.kc <- crop.systems.l %>% select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>% left_join(kc.doy %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
+crop.systems.l.kc <- crop.systems.l %>%
+  select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>%
+  left_join(kc.doy.crop.all %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
 crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
 save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
-
-
 ```
 
-# Landscape Composition
+# Spatial Land Use & Agricultural Demographics
 
-To evaluate Blue Water Potential (or Net Recharge) at the macro level, we scale field-level data up using landscape demographics (area in hectares of each crop system).
+To evaluate Blue Water Potential (or Net Recharge) at the macro level, we must scale our field-level water budgets up to the watershed scale. This requires two distinct scaling factors: the physical footprint of the crops (Spatial Land Use) and the population distribution of the farmers (Agricultural Demographics).
 
-> *📝 **Author's Raw Data (Reference Only)**: Our demographics were gathered in a matrix of crop systems against historical time periods.*
+## Spatial Land Use (Area by Crop System)
+
+> *📝 **Author's Raw Data (Reference Only)**: Our land use data was gathered in a matrix of crop systems against historical time periods.*
 
 ### 🎯 Target Output Dictionary: Production Systems Area (`09_crop_system_area_by_production_system.csv`)
 
@@ -491,7 +501,7 @@ To evaluate Blue Water Potential (or Net Recharge) at the macro level, we scale 
 | **area_ha** | Numeric | Total area cultivated in hectares |
 
 ```{r ps-composition}
-ps_area <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Farm Type structure")
+ps_area <- readxl::read_xlsx(FILE_FARM_AREA, sheet = "Farm Type structure")
 
 ps_area <- ps_area %>%
   subset(!is.na(WB)) %>%
@@ -515,7 +525,6 @@ ps_by_cs_area <- ps_area %>%
 
 write.csv(ps_by_cs_area, file = here("data/processed/09_crop_system_area_by_production_system.csv"), row.names = FALSE)
 
-
 ```
 
 #### Verification: Landscape Demographics
@@ -523,14 +532,58 @@ write.csv(ps_by_cs_area, file = here("data/processed/09_crop_system_area_by_prod
 ```{r preview-area, echo=FALSE}
 knitr::kable(head(ps_by_cs_area, 5), caption = "Target Area (ha) Format")
 
+```
+
+## Agricultural Demographics (Historical Farm Counts)
+
+We extract the macroscopic farm counts from historical and modern survey sheets. These demographic weights are required to scale the per-hectare water budgets to total volumetric watershed impacts across different socio-economic groups.
+
+### 🎯 Target Output Dictionary: Historical Farm Counts (`10_no_of_farmers_by_production_system_.csv`)
+
+| Column | Type | Description |
+| --- | --- | --- |
+| **time_period** | Character | Historical grouping (e.g., "1950s", "2022") |
+| **production_system** | Character | The farm classification archetype |
+| **number_of_farms** | Numeric | Total count of farms belonging to the archetype |
+
+```{r farm-counts}
+# Extract macroscopic farm counts from historical and modern sheets
+farms_count_p1 <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Archetype village 1950") %>% mutate(time_period = "1950s")
+
+farms_count_p2 <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Archetype village 2022") %>% mutate(time_period = "2022")
+
+farms_count_df <- bind_rows(farms_count_p1, farms_count_p2) %>%
+  # Remove NA and TOTAL rows
+  filter(!is.na(`Farm type`) & `Farm type` != "TOTAL") %>%
+  filter(!str_detect(`Farm type`, "WB")) %>%
+  mutate(
+    # Fix raw data spelling errors
+    `Farm type` = str_replace(`Farm type`, "Pastoralits", "Pastoralists"),
+    # Dynamically strip the "(1950s)" or "(2022)" tags from the farm names
+    `Farm type` = str_trim(str_remove(`Farm type`, "\\s*\\([0-9]{4}s?\\)"))
+  ) %>%
+  # Standardize output column names for downstream engine
+  rename(
+    production_system = `Farm type`,
+    number_of_farms = `No farms`
+  ) %>%
+  select(time_period, production_system, number_of_farms)
+
+write.csv(farms_count_df, file = here("data/processed/10_no_of_farmers_by_production_system.csv"), row.names = FALSE)
 
 ```
 
-```{r farm-counts, echo=FALSE, results='hide'}
-# Extract macroscopic farm counts and save seamlessly.
-farms_count_df <- readxl::read_xlsx(FILE_FARM_DEMOS, sheet = "Archetype Village") %>%
-  rename(production_system = `Production System`, time_period = Period, number_of_farms = Number_of_Farms)
-write.csv(farms_count_df, file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), row.names = FALSE)
+#### Verification: Historical Farm Counts
 
+```{r preview-farm-counts, echo=FALSE}
+knitr::kable(head(farms_count_df, 5), caption = "Target Farm Counts Format")
 
 ```
+
+```
+
+```
+
+---
+
+

@@ -316,7 +316,7 @@ get_budget <- function(cs, p, ts) {
                                ggplot2::aes(x = date, y = value)) +
     ggplot2::geom_line(ggplot2::aes(group = var, color = var)) +
     ggplot2::ylab("mm") + ggplot2::xlab("Year-DOY") +
-    ggplot2::scale_x_date(date_labels = "%Y-%j", date_breaks = "6 months") +
+    ggplot2::scale_x_date(date_labels = "%Y-%m-%d", date_breaks = "6 months") +
     ggplot2::theme_minimal() +
     ggplot2::scale_color_discrete("")
   
@@ -335,24 +335,6 @@ get_budget <- function(cs, p, ts) {
   ggplot2::ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
                                                        "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_", paste(years.to.plot, collapse = "-"), "_daily.pdf"),
                   width = 9, height = 9)
-  
-  # 3.13.2 Long-Term Trend Trajectory Lines ----
-  sum.yr.l <- sum.yr %>%
-    tidyr::pivot_longer(cols = -c(year), names_to = "var", values_to = "value")
-  yearly.vars.to.plot <- c("aet.to.etc.crop", "aet.to.Peff", "balance", "aet", "P", "Q", "recharge", "irrigation", "sm.percent")
-  sum.yr.l.select <- sum.yr.l %>% base::subset(var %in% yearly.vars.to.plot)
-  sum.yr.l.select$var_f = factor(sum.yr.l.select$var, levels = yearly.vars.to.plot)
-  
-  p.yearly.budget <- ggplot2::ggplot(sum.yr.l.select, ggplot2::aes(x = year, y = value)) +
-    ggplot2::facet_grid(var_f ~ ., scales = "fixed") +
-    ggplot2::geom_line(ggplot2::aes(col = var_f), show.legend = FALSE) +
-    ggplot2::geom_smooth(span = 0.2, method = 'loess', formula = 'y ~ x') +
-    ggplot2::ylab("Value") + ggplot2::xlab("Year") +
-    ggplot2::ggtitle(paste0(crop.sys.title, "\n", "Long-term Water Budget Trends")) +
-    ggplot2::theme_minimal()
-  
-  ggplot2::ggsave(plot = p.yearly.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
-                                                        "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_yearly.pdf"), width = 9, height = 9)
   
   return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
               sum.mo = sum.mo, clim.mo = clim.mo))
