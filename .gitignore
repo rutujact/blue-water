@@ -11,24 +11,11 @@
 # Workflow
 !crop-waterbudget_Workflow.html
 # Input data
-!data/processed/*.csv
+#!data/processed/*.csv
 data/processed/*Excel*.csv
-!data/raw/*.csv
+#!data/raw/*.csv
 # Output data
-!output/water_budgets/water.budget.annual.csv
-!output/water_budgets/water.budget.annual.climatology.csv
-!output/water_budgets/water.budget.monthly.climatology.csv
-!output/water_budgets/water.budget.daily.1970.csv
-!output/water_budgets/water.budget.annual.climatology_mean_wide.csv
 # Ouput figures
-!figures/manuscript/*
-!figures/water_budgets/annual_climatology_water_budget_mean.jpg
-!figures/water_budgets/annual_climatology_water_budget_median.jpg
-!figures/water_budgets/annual_climatology_BWP_mean.jpg
-!figures/water_budgets/monthly_climatology_water_budget_median.jpg
-!figures/water_budgets/monthly_climatology_BWP_median.jpg
-!figures/crop_kc_curves/Segmented_Crop_Coefficient_Curves.pdf
-!figures/crop_kc_curves/get_kc_output_by_crop.system.jpg
 # Recursively allow files under subtree
 !.gitignore
 DESCRIPTION
