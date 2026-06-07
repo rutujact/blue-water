@@ -10,56 +10,54 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# GLOBAL COLOR PALETTE CONFIGURATION (OKABE-ITO ACCESSIBILITY) ----
+# GLOBAL COLOR PALETTE CONFIGURATION (OKABE-ETO, SURFACE-FIRST MENTAL MODEL)----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This centralized list uses the perceptually uniform, colorblind-safe 
-# Okabe-Ito palette. It strictly maps colors to their hydrological impact:
+# This palette maps colors to the physical nature of the agricultural surface:
 #
-# Vermillion (#D55E00)   : Deficit drivers (Irrigated Crops, Negative BWP)
-# Sky Blue (#56B4E9)     : Rain-driven systems (Rainfall, Rainfed Crops)
-# Bluish-Green (#009E73) : Natural Recharge Buffers (Grazed Areas)
-# Dark Blue (#0072B2)    : Deep Physical Water (Actual ET, Net Groundwater)
+# Sky Blue (#56B4E9)     : Irrigated (Water-intensive)
+# Gold/Orange (#E69F00)  : Rainfed (Dryland/Earthy)
+# Bluish-Green (#009E73) : Pastoral (Vegetation/Grass)
+# Vermillion (#D55E00)   : Mathematical Deficits / ET0 Demand
+# Dark Blue (#0072B2)    : Actual ET / Deep Groundwater
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 BWP_PALETTES <- list(
   # 1. Climate Profile (Supply vs. Demand)
-  climate_fill    = c("Rainfall" = "#56B4E9", "ET0" = "#D55E00"),         
+  climate_fill    = c("Rainfall" = "#56B4E9", "ET0" = "#D55E00"),         # Sky Blue (Rain) vs Vermillion (Demand)
   climate_color   = c("Rainfall" = "#0072B2", "ET0" = "#D55E00",          
                       "Temperature_Line" = "#CC79A7"),                    
   climate_ribbon  = "#CC79A7",                                            
   
   # 2. Irrigation Types (Annual Climatology)
-  irrigation      = c("Rainfed" = "#56B4E9", "Irrigated" = "#D55E00"),    
+  irrigation      = c("Rainfed" = "#E69F00", "Irrigated" = "#56B4E9"),    # Gold (Dry) vs Sky Blue (Wet)
   
   # 3. Monthly Blue Water Potential (BWP) Envelopes
-  bwp_fill        = c("Below axis" = "#F0E442", "Above axis" = "#56B4E9"), 
-  bwp_color       = c("TRUE" = "#0072B2", "FALSE" = "#D55E00"),           
+  bwp_fill        = c("Below axis" = "#F0E442", "Above axis" = "#56B4E9"), # Yellow (Deficit) vs Sky Blue (Surplus)
+  bwp_color       = c("TRUE" = "#0072B2", "FALSE" = "#D55E00"),           # Dark Blue (+BWP) vs Vermillion (-BWP)
   
-  # 4. Socio-Economic Land Use Contributions
-  land_use        = c("irrigated cropped area" = "#D55E00",               
-                      "rainfed cropped area"   = "#56B4E9",               
-                      "grazed area"            = "#009E73"),    
+  # 4. Socio-Economic Land Use Contributions (Fig 5 & 8)
+  # Represents the physical surface.
+  land_use        = c("irrigated cropped area" = "#56B4E9",               
+                      "rainfed cropped area"   = "#E69F00",               
+                      "grazed area"            = "#009E73"),              
   
-  # 5. Farm Disparity Dashboard
-  # Add this right below the "land_use" variable in BWP_PALETTES
-  farm_category   = c("Irrigated" = "#D55E00", "Rainfed" = "#56B4E9", "Pastoralist" = "#009E73")
+  # 5. Farm Disparity Dashboard (Fig 6)
+  # Represents Net Mathematical Impact (+BWP vs -BWP)
+  disparity_count = "#999999",                                            
+  disparity_bwp   = c("+BWP (Surplus)" = "#0072B2", "-BWP (Deficit)" = "#CC79A7"), # Dark Blue vs Purple
   
-  
-  # 6. Sankey & Network D3 Flows
-  sankey_domain   = '["Rain", "Irrigated", "Rainfed", "Grazed", "BWP", "Flow_Rain"]',
-  sankey_range    = '["#56B4E9", "#D55E00", "#56B4E9", "#009E73", "#0072B2", "#56B4E9"]',
-  
-  # 7. Village Flow Charts / Water Tank (Figure 7)
+  # 7. Village Flow Charts / Water Tank (Fig 7)
+  # Represents Net Mathematical Impact
   flow_box_line   = "#0072B2",                              
   flow_box_fill   = "#0072B2",                              
   flow_box_diff   = "#E5F5FA",                              
-  flow_drop_text  = "#D55E00",                              
-  # INFLOWS: Aggregated Recharge (Monochromatic Sky Blue gradient)
-  flow_in_p1      = c("#56B4E9", "#C6E4F9"),                
-  flow_in_p2      = c("#56B4E9", "#C6E4F9"),                
-  # OUTFLOWS: Irrigated Extraction (Monochromatic Vermillion gradient)
-  flow_out_p2     = c("#D55E00", "#F4B88E"),                
-  flow_out_single = c("#CC79A7", "#EBB9D3")               
+  flow_drop_text  = "#CC79A7",                              # Purple Deficit Text
+  # INFLOWS: Aggregated Surplus (+BWP) -> Monochromatic Dark Blue gradient
+  flow_in_p1      = c("#0072B2", "#56B4E9"),                
+  flow_in_p2      = c("#0072B2", "#56B4E9"),                
+  # OUTFLOWS: Aggregated Deficit (-BWP) -> Monochromatic Purple gradient
+  flow_out_p2     = c("#CC79A7", "#EBB9D3"),                
+  flow_out_single = c("#CC79A7", "#EBB9D3")
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -476,89 +474,84 @@ plot_socio_economic_bwp <- function(ps_bwp_volumetric) {
     ggplot2::coord_flip(clip = "off")
 }
 
-#' Plot Regional Disparity Metrics (Farms Count vs Net Volumetric Footprint)
+#' Plot Regional Disparity Metrics (Farms Count vs BWP Footprint)
 #' @description Merges side-by-side distribution plots evaluating regional demographic weightings 
-#' alongside true absolute volumetric footprints, color-coded by agricultural intensity.
-#' @param ps_bwp_volumetric Frame detailing total farm volume totals and counts.
-#' @return A patchwork layout merging distribution column frames.
+#' alongside true absolute volumetric footprints, natively color-coded by the objective system_typology.
+#' @param ps_bwp_volumetric Dataframe containing BWP volumes and farm counts.
+#' @param ps_typology Dataframe containing the hydrological typology classifications.
+#' @param file_prefix Character string for exported file names.
 #' @export
-plot_farm_bwp_disparity <- function(ps_bwp_volumetric, file_prefix = "Fig6_Farm_Disparity") {
+plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
   
-  # 1. Clean data and define objective categories
+  # 1. Clean names and join typology classifications
   clean_data <- ps_bwp_volumetric %>%
     dplyr::filter(time_period == "2022") %>%
+    dplyr::mutate(short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")) %>%
+    dplyr::left_join(
+      ps_typology %>%
+        dplyr::filter(time_period == "2022") %>%
+        dplyr::mutate(short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")),
+      by = "short_label"
+    ) %>%
     dplyr::mutate(
-      category = dplyr::case_when(
-        stringr::str_detect(production_system, "(?i)fruit|vegetable|rice") ~ "Irrigated",
-        stringr::str_detect(production_system, "(?i)rainfed|redgram")      ~ "Rainfed",
-        TRUE                                                               ~ "Pastoralist"
-      ),
-      short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")
+      # Append typology, removing "-Driven" to conserve axis space
+      typology_tag = stringr::str_remove(system_typology, "-Driven"),
+      display_label = paste0(short_label, " [", typology_tag, "]")
     )
   
-  # 2. Force the correct order: Aggregate first, then extract levels
-  # This ensures the sorting is based on total_vol_m3, not row order
-  level_order <- clean_data %>%
-    dplyr::group_by(short_label) %>%
-    dplyr::summarise(total = sum(total_vol_m3)) %>%
-    dplyr::arrange(total) %>%
-    dplyr::pull(short_label)
+  # 2. Aggregate BWP data to assign strict Mathematical BWP Status (+/-)
+  agg_data <- clean_data %>%
+    dplyr::group_by(display_label) %>%
+    dplyr::summarise(
+      total = sum(total_vol_m3, na.rm = TRUE),
+      farms = max(number_of_farms, na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      bwp_status = dplyr::if_else(total >= 0, "+BWP (Surplus)", "-BWP (Deficit)")
+    ) %>%
+    # Sort continuously by total BWP
+    dplyr::arrange(total)
   
-  clean_data <- clean_data %>%
-    dplyr::mutate(production_system = factor(short_label, levels = level_order))
+  # Lock in the factor levels for ggplot sorting
+  agg_data <- agg_data %>%
+    dplyr::mutate(production_system = factor(display_label, levels = unique(display_label)))
   
   # 3. Plotting Demographic Distribution (Left Panel)
-  p_count <- ggplot2::ggplot(clean_data, ggplot2::aes(x = production_system, y = number_of_farms, fill = category)) +
+  p_count <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = farms, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::coord_flip() +
-    ggplot2::scale_fill_manual(values = BWP_PALETTES$farm_category) + # <--- Centralized Palette Call
+    ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
     ggplot2::labs(x = "Production System", y = "Number of Local Farms", title = "Demographic Distribution") +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text.y = ggplot2::element_text(color = "black", size = 9),
-                   plot.title = ggplot2::element_text(face = "bold", size = 11),
-                   legend.position = "none")
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_text(color = "black", size = 9),
+      plot.title = ggplot2::element_text(face = "bold", size = 11),
+      legend.position = "none",
+      panel.grid.major.y = ggplot2::element_blank()
+    )
   
   # 4. Plotting Net Watershed Impact (Right Panel)
-  p_bwp <- ggplot2::ggplot(clean_data, ggplot2::aes(x = production_system, y = total_vol_m3 / 1000, fill = category)) +
+  p_bwp <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = total / 1000, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.6) +
-    ggplot2::scale_fill_manual(values = BWP_PALETTES$farm_category) + # <--- Centralized Palette Call
     ggplot2::coord_flip() +
+    ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
     ggplot2::labs(x = NULL, y = "Total Volumetric BWP (10³ m³/year)", title = "Net Watershed Impact") +
-    ggplot2::theme_minimal() +
-    ggplot2::theme(axis.text.y = ggplot2::element_blank(),
-                   plot.title = ggplot2::element_text(face = "bold", size = 11),
-                   legend.title = ggplot2::element_blank())
+    ggplot2::theme_bw() +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_blank(),
+      axis.ticks.y = ggplot2::element_blank(),
+      plot.title = ggplot2::element_text(face = "bold", size = 11),
+      legend.title = ggplot2::element_blank(),
+      panel.grid.major.y = ggplot2::element_blank()
+    )
   
   # 5. Combine with Patchwork
   p_combined <- p_count + p_bwp + 
     patchwork::plot_layout(widths = c(1.4, 1), guides = "collect") & 
     ggplot2::theme(legend.position = "bottom")
-  
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # EXPORT FIGURES
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  if (!dir.exists("figures")) { dir.create("figures", recursive = TRUE) }
-  
-  # Save as PDF
-  ggplot2::ggsave(
-    filename = paste0("figures/", file_prefix, ".pdf"), 
-    plot = p_combined,  
-    width = 11, 
-    height = 6, 
-    units = "in"
-  )
-  
-  # Save as PNG
-  ggplot2::ggsave(
-    filename = paste0("figures/", file_prefix, ".png"), 
-    plot = p_combined,  
-    width = 11, 
-    height = 6, 
-    units = "in", 
-    dpi = 300  
-  )
-  
+
   return(p_combined)
 }
 
