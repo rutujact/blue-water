@@ -41,8 +41,8 @@ BWP_PALETTES <- list(
                       "grazed area"            = "#009E73"),    
   
   # 5. Farm Disparity Dashboard
-  disparity_count = "#999999",                                            
-  disparity_bwp   = c("TRUE" = "#56B4E9", "FALSE" = "#D55E00"),
+  # Add this right below the "land_use" variable in BWP_PALETTES
+  farm_category   = c("Irrigated" = "#D55E00", "Rainfed" = "#56B4E9", "Pastoralist" = "#009E73")
   
   
   # 6. Sankey & Network D3 Flows
@@ -61,8 +61,7 @@ BWP_PALETTES <- list(
   flow_out_p2     = c("#D55E00", "#F4B88E"),                
   flow_out_single = c("#CC79A7", "#EBB9D3")               
 )
-okabe_ito <- c("#E69F00", "#56B4E9", "#009E73", "#F0E442",
-               "#0072B2", "#D55E00", "#CC79A7", "#000000")
+
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SECTION 1: GLOBAL GRAPHICS THEMES
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -483,7 +482,7 @@ plot_socio_economic_bwp <- function(ps_bwp_volumetric) {
 #' @param ps_bwp_volumetric Frame detailing total farm volume totals and counts.
 #' @return A patchwork layout merging distribution column frames.
 #' @export
-plot_farm_bwp_disparity <- function(ps_bwp_volumetric) {
+plot_farm_bwp_disparity <- function(ps_bwp_volumetric, file_prefix = "Fig6_Farm_Disparity") {
   
   # 1. Clean data and define objective categories
   clean_data <- ps_bwp_volumetric %>%
@@ -508,21 +507,22 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric) {
   clean_data <- clean_data %>%
     dplyr::mutate(production_system = factor(short_label, levels = level_order))
   
-  # 3. Plotting
+  # 3. Plotting Demographic Distribution (Left Panel)
   p_count <- ggplot2::ggplot(clean_data, ggplot2::aes(x = production_system, y = number_of_farms, fill = category)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::coord_flip() +
-    ggplot2::scale_fill_manual(values = c("Irrigated" = "#D55E00", "Rainfed" = "#56B4E9", "Pastoralist" = "#009E73")) +
+    ggplot2::scale_fill_manual(values = BWP_PALETTES$farm_category) + # <--- Centralized Palette Call
     ggplot2::labs(x = "Production System", y = "Number of Local Farms", title = "Demographic Distribution") +
     ggplot2::theme_minimal() +
     ggplot2::theme(axis.text.y = ggplot2::element_text(color = "black", size = 9),
                    plot.title = ggplot2::element_text(face = "bold", size = 11),
                    legend.position = "none")
   
+  # 4. Plotting Net Watershed Impact (Right Panel)
   p_bwp <- ggplot2::ggplot(clean_data, ggplot2::aes(x = production_system, y = total_vol_m3 / 1000, fill = category)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.6) +
-    ggplot2::scale_fill_manual(values = c("Irrigated" = "#D55E00", "Rainfed" = "#56B4E9", "Pastoralist" = "#009E73")) +
+    ggplot2::scale_fill_manual(values = BWP_PALETTES$farm_category) + # <--- Centralized Palette Call
     ggplot2::coord_flip() +
     ggplot2::labs(x = NULL, y = "Total Volumetric BWP (10³ m³/year)", title = "Net Watershed Impact") +
     ggplot2::theme_minimal() +
@@ -530,9 +530,34 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric) {
                    plot.title = ggplot2::element_text(face = "bold", size = 11),
                    legend.title = ggplot2::element_blank())
   
+  # 5. Combine with Patchwork
   p_combined <- p_count + p_bwp + 
     patchwork::plot_layout(widths = c(1.4, 1), guides = "collect") & 
     ggplot2::theme(legend.position = "bottom")
+  
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # EXPORT FIGURES
+  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  if (!dir.exists("figures")) { dir.create("figures", recursive = TRUE) }
+  
+  # Save as PDF
+  ggplot2::ggsave(
+    filename = paste0("figures/", file_prefix, ".pdf"), 
+    plot = p_combined,  
+    width = 11, 
+    height = 6, 
+    units = "in"
+  )
+  
+  # Save as PNG
+  ggplot2::ggsave(
+    filename = paste0("figures/", file_prefix, ".png"), 
+    plot = p_combined,  
+    width = 11, 
+    height = 6, 
+    units = "in", 
+    dpi = 300  
+  )
   
   return(p_combined)
 }
