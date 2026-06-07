@@ -580,6 +580,56 @@ knitr::kable(head(farms_count_df, 5), caption = "Target Farm Counts Format")
 
 ```
 
+### Classify Production Systems by Hydrological Typology
+
+Farm production systems are highly heterogeneous. Because irrigation drives a disproportionately high water deficit, classifying farms strictly by majority land area underestimates their hydrological impact. Instead, we use a hierarchical threshold to define the **System Typology**. If a production system dedicates a significant threshold of its land (e.g., > 35%) to irrigation, it is classified as "Irrigation-Driven," regardless of its remaining acreage. 
+
+```{r classify-system-typology}
+# 1. Map Crop Systems to Core Surface Types
+cs_surface <- crop.systems %>%
+  dplyr::select(crop.system, Irrigation) %>%
+  dplyr::distinct() %>%
+  dplyr::mutate(
+    land_use = dplyr::case_when(
+      Irrigation == "Irrigated" ~ "Irrigated",
+      stringr::str_detect(crop.system, "(?i)grassland|grazed|pasture") ~ "Pastoral",
+      TRUE ~ "Rainfed"
+    )
+  )
+
+# 2. Calculate area percentages and pivot to wide format
+ps_land_use_area_wide <- ps_by_cs_area %>%
+  dplyr::left_join(cs_surface, by = "crop.system") %>%
+  dplyr::group_by(time_period, production_system, land_use) %>%
+  dplyr::summarise(land_use_area = sum(area_ha, na.rm = TRUE), .groups = "drop_last") %>%
+  dplyr::mutate(
+    total_area_ha = sum(land_use_area, na.rm = TRUE),
+    land_use_pc   = round((land_use_area / total_area_ha) * 100, 2)
+  ) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(-land_use_area) %>%
+  tidyr::pivot_wider(names_from = land_use, values_from = land_use_pc, values_fill = 0)
+
+# 3. Apply the Hierarchical Typology Logic
+ps_typology <- ps_land_use_area_wide %>%
+  dplyr::mutate(
+    system_typology = dplyr::case_when(
+      # THRESHOLD RULE: If >= 35% of land is irrigated, the system is Irrigation-Driven.
+      # (You can adjust this 35% threshold to perfectly capture your Small-Scale Fruit Growers)
+      Irrigated >= 35 ~ "Irrigated",
+      # For remaining systems, classify by whichever holds the majority
+      Pastoral > Rainfed ~ "Pastoral",
+      TRUE ~ "Rainfed"
+    )
+  ) %>%
+  # Reorder columns for clean reading
+  dplyr::select(time_period, production_system, total_area_ha, Irrigated, Pastoral, Rainfed, system_typology)
+
+# Save the structured classification for downstream plotting
+write.csv(ps_typology, file = here("data/processed/supplementary/05_production_system_typology.csv"), row.names = FALSE)
+```
+
+
 ```
 
 ```
