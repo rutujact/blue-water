@@ -4,7 +4,9 @@
 # But descend into directories
 !*/
 # You can be specific with these rules
+!code/*.Rmd
 !code/*.R
+!code/functions/*.R
 !R/*.R
 # Workflow
 !crop-waterbudget_Workflow.html
