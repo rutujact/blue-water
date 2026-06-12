@@ -3,7 +3,7 @@ title: "The Blue Water Toolkit"
 subtitle: "A Framework for Modeling Net Watershed Impacts"
 author: "Rutuja Chitra-Tarak, C. Hemingway, C. Aubron, M. Vigne, G. Boulet, S. Muddu, L. Ruiz"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_file = file.path(dirname(dirname(inputFile)), paste0(tools::file_path_sans_ext(basename(inputFile)), '_Workflow.html'))) })
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "..") })
 output:
   html_document:
     df_print: paged
