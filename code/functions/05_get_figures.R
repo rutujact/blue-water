@@ -1,4 +1,3 @@
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Title:        Water Budgeting & Visualization Utility Functions
 # Author:       Rutuja Chitra-Tarak
@@ -10,54 +9,45 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# GLOBAL COLOR PALETTE CONFIGURATION (OKABE-ETO, SURFACE-FIRST MENTAL MODEL)----
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# This palette maps colors to the physical nature of the agricultural surface:
-#
-# Sky Blue (#56B4E9)     : Irrigated (Water-intensive)
-# Gold/Orange (#E69F00)  : Rainfed (Dryland/Earthy)
-# Bluish-Green (#009E73) : Pastoral (Vegetation/Grass)
-# Vermillion (#D55E00)   : Mathematical Deficits / ET0 Demand
-# Dark Blue (#0072B2)    : Actual ET / Deep Groundwater
+# GLOBAL COLOR PALETTE CONFIGURATION (OKABE-ITO, SURFACE-FIRST MENTAL MODEL)----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 BWP_PALETTES <- list(
   # 1. Climate Profile (Supply vs. Demand)
-  climate_fill    = c("Rainfall" = "#56B4E9", "ET0" = "#D55E00"),         # Sky Blue (Rain) vs Vermillion (Demand)
+  climate_fill    = c("Rainfall" = "#56B4E9", "ET0" = "#D55E00"),         
   climate_color   = c("Rainfall" = "#0072B2", "ET0" = "#D55E00",          
                       "Temperature_Line" = "#CC79A7"),                    
   climate_ribbon  = "#CC79A7",                                            
   
   # 2. Irrigation Types (Annual Climatology)
-  irrigation      = c("Rainfed" = "#E69F00", "Irrigated" = "#56B4E9"),    # Gold (Dry) vs Sky Blue (Wet)
+  irrigation      = c("Rainfed" = "#E69F00", "Irrigated" = "#56B4E9"),    
   
   # 3. Monthly Blue Water Potential (BWP) Envelopes
-  bwp_fill        = c("Below axis" = "#F0E442", "Above axis" = "#56B4E9"), # Yellow (Deficit) vs Sky Blue (Surplus)
-  bwp_color       = c("TRUE" = "#0072B2", "FALSE" = "#D55E00"),           # Dark Blue (+BWP) vs Vermillion (-BWP)
+  bwp_fill        = c("Below axis" = "#F0E442", "Above axis" = "#56B4E9"), 
+  bwp_color       = c("TRUE" = "#0072B2", "FALSE" = "#D55E00"),           
   
   # 4. Socio-Economic Land Use Contributions (Fig 5 & 8)
-  # Represents the physical surface.
   land_use        = c("irrigated cropped area" = "#56B4E9",               
                       "rainfed cropped area"   = "#E69F00",               
                       "grazed area"            = "#009E73"),              
   
   # 5. Farm Disparity Dashboard (Fig 6)
-  # Represents Net Mathematical Impact (+BWP vs -BWP)
   disparity_count = "#999999",                                            
-  disparity_bwp   = c("+BWP (Surplus)" = "#0072B2", "-BWP (Deficit)" = "#CC79A7"), # Dark Blue vs Purple
+  disparity_bwp   = c("+BWP (Surplus)" = "#0072B2", "-BWP (Deficit)" = "#CC79A7"), 
   
   # 7. Village Flow Charts / Water Tank (Fig 7)
-  # Represents Net Mathematical Impact
   flow_box_line   = "#0072B2",                              
   flow_box_fill   = "#0072B2",                              
   flow_box_diff   = "#E5F5FA",                              
-  flow_drop_text  = "#CC79A7",                              # Purple Deficit Text
-  # INFLOWS: Aggregated Surplus (+BWP) -> Monochromatic Dark Blue gradient
+  flow_drop_text  = "#CC79A7",                              
   flow_in_p1      = c("#0072B2", "#56B4E9"),                
   flow_in_p2      = c("#0072B2", "#56B4E9"),                
-  # OUTFLOWS: Aggregated Deficit (-BWP) -> Monochromatic Purple gradient
   flow_out_p2     = c("#CC79A7", "#EBB9D3"),                
-  flow_out_single = c("#CC79A7", "#EBB9D3")
+  flow_out_single = c("#CC79A7", "#EBB9D3"),
+  
+  # 8. Interactive Sankey Flow Charts (Fig 8)
+  sankey_domain   = '["Rain", "Irrigated", "Rainfed", "Grazed", "BWP", "Flow_Rain"]',
+  sankey_range    = '["#56B4E9", "#56B4E9", "#E69F00", "#009E73", "#0072B2", "#E8E8E8"]'
 )
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -120,14 +110,13 @@ theme_presentation <- function(base_size = 14) {
     )
 }
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SECTION 2: BASELINE AGRO-CLIMATOLOGY & CROP PARAMETERS
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Plot Historical Climate Profile
 #' @description Generates a publication-grade, dual-axis monthly weather profile tracking average 
-#' and quantile intervals ($5\%$ to $95\%$) for Rainfall, Potential Evapotranspiration ($ET_0$), and Temperature.
+#' and quantile intervals (5% to 95%) for Rainfall, Potential Evapotranspiration (ET0), and Temperature.
 #' @param climate_summary Dataframe containing columns: Month, Rainfall_avg, Rainfall_q05, 
 #' Rainfall_q95, ET0_avg, ET0_q05, ET0_q95, Temperature_avg, Temperature_q05, Temperature_q95.
 #' @param scale_factor Numeric. Scaling factor used to align secondary temperature axis. Default 7.5.
@@ -178,7 +167,6 @@ plot_crop_coefficient_curves <- function(crop_systems_l_kc) {
     ggplot2::theme(strip.background = ggplot2::element_rect(fill = "transparent", color = "#cccccc", linewidth = 0.4),
                    strip.text = ggplot2::element_text(face = "bold", size = 8.5, color = "black", margin = ggplot2::margin(t = 3, b = 3)))
 }
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SECTION 3: CROPPING SYSTEM LEVEL (TEMPORAL CLIMATOLOGY)
@@ -313,7 +301,6 @@ plot_monthly_bwp <- function(clim_crop_cs, years_range_text) {
                   title = paste0("Monthly Blue Water Potential for Various Cropping Systems in Anantapur (", years_range_text, ")"))
 }
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SECTION 4: PRODUCTION SYSTEM LEVEL (SOCIO-ECONOMIC AGGREGATION)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -330,7 +317,6 @@ plot_monthly_bwp <- function(clim_crop_cs, years_range_text) {
 #' @export
 get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_count_df = NULL) {
   
-  # 1. Combine datasets and classify land types cleanly based on rotation names/irrigation
   ps_annual_data <- budget_yr_l %>%
     dplyr::select(rotation, crop.system, Irrigation, year, var, value) %>%
     dplyr::left_join(ps_by_cs_area, by = "crop.system", relationship = "many-to-many") %>%
@@ -344,7 +330,6 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
       )
     )
   
-  # 2. Compute true area-weighted depth for each production system per year
   ps_weighted_annual <- ps_annual_data %>%
     dplyr::group_by(production_system, time_period, Irrigation, year, var, crop.system) %>%
     dplyr::mutate(rotations_count = dplyr::n_distinct(rotation)) %>%
@@ -355,7 +340,6 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
       .groups = "drop"
     )
   
-  # 3. Calculate true final Quantiles over the timeline data
   ps_budget_summary <- ps_weighted_annual %>%
     dplyr::group_by(production_system, time_period, Irrigation, var) %>%
     dplyr::summarise(
@@ -377,7 +361,6 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
     dplyr::relocate(var.plot, .after = var)  %>%
     dplyr::arrange(time_period, production_system)
   
-  # 4. Generate the accurate, area-weighted land contribution matrix for ALL Variables
   ps_total_areas <- ps_by_cs_area %>%
     dplyr::group_by(production_system, time_period) %>%
     dplyr::summarise(total_system_area = sum(area_ha, na.rm = TRUE), .groups = "drop")
@@ -474,16 +457,13 @@ plot_socio_economic_bwp <- function(ps_bwp_volumetric) {
     ggplot2::coord_flip(clip = "off")
 }
 
-#' Plot Regional Disparity Metrics (Farms Count vs BWP Footprint)
+#' Plot Micro-Regional Disparity Metrics (Farms Count vs BWP Footprint) 
 #' @description Merges side-by-side distribution plots evaluating regional demographic weightings 
 #' alongside true absolute volumetric footprints, natively color-coded by the objective system_typology.
 #' @param ps_bwp_volumetric Dataframe containing BWP volumes and farm counts.
 #' @param ps_typology Dataframe containing the hydrological typology classifications.
-#' @param file_prefix Character string for exported file names.
 #' @export
 plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
-  
-  # 1. Clean names and join typology classifications
   clean_data <- ps_bwp_volumetric %>%
     dplyr::filter(time_period == "2022") %>%
     dplyr::mutate(short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")) %>%
@@ -494,12 +474,10 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
       by = "short_label"
     ) %>%
     dplyr::mutate(
-      # Append typology, removing "-Driven" to conserve axis space
       typology_tag = stringr::str_remove(system_typology, "-Driven"),
       display_label = paste0(short_label, " [", typology_tag, "]")
     )
   
-  # 2. Aggregate BWP data to assign strict Mathematical BWP Status (+/-)
   agg_data <- clean_data %>%
     dplyr::group_by(display_label) %>%
     dplyr::summarise(
@@ -510,16 +488,13 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
     dplyr::mutate(
       bwp_status = dplyr::if_else(total >= 0, "+BWP (Surplus)", "-BWP (Deficit)")
     ) %>%
-    # Sort continuously by total BWP
     dplyr::arrange(total)
   
-  # Lock in the factor levels for ggplot sorting
   agg_data <- agg_data %>%
     dplyr::mutate(production_system = factor(display_label, levels = unique(display_label)))
   
-  # 3. Plotting Demographic Distribution (Left Panel)
   p_count <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = farms, fill = bwp_status)) +
-    ggplot2::geom_col(width = 0.6) +
+    ggplot2::geom_col(width = 0.6, show.legend = FALSE) + 
     ggplot2::coord_flip() +
     ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
     ggplot2::labs(x = "Production System", y = "Number of Local Farms", title = "Demographic Distribution") +
@@ -527,31 +502,26 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
     ggplot2::theme(
       axis.text.y = ggplot2::element_text(color = "black", size = 9),
       plot.title = ggplot2::element_text(face = "bold", size = 11),
-      legend.position = "none",
       panel.grid.major.y = ggplot2::element_blank()
     )
   
-  # 4. Plotting Net Watershed Impact (Right Panel)
   p_bwp <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = total / 1000, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.6) +
     ggplot2::coord_flip() +
     ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
-    ggplot2::labs(x = NULL, y = "Total Volumetric BWP (10³ m³/year)", title = "Net Watershed Impact") +
+    ggplot2::labs(x = NULL, y = expression("Total Volumetric BWP (10"^3~"m"^3*"/year)"), title = "Net Watershed Impact") +
     ggplot2::theme_bw() +
     ggplot2::theme(
       axis.text.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(face = "bold", size = 11),
       legend.title = ggplot2::element_blank(),
-      panel.grid.major.y = ggplot2::element_blank()
+      panel.grid.major.y = ggplot2::element_blank(),
+      legend.position = "bottom" 
     )
   
-  # 5. Combine with Patchwork
-  p_combined <- p_count + p_bwp + 
-    patchwork::plot_layout(widths = c(1.4, 1), guides = "collect") & 
-    ggplot2::theme(legend.position = "bottom")
-
+  p_combined <- p_count + p_bwp + patchwork::plot_layout(widths = c(1.4, 1))
   return(p_combined)
 }
 
@@ -804,9 +774,11 @@ get_single_village_plot <- function(df, cfg, output_dev, filename) {
 #' @param ps_volumetric_summary Structured long frame compiled by `get_production_system_budgets`.
 #' @param target_period Character string identifying the focus slice (e.g. `"2022"`, `"1950s"`).
 #' @param font_size Numeric. Typography element baseline size for labels. Default 13.
+#' @param margin_left Numeric. Left margin spacing for the D3 canvas. Default 120.
+#' @param margin_right Numeric. Right margin spacing for the D3 canvas. Default 30.
 #' @return An interactive htmlwidget layout structure.
 #' @export
-get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) {
+get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, margin_left = 120, margin_right = 30) {
   tp_data <- ps_volumetric_summary %>% 
     dplyr::filter(time_period == target_period) %>%
     dplyr::group_by(var) %>%
@@ -819,12 +791,6 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
     ) %>%
     dplyr::mutate(dplyr::across(dplyr::ends_with("_m3"), ~ ifelse(is.nan(.) | is.na(.), 0, .)))
   
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # ANNOTATION: CUSTOM ROUNDING LOGIC
-  # Goal: Round to nearest 10,000 m³ but express in thousands (k m³ / 10³ m³).
-  # Math: (Raw / 10000) rounded * 10
-  # Example: 5,127,450 -> 512.745 -> round(513) -> 513 * 10 = 5130 k m³
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   round_to_10k_in_thousands <- function(val) {
     return(round(val / 10000) * 10)
   }
@@ -839,15 +805,11 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
   et_irrigated <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$irrigated_m3)) else 0
   et_grazed    <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$grazed_m3)) else 0
   
-  # Balance equation to ensure Inflows == Outflows
-  # Rainfed acts as the buffer to absorb any minor rounding discrepancies
   total_out <- bwp_vol + et_rainfed + et_irrigated + et_grazed
   if (p_vol != total_out && total_out > 0) { 
     et_rainfed <- et_rainfed + (p_vol - total_out) 
   }
-  # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   
-  # EXPLICIT ORDERING: 0=Precip, 1=Irrigated, 2=Rainfed, 3=Grazed, 4=BWP
   nodes_df <- data.frame(
     name = c(
       paste0("Precipitation|", format(p_vol, big.mark=","), " k m³"),
@@ -859,7 +821,6 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
     group = c("Rain", "Irrigated", "Rainfed", "Grazed", "BWP")
   )
   
-  # Match outflow ordering to nodes_df order
   outflow_vols <- c(et_irrigated, et_rainfed, et_grazed, bwp_vol)
   outflow_indices <- 1:4 
   
@@ -871,7 +832,6 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
   }
   links_df <- do.call(rbind, links_list)
   
-  # MAP COLORS TO NEW ORDER dynamically
   color_scale <- paste0('d3.scaleOrdinal()
     .domain(', BWP_PALETTES$sankey_domain, ')
     .range(', BWP_PALETTES$sankey_range, ')')
@@ -881,13 +841,12 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
     Value = "value", NodeID = "name", NodeGroup = "group", LinkGroup = "group",
     units = "k m³", fontSize = font_size, nodeWidth = 30, nodePadding = 40, 
     colourScale = color_scale, sinksRight = TRUE, 
-    width = 720, height = 480, iterations = 0,
-    margin = list(top = 25, left = 130, right = 140, bottom = 25)
+    width = 550, height = 450, iterations = 0,
+    margin = list(top = 25, left = margin_left, right = margin_right, bottom = 25)
   )
   
   sankey <- htmlwidgets::onRender(sankey, '
     function(el, x) {
-      // --- 1. Custom Typography & Multi-line Labels ---
       d3.select(el).selectAll(".node text")
         .style("fill", "#1a1a1a")
         .style("font-family", "sans-serif")
@@ -906,7 +865,6 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13) 
         }
       });
 
-      // --- 2. Fix the Straight Top Link (Force Curvature) ---
       var nodes = d3.select(el).selectAll(".node").data();
       var sourceNode = nodes.find(n => n.name && n.name.startsWith("Precipitation"));
 

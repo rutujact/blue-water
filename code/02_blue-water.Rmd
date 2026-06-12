@@ -61,9 +61,11 @@ knitr::opts_chunk$set(
 
 options(width = 80)
 
+EXPORT_FIGURES <- FALSE  # Toggle to TRUE only for final manuscript output
+
 # Load core dependencies
 if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow, networkD3, htmlwidgets, webshot2, htmltools, here)
+pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow, networkD3, htmlwidgets, webshot2, htmltools, here, data.table)
 
 # Generate directory framework if missing
 required_dirs <- list(
@@ -137,12 +139,13 @@ climate_summary <- read.csv(file = here("data/processed/03_climatology_for_figur
 fig.1_journal <- plot_climate_profile(climate_summary)
 print(fig.1_journal)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(plot = fig.1_journal, filename = here("figures/manuscript/Fig.1_Regional_Monthly_Climate_Profile.pdf"), width = 180, height = 90, units = "mm", device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regional_Monthly_Climate_Profile.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white")
-
+}
 ```
 
 ## Landscape & Cropping Parameter Ingestion
@@ -173,12 +176,13 @@ crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
 fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
 print(fig.2_journal)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(plot = fig.2_journal, filename = here("figures/manuscript/Fig.2_Crop_Coefficient_Curves_by_Rotation.pdf"), width = 180, height = 225, units = "mm", device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Crop_Coefficient_Curves_by_Rotation.png"), width = 180, height = 225, units = "mm", dpi = 300, bg = "white")
-
+}
 ```
 
 ## Production Systems & Socio-Agricultural Composition
@@ -260,31 +264,37 @@ load(file = here("output/01_processed_water_budgets.Rdata"))
 We transform the heavy daily flux lists into clean, aggregated annual summaries. These outputs form the basis for all downstream socio-hydrological evaluations.
 
 ```{r compile-outputs}
+# Make sure data.table and readr are installed and loaded
+pacman::p_load(data.table, readr)
+
+# 1. Optimize Daily Processing
 budget.daily.ls <- lapply(budget, function(x) {return(x$ts)})
-budget.daily <- dplyr::bind_rows(budget.daily.ls, .id = "rotation") %>% 
-  left_join(crop.systems, by = "rotation")
 
-# Save detailed daily data metrics
-write.csv(budget.daily, file = here("output/02_export_detailed_daily_water_budgets.csv"), row.names = FALSE)
+# data.table::rbindlist is exponentially faster than dplyr::bind_rows for large lists
+budget.daily <- data.table::rbindlist(budget.daily.ls, idcol = "rotation") %>% 
+  dplyr::left_join(crop.systems, by = "rotation")
 
-# Generate annual long-format metrics
+# readr::write_csv is massively faster than base write.csv
+readr::write_csv(budget.daily, file = here("output/02_export_detailed_daily_water_budgets.csv"))
+
+# 2. Optimize Annual Processing
 budget.yr.ls <- lapply(budget, function(x) {return(x$sum.yr)})
-budget.yr.l <- dplyr::bind_rows(budget.yr.ls, .id = "rotation") %>% 
-    pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
-  left_join(crop.systems, by = "rotation")
-write.csv(budget.yr.l, file = here("output/03_export_annual_water_budgets_long.csv"), row.names = FALSE)
+budget.yr.l <- data.table::rbindlist(budget.yr.ls, idcol = "rotation") %>% 
+    tidyr::pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
+    dplyr::left_join(crop.systems, by = "rotation")
+
+readr::write_csv(budget.yr.l, file = here("output/03_export_annual_water_budgets_long.csv"))
 
 # Process the Blue Water Potential (BWP)
 summary_yr_budgets <- process_annual_budget(budget, crop.systems)
 summ.qs.cs <- summary_yr_budgets$summ_qs_cs
 
 bwp <- summ.qs.cs %>% 
-  subset(var == "balance") %>%
-  select(-var, -var.plot)
+  base::subset(var == "balance") %>%
+  dplyr::select(-var, -var.plot)
 colnames(bwp)[-c(1,2)] <- paste0("BWP_", colnames(bwp)[-c(1,2)])
 
-write.csv(bwp, file = here("output/04_calculated_crop_system_blue_water_potential.csv"), row.names = FALSE)
-
+readr::write_csv(bwp, file = here("output/04_calculated_crop_system_blue_water_potential.csv"))
 ```
 
 ---
@@ -298,15 +308,16 @@ The following chart compares the irrigation requirements of different cropping c
 ```{r annual-wb, fig.align='center', echo=FALSE, fig.cap = "Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Groundwater Recharge is depicted in negative terms of the water fluxes axis."}
 vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)", "Crop ET Supply:Demand")
 
-# Added file_prefix to save as "Fig3_Supply_vs_Demand"
 fig.3_supply_demand <- plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (95% CI)")
 print(fig.3_supply_demand)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.3_Supply_vs_Demand.pdf"), fig.3_supply_demand, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(here("figures/presentation/Fig.3_Supply_vs_Demand.png"), fig.3_supply_demand, width = 10, height = 5.65, dpi = 300, bg = "white")
+}
 ```
 
 ## Blue Water Potential ($BWP$) by Cropping System
@@ -314,15 +325,17 @@ ggsave(here("figures/presentation/Fig.3_Supply_vs_Demand.png"), fig.3_supply_dem
 This plot isolates the core metric: **Blue Water Potential**. It visualizes the absolute net impact of a specific land use decision on the underlying aquifer.
 
 ```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = "Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur."}
-# Added file_prefix to save as "Fig4_Blue_Water_Potential"
+
 fig.4_cs_bwp <- plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Recharge - Irrigation] (mm)")
 print(fig.4_cs_bwp)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.4_Crop_System_Blue_Water_Potential.pdf"), fig.4_cs_bwp, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(here("figures/presentation/Fig4_Crop_System_Blue_Water_Potential.png"), fig.4_cs_bwp, width = 10, height = 5.65, dpi = 300, bg = "white")
+}
 ```
 
 ---
@@ -352,12 +365,13 @@ write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contri
 fig.5_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
 print(fig.5_social)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.5_Socio_Economic_Group_BWP.pdf"), fig.5_social, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.5_social, width = 10, height = 5.65, dpi = 300, bg = "white")
-
+}
 ```
 
 ## Farm-Level BWP Disparity: Demographics vs. Impact
@@ -369,12 +383,13 @@ Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net wa
 fig.6_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, ps_typology)
 print(fig.6_disparity)
 
+if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.6_Farm_BWP_Disparity.pdf"), fig.6_disparity, width = 11, height = 5.5, device = cairo_pdf)
 
 # Save PNG for Presentation
 ggsave(here("figures/presentation/Fig.6_Farm_BWP_Disparity.png"), fig.6_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
-
+}
 ```
 
 ---
@@ -408,16 +423,20 @@ colnames(village.bwp_collapsed) <- c("period", "label", "val")
 
 cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
 
+if (EXPORT_FIGURES) {
 # Build comprehensive system maps
 invisible(plot_village_bwp(
-  village_bwp_collapsed = village.bwp_collapsed, 
+  village_bwp_collapsed = village.bwp_collapsed,
+  # ps_typology = ps_typology,
   cfg = cfg, 
   output_dev = cairo_pdf, 
   filename = here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
   manuscript_style = TRUE
 ))
+}
 invisible(plot_village_bwp(
-  village_bwp_collapsed = village.bwp_collapsed, 
+  village_bwp_collapsed = village.bwp_collapsed,
+  # ps_typology = ps_typology,
   cfg = cfg, 
   output_dev = png, 
   filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
@@ -434,66 +453,87 @@ Figure 8 employs a strict water accounting framework (Inflows = Outflows) to tra
 
 By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.
 
-```{r village-budget, eval=TRUE, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village in the 1950s (A) and 2022 (B), based on 37 years of climate data (1980–2018) and following a ‘water accounting’ approach. Values are rounded to the nearest ten thousand cubic metres and expressed in thousands (10³ m³)."}
-# ==============================================================================
-# Village Average Annual Water Balance Two-Panel Comparative Layout (Figure 8)
-# ==============================================================================
+```{r village-budget, eval=TRUE, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
 
-# 1. System environment patch for headless browser stability
-options(chromote.timeout = 60)
-Sys.setenv(CHROMOTE_ARGS = "--disable-gpu --no-sandbox --disable-dev-shm-usage")
-try(Sys.setenv(CHROMOTE_CHROME = chromote::find_chrome()), silent = TRUE)
+# --- DEFINE YOUR PREFERRED MARGINS HERE ---
+# Margins for the interactive HTML document
+html_margin_left  <- 120
+html_margin_right <- 30
 
-# 2. Build Individual Synchronized Panels
-sankey_1950s <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14) # Magnified font
-sankey_2022  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14)
+# Margins specifically for the PNG/PDF printout
+# (Adjust these if the camera export needs different spacing)
+export_margin_left  <- 50
+export_margin_right <- 50
+# ------------------------------------------
 
-# 3. Bind Into a Unified Comparative HTML Tag List
-combined_water_balance_panels <- htmltools::tagList(
-  htmltools::tags$head(
-    htmltools::tags$style("
-      body { margin: 0 !important; padding: 0 !important; background-color: white; }
-      .master-canvas { display: flex; justify-content: center; align-items: flex-start; width: 100%; gap: 10px; }
-      .panel-column { width: 45%; }
-      .panel-header { text-align: center; font-size: 20px; color: #2c3e50; font-family: sans-serif; font-weight: bold; margin-bottom: 10px; }
-    ")
-  ),
+# 1. Build the HTML version
+sankey_1950s_html <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
+sankey_2022_html  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
+
+combined_panels_html <- htmltools::tagList(
   htmltools::tags$div(
-    class = "master-canvas",
+    style = "display: flex; flex-direction: row; justify-content: space-between; width: 100%;",
     htmltools::tags$div(
-      class = "panel-column",
-      htmltools::tags$div(class = "panel-header", "A. 1950s Archetype Village Water Balance"),
-      sankey_1950s
+      style = "width: 48%;",
+      htmltools::tags$h3("A. 1950s Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
+      sankey_1950s_html
     ),
     htmltools::tags$div(
-      class = "panel-column",
-      htmltools::tags$div(class = "panel-header", "B. 2022 Archetype Village Water Balance"),
-      sankey_2022
+      style = "width: 48%;",
+      htmltools::tags$h3("B. 2022 Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
+      sankey_2022_html
     )
   )
 )
 
-# 4. Export Consolidated Multi-Panel Layout
-html_path <- here("temp_combined_sankey.html")
-png_path  <- here("figures/presentation/Fig.8_Village_Water_Balance_Sankey_2Panels.png")
-pdf_path  <- here("figures/manuscript/Fig.8_Village_Water_Balance_Sankey_2Panels.pdf")
-
-htmltools::save_html(combined_water_balance_panels, html_path)
-Sys.sleep(3) 
-
-# 5. Robust Snapshot Execution (Increased magnification via reduced viewport)
+if (EXPORT_FIGURES) {
+  
+  # 2. Build a completely separate Export version with its own margins
+  sankey_1950s_export <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
+  sankey_2022_export  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
+  
+  combined_panels_export <- htmltools::tagList(
+    htmltools::tags$div(
+      style = "display: flex; flex-direction: row; justify-content: space-between; width: 100%;",
+      htmltools::tags$div(
+        style = "width: 48%;",
+        htmltools::tags$h3("A. 1950s Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
+        sankey_1950s_export
+      ),
+      htmltools::tags$div(
+        style = "width: 48%;",
+        htmltools::tags$h3("B. 2022 Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
+        sankey_2022_export
+      )
+    )
+  )
+  
+  html_path <- here("temp_combined_sankey.html")
+  png_path  <- here("figures/presentation/Fig.8_Village_Sankey.png")
+  pdf_path  <- here("figures/manuscript/Fig.8_Village_Sankey.pdf")
+  
+  # Save the EXPORT version for the camera
+  htmltools::save_html(combined_panels_export, html_path)
+  
 try({
-  invisible(webshot2::webshot(url = html_path, file = png_path, vwidth = 1200, vheight = 500, zoom = 2))
-  invisible(webshot2::webshot(url = html_path, file = pdf_path, vwidth = 1200, vheight = 500))
-}, silent = TRUE)
-
-unlink(html_path)
-
-if (file.exists(png_path)) {
-  knitr::include_graphics(png_path)
-} else {
-  message("Notice: webshot2 failed to capture the static PNG image.")
+    # Changed zoom from 2 to 4 to generate a 300+ DPI publication-quality image
+    webshot2::webshot(url = html_path, file = png_path, vwidth = 1250, vheight = 600, zoom = 4, delay = 5)
+    
+    # Save perfectly framed, ultra-high-res PNG into PDF format
+    if (file.exists(png_path)) {
+      img <- png::readPNG(png_path)
+      pdf(pdf_path, width = 14, height = 6)
+      par(mar = c(0,0,0,0)) 
+      plot.new()
+      rasterImage(img, 0, 0, 1, 1)
+      dev.off()
+    }
+  }, silent = TRUE)
+  unlink(html_path)
 }
+
+# 3. Print the HTML version to your actual knitted document
+combined_panels_html
 ```
 
 ```
