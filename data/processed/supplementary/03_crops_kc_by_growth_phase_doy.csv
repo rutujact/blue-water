@@ -1,0 +1,86 @@
+"crop","doy_var","doy","kc"
+"Banana 1 Beg","Sowing",340,1
+"Banana 1 Beg","End of ini",460,1
+"Banana 1 Beg","End of Dev",550,1.2
+"Banana 1 Beg","End of Mid",670,1.2
+"Banana 1 Beg","Harvest",730,1.1
+"Banana 1 Next","Sowing",1,1
+"Banana 1 Next","End of ini",96,1
+"Banana 1 Next","End of Dev",186,1.2
+"Banana 1 Next","End of Mid",306,1.2
+"Banana 1 Next","Harvest",366,1.1
+"Banana 2","Sowing",214,1
+"Banana 2","End of ini",334,1
+"Banana 2","End of Dev",394,1.2
+"Banana 2","End of Mid",574,1.2
+"Banana 2","Harvest",579,1.1
+"Formule","Sowing",150,0.51
+"Formule","End of ini",165,0.51
+"Formule","End of Dev",195,0.87
+"Formule","End of Mid",228,0.87
+"Formule","Harvest",248,0.47
+"Grapes","Sowing",92,0.3
+"Grapes","End of ini",112,0.3
+"Grapes","End of Dev",162,0.95
+"Grapes","Harvest",457,0.7
+"Grapes","End of Mid",457,0.95
+"Grasslands","Sowing",122,0.2
+"Grasslands","End of ini",152,0.2
+"Grasslands","End of Dev",272,0.75
+"Grasslands","End of Mid",317,0.75
+"Grasslands","Harvest",372,0.2
+"Horsegram","Sowing",289,0.4
+"Horsegram","End of ini",304,0.4
+"Horsegram","End of Dev",329,1.15
+"Horsegram","End of Mid",364,1.15
+"Horsegram","Harvest",384,0.35
+"Millet","Sowing",197,0.3
+"Millet","End of ini",212,0.3
+"Millet","End of Dev",237,1
+"Millet","End of Mid",277,1
+"Millet","Harvest",302,0.3
+"Okra Summer","Sowing",1,0.2
+"Okra Summer","End of ini",11,0.2
+"Okra Summer","End of Dev",42,1
+"Okra Summer","End of Mid",67,1
+"Okra Summer","Harvest",87,0.9
+"Okra Winter","Sowing",153,0.2
+"Okra Winter","End of ini",163,0.2
+"Okra Winter","End of Dev",194,1
+"Okra Winter","End of Mid",219,1
+"Okra Winter","Harvest",239,0.9
+"Pulse","Sowing",197,0.4
+"Pulse","End of ini",212,0.4
+"Pulse","End of Dev",237,1.15
+"Pulse","End of Mid",272,1.15
+"Pulse","Harvest",292,0.35
+"Ragi","Sowing",122,0.3
+"Ragi","End of ini",137,0.3
+"Ragi","End of Dev",162,1
+"Ragi","End of Mid",202,1
+"Ragi","Harvest",227,0.3
+"Rice Long","Sowing",245,1.15
+"Rice Long","End of ini",275,1.15
+"Rice Long","End of Dev",305,1.2
+"Rice Long","End of Mid",385,1.2
+"Rice Long","Harvest",425,0.75
+"Rice Short Monsoon","Sowing",197,1.15
+"Rice Short Monsoon","End of ini",227,1.15
+"Rice Short Monsoon","End of Dev",257,1.2
+"Rice Short Monsoon","End of Mid",317,1.2
+"Rice Short Monsoon","Harvest",347,0.75
+"Rice Short Summer","Sowing",32,1.15
+"Rice Short Summer","End of ini",62,1.15
+"Rice Short Summer","End of Dev",92,1.2
+"Rice Short Summer","End of Mid",152,1.2
+"Rice Short Summer","Harvest",182,0.75
+"Tomato Summer","Sowing",1,0.6
+"Tomato Summer","End of ini",31,0.6
+"Tomato Summer","End of Dev",71,1.15
+"Tomato Summer","End of Mid",111,1.15
+"Tomato Summer","Harvest",136,0.8
+"Tomato Winter","Sowing",183,0.6
+"Tomato Winter","End of ini",213,0.6
+"Tomato Winter","End of Dev",253,1.15
+"Tomato Winter","End of Mid",293,1.15
+"Tomato Winter","Harvest",318,0.8

@@ -1,27 +1,29 @@
-# https://jasonstitt.com/gitignore-whitelisting-patterns
-# Ignore everything
-*
-# But descend into directories
-!*/
-# You can be specific with these rules
-!code/*.Rmd
-!code/*.R
-!code/functions/*.R
-!R/*.R
-# Workflow
-!crop-waterbudget_Workflow.html
-# Input data
-#!data/processed/*.csv
-data/processed/*Excel*.csv
-#!data/raw/*.csv
-# Output data
-# Ouput figures
-# Recursively allow files under subtree
-!.gitignore
-DESCRIPTION
-!*.Rmd
-!*.md
-!*.Rproj
-!preamble.tex
-# https://stackoverflow.com/questions/44568184/gitignore-everything-except-a-subfolder-with-every-content
+# General OS Junk
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+
+# R and RStudio specific
 .Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+*.Rproj
+
+# Exclude temporary knitr files (but KEEP the final report .html files)
+temp_combined_sankey.html
+
+# Excluded Project Folders
+/communications/
+/manuscript/
+/older_outputs/
+/figures/water_budgets/
+/figures/manuscript/old_figures/
+/figures/crop_kc_curves/
+/output/water_budgets/
+/code/lib/
+/data/raw/
+/output/01_processed_water_budgets.Rdata
+/output/02_export_detailed_daily_water_budgets.csv
+/output/03_export_annual_water_budgets_long.csv
