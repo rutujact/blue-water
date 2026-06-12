@@ -8,7 +8,7 @@ output: github_document
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.xxxxxxx.svg)](https://doi.org/10.5281/zenodo.xxxxxxx)
 
 This repository contains the computational workflow and analytical engine for the manuscript:
-> **Hemingway, C. et al. (2026).** *Socio-Hydrologic Inequity in the Aquifer: How Farm Diversity Buffers Groundwater Depletion in Intensifying Landscapes.* [Journal Name]. [DOI]
+> **Hemingway, C. et al. (2026).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
 The **Blue Water Toolkit** provides a generalized R framework for simulating Blue Water Potential (Recharge minus Irrigation requirement) at the micro-regional or village scale. By coupling biophysical water fluxes (driven by meteorological forcing and dynamic crop coefficients) with agricultural demographics, this toolkit reveals how human social structures and farm-level diversity drive local groundwater sustainability.
 
