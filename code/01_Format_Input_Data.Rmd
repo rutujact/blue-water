@@ -34,23 +34,27 @@ This script processes and standardizes six distinct categories of input data req
 5. **Crop Systems**: Multi-season crop rotation definitions.
 6. **Landscape Demographics**: Cultivated area (hectares) broken down by production system and historical period.
 
-### 📂 Directory Setup & Data Placement
+### 📂 Directory Structure for this Script
 
-This script automatically generates the required folder structure for all processed outputs and figures. However, before running the script, you must ensure your raw data and code dependencies are placed in the correct starting locations:
+This script serves two purposes: it documents the reproducible workflow for the manuscript, and it acts as a "cookbook" for adapting the engine to new watersheds. 
+
+* **Reproducing the Manuscript:** Our original data files in their raw format are not provided. However, all resulting processed data is provided for the `02_blue-water.Rmd` engine.
+* **Adapting for your own data:** Place your raw data and code dependencies in the correct starting locations shown below. The script will automatically generate the required folder structure for all processed outputs and figures if they do not exist. To run this script, open the `.Rproj` and click "Knit".
 
 ```text
 project_root/
 ├── data/
-│   ├── raw/                 <- Place your original data here (if adapting this script)
-│   └── processed/           <- TARGET: Standardized CSV outputs are saved here
-│       └── supplementary/   <- TARGET: Intermediary and diagnostic tables
+│   ├── raw/                 <- Required: Place your raw survey and climate data here
+│   └── processed/           <- TARGET: Standardized CSV outputs will land here
+│       └── supplementary/   <- TARGET: Intermediary Kc tables and typologies will land here
 ├── figures/
 │   └── manuscript/          <- TARGET: Output location for generated plots
 ├── code/
 │   ├── functions/
-│   │   └── 02_get_kc.R      <- Required biophysical function dependency
-│   └── 01_Format_Input_Data.Rmd (This file)
-
+│   │   └── 02_get_kc.R      <- Required: Biophysical function dependency
+│   └── 01_Format_Input_Data.Rmd <- (This file)
+├── Blue-Water.Rproj         <- Required: RStudio Project file to knit this script
+└── 01_Format_Input_Data.html<- Generated: HTML Report created by knitting this script
 ```
 
 ```{r setup-file, include=FALSE}

@@ -18,17 +18,17 @@ output:
 
 # Overview
 
-This document serves as the main reproducible report and Computational Workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
+This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
 
-This repository provides a generalized computational framework for simulating **Blue Water Potential (BWP)** at the village level, driven by area-specific cropping systems and historical meteorological forcing. While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any watershed globally, provided you have local meteorological and cropping system data. 
+This repository provides a generalized computational framework for simulating **Blue Water Potential (BWP)** at the micro-regional (aka village) level, driven by area-specific cropping systems and historical meteorological forcing. While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any watershed globally, provided you have local meteorological and cropping system data. 
 
 > 💡 **Using this Toolkit:** See the repository `README.md` for full instructions on how to adapt this framework using your own processed site data (generated via `01_Format_Input_Data.Rmd`).
 
 ---
 
-# Directory Setup & Configuration
+### 📂 Directory Structure for this Script
 
-For this analytical engine to run seamlessly, ensure your R project directory matches the structure defined below. 
+This script assumes you have already run `01_Format_Input_Data.Rmd`. It will consume the processed data and automatically generate the necessary subdirectories in `output/` and `figures/` for the final exports. To run this script and generate the report, open the `.Rproj` and click "Knit".
 
 ```text
 project_root/
@@ -37,18 +37,21 @@ project_root/
 ├── code/
 │   ├── functions/           <- Required: Core engine dependencies
 │   │   ├── 01_get_Peff.R
+│   │   ├── 02_get_kc.R
 │   │   ├── 03_expand_kc.R
 │   │   ├── 04_get_budget.R
 │   │   └── 05_get_figures.R
+│   ├── 01_Format_Input_Data.Rmd
 │   └── 02_blue-water.Rmd    <- (This file)
-├── output/
-│   └── water_budgets/       <- Generated: Processed Rdata and CSV budget summaries
-└── figures/                 <- Generated: Root folder for all visualizations
-    ├── crop_kc_curves/      <- Generated: Individual Kc curve outputs
-    ├── water_budgets/       <- Generated: Individual field-level budget plots
-    ├── manuscript/          <- Generated: High-res print-ready PDFs/TIFFs
-    └── presentation/        <- Generated: Screen-ready PNGs and web layouts
-
+├── output/                  <- Generated: Final budget summaries 
+│   └── water_budgets/       <- Generated: Wide-format climatology tables
+├── figures/                 <- Generated: Root folder for all visualizations
+│   ├── crop_kc_curves/      <- Generated: Individual Kc curve outputs
+│   ├── water_budgets/       <- Generated: Individual field-level budget plots
+│   ├── manuscript/          <- Generated: High-res print-ready PDFs/TIFFs
+│   └── presentation/        <- Generated: Screen-ready PNGs and web layouts
+├── Blue-Water.Rproj         <- Required: RStudio Project file to knit this script
+└── 02_Blue-Water.html       <- Generated: HTML Report created by knitting this script
 ```
 
 ```{r setup, include=FALSE}
@@ -197,7 +200,7 @@ farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_produ
 
 knitr::kable(head(ps_by_cs_area, 3), caption = "Preview: Production System Crop Area Splits")
 
-knitr::kable(head(ps_by_cs_area, 3), caption = "Preview: Production System % Land Use Area & Typology")
+knitr::kable(head(ps_typology, 3), caption = "Preview: Production System % Land Use Area & Typology")
 
 knitr::kable(head(farms_count_df, 3), caption = "Preview: Historical Farm Counts")
 
@@ -207,7 +210,7 @@ knitr::kable(head(farms_count_df, 3), caption = "Preview: Historical Farm Counts
 
 # Core Hydrology Execution Engine
 
-We first transform crude precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) to account for surface runoff, before initializing the core water balance engine.
+We first transform crude precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) depending on soil type to account for surface runoff, before initializing the core water balance engine.
 
 ```{r set_param_budget}
 p.list <- list(
