@@ -36,13 +36,12 @@ project_root/
 │   └── processed/           <- Required: Output data from the 01_Format script
 ├── code/
 │   ├── functions/           <- Required: Core engine dependencies
-│   │   ├── 01_get_Peff.R
-│   │   ├── 02_get_kc.R
+│   │   ├── 02_get_Peff.R
 │   │   ├── 03_expand_kc.R
 │   │   ├── 04_get_budget.R
 │   │   └── 05_get_figures.R
 │   ├── 01_Format_Input_Data.Rmd
-│   └── 02_blue-water.Rmd    <- (This file)
+│   └── 02_Blue-Water.Rmd    <- (This file)
 ├── output/                  <- Generated: Final budget summaries 
 │   └── water_budgets/       <- Generated: Wide-format climatology tables
 ├── figures/                 <- Generated: Root folder for all visualizations
@@ -99,7 +98,7 @@ theme_set(
 These external modular scripts handle the mathematical heavy lifting behind the scenes, processing parameters such as daily reference evapotranspiration ($ET_0$), effective precipitation ($P_{eff}$), and generating the core plot architectures.
 
 ```{r load-functions}
-source(here("code/functions/01_get_Peff.R"))
+source(here("code/functions/02_get_Peff.R"))
 source(here("code/functions/03_expand_kc.R"))
 source(here("code/functions/04_get_budget.R"))
 source(here("code/functions/05_get_figures.R"))

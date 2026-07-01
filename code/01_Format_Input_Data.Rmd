@@ -51,7 +51,7 @@ project_root/
 │   └── manuscript/          <- TARGET: Output location for generated plots
 ├── code/
 │   ├── functions/
-│   │   └── 02_get_kc.R      <- Required: Biophysical function dependency
+│   │   └── 01_get_kc.R      <- Required: Biophysical function dependency
 │   └── 01_Format_Input_Data.Rmd <- (This file)
 ├── Blue-Water.Rproj         <- Required: RStudio Project file to knit this script
 └── 01_Format_Input_Data.html<- Generated: HTML Report created by knitting this script
@@ -86,7 +86,7 @@ biophysical_parameters <- list(
   napier_decline_rate_2 = 0.000153846153846154
 )
 
-source(here("code/functions/02_get_kc.R"))
+source(here("code/functions/01_get_kc.R"))
 
 theme_baseR <- theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), panel.background = element_rect(fill = "white", colour = "black"), strip.background = element_blank())
 
