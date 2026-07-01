@@ -1,20 +1,3 @@
- <!--
- Copyright (C) 2026 Rutuja-Chitra Tarak
- 
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU Lesser General Public License as published
- by the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
- 
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- GNU Lesser General Public License for more details.
- 
- You should have received a copy of the GNU Lesser General Public License
- along with this program. If not, see <https://gnu.org>.
--->
-
 ---
 title: "Format Input Data for Blue Water Potential Toolkit" 
 subtitle: "Climatic Data, Crop and Soil Parameters, Cropping Systems, and Area Demographics"
@@ -37,6 +20,22 @@ output:
     code_folding: show
 description: "This script acts as a data preparation cookbook. It translates raw site data into clean, standardized inputs required by the BWP analytical engine."
 ---
+<!--
+ Copyright (C) 2026 Rutuja-Chitra Tarak
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published
+ by the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program. If not, see <https://gnu.org>.
+-->
 
 **Note to Users**: The primary requirement to run the BWP Analytical Engine (`02_blue-water.Rmd`) is the set of standardized CSV outputs produced by this script.
 
