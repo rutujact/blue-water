@@ -112,11 +112,12 @@ quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
 
 ---
 
-# Data Ingestion & Climatology Validation
+# Data Ingestion & Climatology Check
 
-The foundation of the water balance is driven by high-resolution daily meteorological forcing. Below, we ingest the processed climate series and provide brief data previews.
+The foundation of the water balance is driven by daily meteorological forcing. Below, we ingest the processed climate series and provide brief data previews.
 
 ```{r load-met}
+sitename <- "Anantapur"
 # 1. Meteorological Forcing
 precip <- read.csv(file = here("data/processed/01_precipitation.csv"), header = TRUE) 
 years.range <- range(as.numeric(format(strptime(precip$date, format = "%Y-%m-%d"), format = "%Y")))
@@ -152,7 +153,7 @@ ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regiona
 
 ## Landscape & Cropping Parameter Ingestion
 
-Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific rotational systems cultivated in the region.
+Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific crop rotational systems cultivated in the region.
 
 ```{r load-soil-and-crop}
 # Soil Parameter Matrix
@@ -161,18 +162,18 @@ knitr::kable(soil.param, caption = "Preview: Soil Parameter Matrix")
 
 # Crop Phenology Parameters
 crop.param <- read.csv(file = here("data/processed/05_crop.parameters.csv"), header = TRUE)
-knitr::kable(head(crop.param, 3), caption = "Preview: Crop Phenology Matrix")
+knitr::kable(head(crop.param), caption = "Preview: Crop Phenology Matrix")
 
 # Cropping Systems Definitions
 crop.systems.l <- read.csv(file = here("data/processed/06_crop.systems.l.csv"), header = TRUE)
 crop.systems <- read.csv(file = here("data/processed/07_crop.systems.csv"), header = TRUE)
 load(file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
 
-knitr::kable(head(crop.systems, 3), caption = "Preview: Active Cropping Systems")
+knitr::kable(head(crop.systems %>% select(-WB)), caption = "Preview: Active Cropping Systems")
 
 ```
 
-```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 8, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations."}
+```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 8, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (color coded by crop). "}
 crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
 
 fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
@@ -197,11 +198,11 @@ ps_by_cs_area <- read.csv(file = here("data/processed/09_crop_system_area_by_pro
 ps_typology <- read.csv(file = here("data/processed/supplementary/05_production_system_typology.csv"), header = TRUE)
 farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), header = TRUE)
 
-knitr::kable(head(ps_by_cs_area, 3), caption = "Preview: Production System Crop Area Splits")
+knitr::kable(head(ps_by_cs_area), caption = "Preview: Crop Area under each Production System")
 
-knitr::kable(head(ps_typology, 3), caption = "Preview: Production System % Land Use Area & Typology")
+knitr::kable(head(ps_typology), caption = "Preview: Production System Land Use Area & Hydrological Typology based on the dominant % area of their land allocation under Irrigated [Crops], Rainfed [Crops], or [Rainfed] Pastures")
 
-knitr::kable(head(farms_count_df, 3), caption = "Preview: Historical Farm Counts")
+knitr::kable(head(farms_count_df), caption = "Preview: Historical Farm Counts")
 
 ```
 
@@ -307,7 +308,7 @@ readr::write_csv(bwp, file = here("output/04_calculated_crop_system_blue_water_p
 
 The following chart compares the irrigation requirements of different cropping choices against their natural groundwater recharge capacity.
 
-```{r annual-wb, fig.align='center', echo=FALSE, fig.cap = "Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Groundwater Recharge is depicted in negative terms of the water fluxes axis."}
+```{r annual-wb, fig.align='center', echo=FALSE, fig.cap = paste0("Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in ", sitename, ". Groundwater Recharge is depicted in negative terms of the water fluxes axis. Crop systems are color coded by Irrigated or Rainfed hydrology.")}
 vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)", "Crop ET Supply:Demand")
 
 fig.3_supply_demand <- plot_annual_climatology(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (95% CI)")
@@ -326,7 +327,7 @@ ggsave(here("figures/presentation/Fig.3_Supply_vs_Demand.png"), fig.3_supply_dem
 
 This plot isolates the core metric: **Blue Water Potential**. It visualizes the absolute net impact of a specific land use decision on the underlying aquifer.
 
-```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = "Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur."}
+```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = paste0("Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in ", sitename, ", color coded by Irrigated or Rainfed hydrology.")}
 
 fig.4_cs_bwp <- plot_annual_climatology(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Recharge - Irrigation] (mm)")
 print(fig.4_cs_bwp)
@@ -347,7 +348,9 @@ ggsave(here("figures/presentation/Fig4_Crop_System_Blue_Water_Potential.png"), f
 By coupling the physical water fluxes with farm survey demographics, we aggregate individual cropping footprints into broader socio-economic archetypes. This critical step reveals how human social structures drive local water availability.
 
 > 🔍 **Understanding Net Consumers vs. Net Contributors**
+>
 > * **Irrigated Farms ($BWP < 0$):** Commercial systems focusing on cash crops (e.g., grape vines or sweet lime) rely heavily on groundwater extraction. Because their artificial irrigation demand exceeds natural recharge over their area, they act as chronic hydrological **Net Consumers**.
+>
 > * **Rainfed Farms & Grasslands ($BWP > 0$):** Traditional smallholders and pastoralists operate without active groundwater pumping. A substantial fraction of seasonal monsoon precipitation infiltrates past the root zone, actively recharging the aquifer. These act as **Net Contributors**.
 > 
 > 
@@ -363,7 +366,7 @@ write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contri
 
 ```
 
-```{r ann-social, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 5. Comparative annual Blue Water Potential ($BWP$) across farm types (1950s vs. 2022).'}
+```{r ann-social, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 5. Comparative annual Blue Water Potential ($BWP$) across Production Systems, or farm types, (1950s vs. 2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross.'}
 fig.5_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
 print(fig.5_social)
 
@@ -378,7 +381,7 @@ ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.5_so
 
 ## Farm-Level BWP Disparity: Demographics vs. Impact
 
-Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically subsidized by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
+Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically propped up by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
 
 ```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
 
