@@ -38,10 +38,15 @@ project_root/
 │       └── supplementary/   <- Extra utility functions (e.g., get_et0.R)
 ├── output/                  <- Generated budget CSV summaries
 │   └── water_budgets/       <- Detailed annual/monthly water budget exports
-└── figures/                 <- Generated visualization outputs
+├── figures/                 <- Generated visualization outputs
     ├── manuscript/          <- High-resolution, vector PDFs
     ├── presentation/        <- Screen-ready PNGs (300 DPI)
     └── water_budgets/       <- Annual and monthly climatology plots
+├── 01_Format_Input_Data.html<- Generated: Pre-compiled data preparation report
+├── 02_Blue-Water.html       <- Generated: Pre-compiled main analysis report
+├── CONTRIBUTING.md          <- Guidelines for contributing to the codebase
+├── LICENSE                  <- Main GNU GPLv3 License text
+└── COPYING.LESSER           <- Additional GNU LGPL-3.0 License terms
 ```
 
 ------------------------------------------------------------------------
@@ -129,5 +134,35 @@ R. Chitra-Tarak \* **Funding Acquisition:** C. Aubron
 
 ## 📜 License & Citation
 
-*(Include your chosen open-source license here, e.g., MIT or GPL-3.0,
-and the preferred citation format once the paper is published).*
+### Open-Source License
+
+The computational workflow, functions, and codebase contained within
+this repository are licensed under the **GNU Lesser General Public
+License v3.0 (LGPL-3.0)**.
+
+- **For Open-Source Use & Academics:** You are free to use, modify, and
+  link against this toolkit in your own research or open-source
+  projects.
+- **For Modifications:** Any modifications, improvements, or forks made
+  directly to the core Blue Water Toolkit codebase must be disclosed and
+  shared openly under the same LGPL-3.0 license terms.
+- **Commercial Inquiries:** If you are a commercial entity wishing to
+  integrate this framework into closed-source, proprietary software or
+  private environmental consulting tools without the copyleft
+  constraints of the LGPL, please contact the author directly to discuss
+  an alternative commercial license.
+
+### Preferred Citation
+
+If you use this toolkit, its underlying logic, or adapt the framework
+for another watershed study, please cite both the software repository
+and the primary manuscript:
+
+- **Software:** Chitra-Tarak, R. et al. (2026). *The Blue Water Toolkit:
+  a new framework for incorporating farm social diversity in
+  micro-regional water budgets* (Version 1.0.0). Zenodo.
+  <https://doi.org/10.5281/zenodo.20665272>
+
+- **Manuscript:** Hemingway, C. et al. (2026). *Accounting the
+  unaccounted: a new framework for incorporating farm social diversity
+  in micro-regional water budgets*. \[Journal Name\]. \[DOI\]

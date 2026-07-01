@@ -31,10 +31,15 @@ project_root/
 │       └── supplementary/   <- Extra utility functions (e.g., get_et0.R)
 ├── output/                  <- Generated budget CSV summaries
 │   └── water_budgets/       <- Detailed annual/monthly water budget exports
-└── figures/                 <- Generated visualization outputs
+├── figures/                 <- Generated visualization outputs
     ├── manuscript/          <- High-resolution, vector PDFs
     ├── presentation/        <- Screen-ready PNGs (300 DPI)
     └── water_budgets/       <- Annual and monthly climatology plots
+├── 01_Format_Input_Data.html<- Generated: Pre-compiled data preparation report
+├── 02_Blue-Water.html       <- Generated: Pre-compiled main analysis report
+├── CONTRIBUTING.md          <- Guidelines for contributing to the codebase
+├── LICENSE                  <- Main GNU GPLv3 License text
+└── COPYING.LESSER           <- Additional GNU LGPL-3.0 License terms
 ```
 ---
 
