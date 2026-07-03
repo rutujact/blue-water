@@ -1,24 +1,22 @@
 ---
 title: "Format Input Data for Blue Water Potential Toolkit" 
 subtitle: "Climatic Data, Crop and Soil Parameters, Cropping Systems, and Area Demographics"
-author:  |
-  | Rutuja Chitra-Tarak (Code)
-  | Charlotte Hemingway (Data and Kc Calculations)
-  | Laurent Ruiz (Data and Kc Calculations)
-date: "2024-07-18"
-modified: "`r Sys.Date()`"
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "..") })
-output:
-  html_document:
-    df_print: paged
+author: 
+  - "Rutuja Chitra-Tarak (Code)"
+  - "Charlotte Hemingway (Data and Kc Calculations)"
+  - "Laurent Ruiz (Data and Kc Calculations)"
+# initial date: "2024-07-18"
+# date: "`r Sys.Date()`"
+format: 
+  html:
     toc: true
-    toc_depth: 3
-    toc_float: true
-    number_sections: true
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
     theme: flatly
-    highlight: tango
-    code_folding: show
-description: "This script acts as a data preparation cookbook. It translates raw site data into clean, standardized inputs required by the BWP analytical engine."
+    highlight-style: tango
+    code-fold: show
+    df-print: paged
 ---
 <!--
  Copyright (C) 2026 Rutuja-Chitra Tarak

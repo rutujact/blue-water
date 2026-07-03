@@ -1,19 +1,26 @@
 ---
 title: "The Blue Water Toolkit"
 subtitle: "A Framework for Modeling Net Watershed Impacts"
-author: "Rutuja Chitra-Tarak, C. Hemingway, C. Aubron, M. Vigne, G. Boulet, S. Muddu, L. Ruiz"
-date: "`r format(Sys.time(), '%d %B, %Y')`"
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, output_dir = "..") })
-output:
-  html_document:
-    df_print: paged
+author: 
+  - "Rutuja Chitra-Tarak"
+  - "Charlotte Hemingway"
+  - "Claire Aubron"
+  - "Mathieu Vigne"
+  - "Gilles Boulet"
+  - "Sekhar Muddu"
+  - "Laurent Ruiz"
+# date: today
+# date-format: "DD MMMM, YYYY"
+format: 
+  html:
     toc: true
-    toc_float: true
-    number_sections: true
-    toc_depth: 3
+    toc-depth: 3
+    toc-location: left
+    number-sections: true
     theme: flatly
-    highlight: tango
-    code_folding: show
+    highlight-style: tango
+    code-fold: show
+    df-print: paged
 ---
 <!--
  Copyright (C) 2026 Rutuja-Chitra Tarak
