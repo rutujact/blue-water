@@ -38,7 +38,15 @@ format:
  You should have received a copy of the GNU Lesser General Public License
  along with this program. If not, see <https://gnu.org>.
 -->
-
+```{=html}
+<style>
+/* This CSS adds the clean underlines beneath your main section headers */
+h1, h2 {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+</style>
 # Overview
 
 This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
@@ -94,9 +102,8 @@ pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RCol
 
 # Generate directory framework if missing
 required_dirs <- list(
-  here("figures"), here("figures/crop_kc_curves"), here("figures/water_budgets"), 
-  here("figures/manuscript"), here("figures/presentation"), here("output"), here("output/water_budgets")
-)
+  here("figures"),
+  here("figures/manuscript"), here("figures/presentation"), here("output"))
 lapply(required_dirs, function(x) if (!dir.exists(x)) {dir.create(x, recursive = TRUE, showWarnings = FALSE)})
 
 # Set global ggplot2 aesthetics for publication-quality figures
@@ -141,7 +148,7 @@ The foundation of the water balance is driven by daily meteorological forcing. B
 
 ```{r load-met}
 sitename <- "Anantapur"
-# 1. Meteorological Forcing
+# Meteorological Forcing
 precip <- read.csv(file = here("data/processed/01_precipitation.csv"), header = TRUE) 
 years.range <- range(as.numeric(format(strptime(precip$date, format = "%Y-%m-%d"), format = "%Y")))
 years.range.plot <- paste(years.range[1], ":", years.range[2])

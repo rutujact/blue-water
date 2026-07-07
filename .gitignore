@@ -15,12 +15,7 @@ Thumbs.db
 temp_combined_sankey.html
 
 # Excluded Project Folders
-/communications/
-/manuscript/
-/older_outputs/
-/figures/water_budgets/
-/figures/manuscript/old_figures/
-/figures/crop_kc_curves/
+/internal/
 /output/water_budgets/
 /code/lib/
 /data/raw/

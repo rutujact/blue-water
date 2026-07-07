@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rutuja Chitra-Tarak">
+<meta name="author" content="Charlotte Hemingway">
+<meta name="author" content="Claire Aubron">
+<meta name="author" content="Mathieu Vigne">
+<meta name="author" content="Gilles Boulet">
+<meta name="author" content="Sekhar Muddu">
+<meta name="author" content="Laurent Ruiz">
+
+<title>The Blue Water Toolkit</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="02_Blue-Water_files/libs/clipboard/clipboard.min.js"></script>
+<script src="02_Blue-Water_files/libs/quarto-html/quarto.js"></script>
+<script src="02_Blue-Water_files/libs/quarto-html/popper.min.js"></script>
+<script src="02_Blue-Water_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="02_Blue-Water_files/libs/quarto-html/anchor.min.js"></script>
+<link href="02_Blue-Water_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="02_Blue-Water_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="02_Blue-Water_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="02_Blue-Water_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="02_Blue-Water_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+<script src="02_Blue-Water_files/libs/htmlwidgets-1.6.2/htmlwidgets.js"></script>
+<script src="02_Blue-Water_files/libs/d3-4.5.0/d3.min.js"></script>
+<script src="02_Blue-Water_files/libs/sankey-1/sankey.js"></script>
+<script src="02_Blue-Water_files/libs/sankeyNetwork-binding-0.4/sankeyNetwork.js"></script>
+<link href="02_Blue-Water_files/libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet">
+<script src="02_Blue-Water_files/libs/pagedtable-1.1/js/pagedtable.js"></script>
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#load-engine-dependencies" id="toc-load-engine-dependencies" class="nav-link active" data-scroll-target="#load-engine-dependencies"><span class="header-section-number">0.1</span> Load Engine Dependencies</a></li>
+  <li><a href="#data-ingestion-climatology-check" id="toc-data-ingestion-climatology-check" class="nav-link" data-scroll-target="#data-ingestion-climatology-check"><span class="header-section-number">1</span> Data Ingestion &amp; Climatology Check</a>
+  <ul class="collapse">
+  <li><a href="#climatological-profile-summary" id="toc-climatological-profile-summary" class="nav-link" data-scroll-target="#climatological-profile-summary"><span class="header-section-number">1.1</span> Climatological Profile Summary</a></li>
+  <li><a href="#landscape-cropping-parameter-ingestion" id="toc-landscape-cropping-parameter-ingestion" class="nav-link" data-scroll-target="#landscape-cropping-parameter-ingestion"><span class="header-section-number">1.2</span> Landscape &amp; Cropping Parameter Ingestion</a></li>
+  <li><a href="#production-systems-socio-agricultural-composition" id="toc-production-systems-socio-agricultural-composition" class="nav-link" data-scroll-target="#production-systems-socio-agricultural-composition"><span class="header-section-number">1.3</span> Production Systems &amp; Socio-Agricultural Composition</a></li>
+  </ul></li>
+  <li><a href="#core-hydrology-execution-engine" id="toc-core-hydrology-execution-engine" class="nav-link" data-scroll-target="#core-hydrology-execution-engine"><span class="header-section-number">2</span> Core Hydrology Execution Engine</a></li>
+  <li><a href="#output-processing-bwp-calculations" id="toc-output-processing-bwp-calculations" class="nav-link" data-scroll-target="#output-processing-bwp-calculations"><span class="header-section-number">3</span> Output Processing &amp; BWP Calculations</a></li>
+  <li><a href="#visualizing-cropping-system-fluxes" id="toc-visualizing-cropping-system-fluxes" class="nav-link" data-scroll-target="#visualizing-cropping-system-fluxes"><span class="header-section-number">4</span> Visualizing Cropping System Fluxes</a>
+  <ul class="collapse">
+  <li><a href="#annual-climatology-supply-vs.-demand" id="toc-annual-climatology-supply-vs.-demand" class="nav-link" data-scroll-target="#annual-climatology-supply-vs.-demand"><span class="header-section-number">4.1</span> Annual Climatology: Supply vs.&nbsp;Demand</a></li>
+  <li><a href="#blue-water-potential-bwp-by-cropping-system" id="toc-blue-water-potential-bwp-by-cropping-system" class="nav-link" data-scroll-target="#blue-water-potential-bwp-by-cropping-system"><span class="header-section-number">4.2</span> Blue Water Potential (<span class="math inline">\(BWP\)</span>) by Cropping System</a></li>
+  </ul></li>
+  <li><a href="#socio-hydrological-aggregation-production-system-impact" id="toc-socio-hydrological-aggregation-production-system-impact" class="nav-link" data-scroll-target="#socio-hydrological-aggregation-production-system-impact"><span class="header-section-number">5</span> Socio-Hydrological Aggregation: Production System Impact</a>
+  <ul class="collapse">
+  <li><a href="#farm-level-bwp-disparity-demographics-vs.-impact" id="toc-farm-level-bwp-disparity-demographics-vs.-impact" class="nav-link" data-scroll-target="#farm-level-bwp-disparity-demographics-vs.-impact"><span class="header-section-number">5.1</span> Farm-Level BWP Disparity: Demographics vs.&nbsp;Impact</a></li>
+  </ul></li>
+  <li><a href="#macro-landscape-analysis" id="toc-macro-landscape-analysis" class="nav-link" data-scroll-target="#macro-landscape-analysis"><span class="header-section-number">6</span> Macro Landscape Analysis</a>
+  <ul class="collapse">
+  <li><a href="#historical-village-comparison" id="toc-historical-village-comparison" class="nav-link" data-scroll-target="#historical-village-comparison"><span class="header-section-number">6.1</span> Historical Village Comparison</a></li>
+  <li><a href="#village-water-balance" id="toc-village-water-balance" class="nav-link" data-scroll-target="#village-water-balance"><span class="header-section-number">6.2</span> Village Water Balance</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">The Blue Water Toolkit</h1>
+<p class="subtitle lead">A Framework for Modeling Net Watershed Impacts</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-contents">
+             <p>Rutuja Chitra-Tarak </p>
+             <p>Charlotte Hemingway </p>
+             <p>Claire Aubron </p>
+             <p>Mathieu Vigne </p>
+             <p>Gilles Boulet </p>
+             <p>Sekhar Muddu </p>
+             <p>Laurent Ruiz </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<!--
+ Copyright (C) 2026 Rutuja-Chitra Tarak
+ 
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Lesser General Public License as published
+ by the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ 
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Lesser General Public License for more details.
+ 
+ You should have received a copy of the GNU Lesser General Public License
+ along with this program. If not, see <https://gnu.org>.
+-->
+
+<style>
+/* This CSS adds the clean underlines beneath your main section headers */
+h1, h2 {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+</style>
+# Overview
+
+This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
+
+This repository provides a generalized computational framework for simulating **Blue Water Potential (BWP)** at the micro-regional (aka village) level, driven by area-specific cropping systems and historical meteorological forcing. While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any watershed globally, provided you have local meteorological and cropping system data. 
+
+&gt; 💡 **Using this Toolkit:** See the repository `README.md` for full instructions on how to adapt this framework using your own processed site data (generated via `01_Format_Input_Data.Rmd`).
+
+---
+
+### 📂 Directory Structure for this Script
+
+This script assumes you have already run `01_Format_Input_Data.Rmd`. It will consume the processed data and automatically generate the necessary subdirectories in `output/` and `figures/` for the final exports. To run this script and generate the report, open the `.Rproj` and click "Knit".
+
+```text
+project_root/
+├── data/
+│   └── processed/           &lt;- Required: Output data from the 01_Format script
+├── code/
+│   ├── functions/           &lt;- Required: Core engine dependencies
+│   │   ├── 02_get_Peff.R
+│   │   ├── 03_expand_kc.R
+│   │   ├── 04_get_budget.R
+│   │   └── 05_get_figures.R
+│   ├── 01_Format_Input_Data.Rmd
+│   └── 02_Blue-Water.Rmd    &lt;- (This file)
+├── output/                  &lt;- Generated: Final budget summaries 
+│   └── water_budgets/       &lt;- Generated: Wide-format climatology tables
+├── figures/                 &lt;- Generated: Root folder for all visualizations
+│   ├── crop_kc_curves/      &lt;- Generated: Individual Kc curve outputs
+│   ├── water_budgets/       &lt;- Generated: Individual field-level budget plots
+│   ├── manuscript/          &lt;- Generated: High-res print-ready PDFs/TIFFs
+│   └── presentation/        &lt;- Generated: Screen-ready PNGs and web layouts
+├── Blue-Water.Rproj         &lt;- Required: RStudio Project file to knit this script
+└── 02_Blue-Water.html       &lt;- Generated: HTML Report created by knitting this script
+<section id="load-engine-dependencies" class="level2" data-number="0.1">
+<h2 data-number="0.1" class="anchored" data-anchor-id="load-engine-dependencies"><span class="header-section-number">0.1</span> Load Engine Dependencies</h2>
+<p>These external modular scripts handle the mathematical heavy lifting behind the scenes, processing parameters such as daily reference evapotranspiration (<span class="math inline">\(ET_0\)</span>), effective precipitation (<span class="math inline">\(P_{eff}\)</span>), and generating the core plot architectures.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"code/functions/02_get_Peff.R"</span>))</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"code/functions/03_expand_kc.R"</span>))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"code/functions/04_get_budget.R"</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"code/functions/05_get_figures.R"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Helper function for statistical summarization</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>quantile_df <span class="ot">&lt;-</span> <span class="cf">function</span>(x, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.5</span>, <span class="fl">0.975</span>)) {</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">quantile =</span> probs, <span class="at">value =</span> <span class="fu">quantile</span>(x, probs, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="data-ingestion-climatology-check" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Data Ingestion &amp; Climatology Check</h1>
+<p>The foundation of the water balance is driven by daily meteorological forcing. Below, we ingest the processed climate series and provide brief data previews.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sitename <span class="ot">&lt;-</span> <span class="st">"Anantapur"</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Meteorological Forcing</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>precip <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/01_precipitation.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>years.range <span class="ot">&lt;-</span> <span class="fu">range</span>(<span class="fu">as.numeric</span>(<span class="fu">format</span>(<span class="fu">strptime</span>(precip<span class="sc">$</span>date, <span class="at">format =</span> <span class="st">"%Y-%m-%d"</span>), <span class="at">format =</span> <span class="st">"%Y"</span>)))</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>years.range.plot <span class="ot">&lt;-</span> <span class="fu">paste</span>(years.range[<span class="dv">1</span>], <span class="st">":"</span>, years.range[<span class="dv">2</span>])</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>et0 <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/02_et0.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>) </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>et0.timestep <span class="ot">=</span> <span class="st">"daily"</span> </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Display Previews</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(precip, <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"Preview: Precipitation Data Sample"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Precipitation Data Sample</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">date</th>
+<th style="text-align: right;">p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1980-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-02</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-03</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(et0, <span class="dv">3</span>), <span class="at">caption =</span> <span class="st">"Preview: Reference ET0 Data Sample"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Reference ET0 Data Sample</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">date</th>
+<th style="text-align: right;">et0</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1980-01-01</td>
+<td style="text-align: right;">3.799466</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-02</td>
+<td style="text-align: right;">4.036208</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-03</td>
+<td style="text-align: right;">4.315340</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<section id="climatological-profile-summary" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="climatological-profile-summary"><span class="header-section-number">1.1</span> Climatological Profile Summary</h2>
+<p>To visually validate our meteorological inputs before running the engine, we plot the baseline monthly metrics representing the overarching water supply and evaporative demand.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/fig.1-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption class="figure-caption">Figure 1. Monthly baseline metrics showing mean rainfall, temperature, and reference evapotranspiration.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="landscape-cropping-parameter-ingestion" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="landscape-cropping-parameter-ingestion"><span class="header-section-number">1.2</span> Landscape &amp; Cropping Parameter Ingestion</h2>
+<p>Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific crop rotational systems cultivated in the region.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Soil Parameter Matrix</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>soil.param <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/04_soil.parameters.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(soil.param, <span class="at">caption =</span> <span class="st">"Preview: Soil Parameter Matrix"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Soil Parameter Matrix</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">soil</th>
+<th style="text-align: left;">soil.type</th>
+<th style="text-align: right;">whc.mmpercm</th>
+<th style="text-align: right;">raw</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">RED LOAMY</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">GREY CLAYEY</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Crop Phenology Parameters</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>crop.param <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/05_crop.parameters.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(crop.param), <span class="at">caption =</span> <span class="st">"Preview: Crop Phenology Matrix"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Crop Phenology Matrix</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">crop.ID</th>
+<th style="text-align: left;">crop</th>
+<th style="text-align: left;">irrigation</th>
+<th style="text-align: right;">rooting_depth_cm</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Rice Long</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Rice Short Monsoon</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Rice Short Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Groundnut Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">Banana 2</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">65</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cropping Systems Definitions</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>crop.systems.l <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/06_crop.systems.l.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>crop.systems <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/07_crop.systems.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/08_crop.rotation.kc.ls.Rdata"</span>))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(crop.systems <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>WB)), <span class="at">caption =</span> <span class="st">"Preview: Active Cropping Systems"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Active Cropping Systems</caption>
+<colgroup>
+<col style="width: 9%">
+<col style="width: 16%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 9%">
+<col style="width: 7%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 19%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">crop.system.ID</th>
+<th style="text-align: left;">crop.system</th>
+<th style="text-align: left;">Irrigation</th>
+<th style="text-align: right;">n.rotation</th>
+<th style="text-align: left;">rotation</th>
+<th style="text-align: right;">rotation.ID</th>
+<th style="text-align: right;">soil</th>
+<th style="text-align: left;">crop_1</th>
+<th style="text-align: left;">crop_2</th>
+<th style="text-align: left;">crop_3</th>
+<th style="text-align: left;">crop1_crop2_crop3</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Finger Millet/Rice</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Ragi Rice</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Ragi</td>
+<td style="text-align: left;">Rice Long</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Ragi-Rice Long-No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Millets/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Millet</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Millet</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Millet-No Crop-No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Pulses/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Pulse</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Pulse</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Pulse-No Crop-No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Aug</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Aug</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Grazed 1 Aug-No Crop-No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Grazed 1 Sept</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Sept</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Grazed 1 Sept-No Crop-No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Grazed 1 Oct</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Oct</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">Grazed 1 Oct-No Crop-No Crop</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/fig.2-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption class="figure-caption">Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (color coded by crop).</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="production-systems-socio-agricultural-composition" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="production-systems-socio-agricultural-composition"><span class="header-section-number">1.3</span> Production Systems &amp; Socio-Agricultural Composition</h2>
+<p>These files map the crop systems to social category of farms. They track historical changes in land use structure, count the number of farms belonging to each group, and classify each production system (e.g., Irrigated vs.&nbsp;Pastoral) based on the dominant percentage of their land allocation.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/09_crop_system_area_by_production_system.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>ps_typology <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/supplementary/05_production_system_typology.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"</span>), <span class="at">header =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(ps_by_cs_area), <span class="at">caption =</span> <span class="st">"Preview: Crop Area under each Production System"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Crop Area under each Production System</caption>
+<colgroup>
+<col style="width: 26%">
+<col style="width: 12%">
+<col style="width: 26%">
+<col style="width: 25%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">production_system_period</th>
+<th style="text-align: left;">time_period</th>
+<th style="text-align: left;">production_system</th>
+<th style="text-align: left;">crop.system</th>
+<th style="text-align: right;">area_ha</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Large landholders (1950s)</td>
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Finger Millet/Rice</td>
+<td style="text-align: right;">1.214575</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Large landholders (1950s)</td>
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: right;">14.200042</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Large landholders (1950s)</td>
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: right;">3.600000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Large landholders (1950s)</td>
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Millets/Fallow</td>
+<td style="text-align: right;">1.800000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Large landholders (1950s)</td>
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Pulses/Fallow</td>
+<td style="text-align: right;">2.132912</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: right;">2.024291</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(ps_typology), <span class="at">caption =</span> <span class="st">"Preview: Production System Land Use Area &amp; Hydrological Typology based on the dominant % area of their land allocation under Irrigated [Crops], Rainfed [Crops], or [Rainfed] Pastures"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Production System Land Use Area &amp; Hydrological Typology based on the dominant % area of their land allocation under Irrigated [Crops], Rainfed [Crops], or [Rainfed] Pastures</caption>
+<colgroup>
+<col style="width: 10%">
+<col style="width: 37%">
+<col style="width: 12%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">time_period</th>
+<th style="text-align: left;">production_system</th>
+<th style="text-align: right;">total_area_ha</th>
+<th style="text-align: right;">Irrigated</th>
+<th style="text-align: right;">Pastoral</th>
+<th style="text-align: right;">Rainfed</th>
+<th style="text-align: left;">system_typology</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: right;">22.947529</td>
+<td style="text-align: right;">5.29</td>
+<td style="text-align: right;">61.88</td>
+<td style="text-align: right;">32.83</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">14.145211</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: right;">7.759781</td>
+<td style="text-align: right;">5.16</td>
+<td style="text-align: right;">74.22</td>
+<td style="text-align: right;">20.63</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: right;">6.072875</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Irrigated</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">15.195612</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers (no livestock)</td>
+<td style="text-align: right;">2.024291</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: left;">Rainfed</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(farms_count_df), <span class="at">caption =</span> <span class="st">"Preview: Historical Farm Counts"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: Historical Farm Counts</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">time_period</th>
+<th style="text-align: left;">production_system</th>
+<th style="text-align: right;">number_of_farms</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: right;">80</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1950s</td>
+<td style="text-align: left;">Landless households</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">17</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="core-hydrology-execution-engine" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Core Hydrology Execution Engine</h1>
+<p>We first transform crude precipitation series into site-specific effective inputs (<span class="math inline">\(P_{eff}\)</span>), governed by the SCS Curve Number (<span class="math inline">\(CN\)</span>) depending on soil type to account for surface runoff, before initializing the core water balance engine.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>p.list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">precip =</span> precip,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">et0 =</span> et0,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">et0.timestep =</span> et0.timestep, </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">CN =</span> <span class="dv">85</span>, </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">soil.input =</span> <span class="st">"P"</span>, </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">soil.param =</span> soil.param,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">sm.init =</span> <span class="fl">0.5</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">crop.param =</span> crop.param,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">kc_no_crop =</span> <span class="fu">list</span>(<span class="at">summer =</span> <span class="fl">0.005</span>, <span class="at">kharip_rabi =</span> <span class="fl">0.2</span>)</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Vectorized generation of effective precipitation models across targeted soil horizons</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>met.forcing.ls <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">as.list</span>(soil.param<span class="sc">$</span>soil), <span class="cf">function</span>(x) {</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_peff_et0</span>(<span class="at">p =</span> p.list, <span class="at">soil =</span> x)</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(met.forcing.ls) <span class="ot">&lt;-</span> soil.param<span class="sc">$</span>soil </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<blockquote class="blockquote">
+<p>⚡ <strong>Pro-Tip: Parallel Processing</strong> Simulating multi-decadal daily water fluxes across dozens of crop rotations is computationally expensive. The code block below detects the number of available physical cores on your machine and parallelizes the tasks, drastically reducing execution time.</p>
+</blockquote>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Multi-Core Setup</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>num_cores <span class="ot">&lt;-</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>(<span class="at">logical =</span> <span class="cn">FALSE</span>) </span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cl <span class="ot">&lt;-</span> <span class="fu">makeCluster</span>(num_cores, <span class="at">type =</span> <span class="st">"PSOCK"</span>) </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">clusterExport</span>(cl, <span class="at">varlist =</span> <span class="fu">c</span>(<span class="st">"p.list"</span>, <span class="st">"met.forcing.ls"</span>, <span class="st">"get_budget"</span>, <span class="st">"quantile_df"</span>), <span class="at">envir =</span> <span class="fu">environment</span>()) </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">clusterEvalQ</span>(cl, {<span class="fu">library</span>(tidyverse); <span class="fu">library</span>(ggpubr)})</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Process budget arrays iteratively</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>budget <span class="ot">&lt;-</span> <span class="fu">pblapply</span>(crop.rotation.kc.ls, get_budget, <span class="at">cl =</span> cl, <span class="at">p =</span> p.list, <span class="at">ts =</span> met.forcing.ls)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="fu">stopCluster</span>(cl)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(budget) <span class="ot">&lt;-</span> <span class="fu">names</span>(crop.rotation.kc.ls)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(budget, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"output/01_processed_water_budgets.Rdata"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="output-processing-bwp-calculations" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Output Processing &amp; BWP Calculations</h1>
+<p>We transform the heavy daily flux lists into clean, aggregated annual summaries. These outputs form the basis for all downstream socio-hydrological evaluations.</p>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make sure data.table and readr are installed and loaded</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>pacman<span class="sc">::</span><span class="fu">p_load</span>(data.table, readr)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Optimize Daily Processing</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>budget.daily.ls <span class="ot">&lt;-</span> <span class="fu">lapply</span>(budget, <span class="cf">function</span>(x) {<span class="fu">return</span>(x<span class="sc">$</span>ts)})</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="co"># data.table::rbindlist is exponentially faster than dplyr::bind_rows for large lists</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>budget.daily <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">rbindlist</span>(budget.daily.ls, <span class="at">idcol =</span> <span class="st">"rotation"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">left_join</span>(crop.systems, <span class="at">by =</span> <span class="st">"rotation"</span>)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="co"># readr::write_csv is massively faster than base write.csv</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(budget.daily, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"output/02_export_detailed_daily_water_budgets.csv"</span>))</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Optimize Annual Processing</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>budget.yr.ls <span class="ot">&lt;-</span> <span class="fu">lapply</span>(budget, <span class="cf">function</span>(x) {<span class="fu">return</span>(x<span class="sc">$</span>sum.yr)})</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>budget.yr.l <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">rbindlist</span>(budget.yr.ls, <span class="at">idcol =</span> <span class="st">"rotation"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>    tidyr<span class="sc">::</span><span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">c</span>(<span class="sc">-</span>rotation, <span class="sc">-</span>year), <span class="at">names_to =</span> <span class="st">"var"</span>, <span class="at">values_to =</span> <span class="st">"value"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">left_join</span>(crop.systems, <span class="at">by =</span> <span class="st">"rotation"</span>)</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(budget.yr.l, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"output/03_export_annual_water_budgets_long.csv"</span>))</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Process the Blue Water Potential (BWP)</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>summary_yr_budgets <span class="ot">&lt;-</span> <span class="fu">process_annual_budget</span>(budget, crop.systems)</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>summ.qs.cs <span class="ot">&lt;-</span> summary_yr_budgets<span class="sc">$</span>summ_qs_cs</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>bwp <span class="ot">&lt;-</span> summ.qs.cs <span class="sc">%&gt;%</span> </span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  base<span class="sc">::</span><span class="fu">subset</span>(var <span class="sc">==</span> <span class="st">"balance"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>var, <span class="sc">-</span>var.plot)</span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(bwp)[<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)] <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">"BWP_"</span>, <span class="fu">colnames</span>(bwp)[<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>)])</span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">write_csv</span>(bwp, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"output/04_calculated_crop_system_blue_water_potential.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="visualizing-cropping-system-fluxes" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Visualizing Cropping System Fluxes</h1>
+<section id="annual-climatology-supply-vs.-demand" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="annual-climatology-supply-vs.-demand"><span class="header-section-number">4.1</span> Annual Climatology: Supply vs.&nbsp;Demand</h2>
+<p>The following chart compares the irrigation requirements of different cropping choices against their natural groundwater recharge capacity.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/annual-wb-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure 3. Annual Climatology (mean + 95 CI; 1980-2018) of Water Supply and Demand for various cropping systems in Anantapur. Groundwater Recharge is depicted in negative terms of the water fluxes axis. Crop systems are color coded by Irrigated or Rainfed hydrology.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="blue-water-potential-bwp-by-cropping-system" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="blue-water-potential-bwp-by-cropping-system"><span class="header-section-number">4.2</span> Blue Water Potential (<span class="math inline">\(BWP\)</span>) by Cropping System</h2>
+<p>This plot isolates the core metric: <strong>Blue Water Potential</strong>. It visualizes the absolute net impact of a specific land use decision on the underlying aquifer.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/annual-bwp-1.png" class="img-fluid figure-img" width="672"></p>
+<figcaption class="figure-caption">Figure 4. Annual Climatology of Blue Water Potential/BWP (mean + 95 CI; 1980-2018) for various cropping systems in Anantapur, color coded by Irrigated or Rainfed hydrology.</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="socio-hydrological-aggregation-production-system-impact" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Socio-Hydrological Aggregation: Production System Impact</h1>
+<p>By coupling the physical water fluxes with farm survey demographics, we aggregate individual cropping footprints into broader socio-economic archetypes. This critical step reveals how human social structures drive local water availability.</p>
+<blockquote class="blockquote">
+<p>🔍 <strong>Understanding Net Consumers vs.&nbsp;Net Contributors</strong></p>
+<ul>
+<li><p><strong>Irrigated Farms (<span class="math inline">\(BWP &lt; 0\)</span>):</strong> Commercial systems focusing on cash crops (e.g., grape vines or sweet lime) rely heavily on groundwater extraction. Because their artificial irrigation demand exceeds natural recharge over their area, they act as chronic hydrological <strong>Net Consumers</strong>.</p></li>
+<li><p><strong>Rainfed Farms &amp; Grasslands (<span class="math inline">\(BWP &gt; 0\)</span>):</strong> Traditional smallholders and pastoralists operate without active groundwater pumping. A substantial fraction of seasonal monsoon precipitation infiltrates past the root zone, actively recharging the aquifer. These act as <strong>Net Contributors</strong>.</p></li>
+</ul>
+</blockquote>
+<div class="cell">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>ps_results <span class="ot">&lt;-</span> <span class="fu">get_production_system_budgets</span>(budget.yr.l, ps_by_cs_area, farms_count_df)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>ps_budget_summary  <span class="ot">&lt;-</span> ps_results<span class="sc">$</span>ps_budget_summary</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>ps_volumetric_summary <span class="ot">&lt;-</span> ps_results<span class="sc">$</span>ps_volumetric_summary</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>ps_bwp_volumetric <span class="ot">&lt;-</span> ps_results<span class="sc">$</span>ps_bwp_volumetric</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(ps_bwp_volumetric, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"output/05_production_system_bwp_contributions.csv"</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell" data-layout-align="center">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>fig<span class="fl">.5</span>_social <span class="ot">&lt;-</span> <span class="fu">plot_socio_economic_bwp</span>(ps_bwp_volumetric)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fig<span class="fl">.5</span>_social)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/ann-social-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption class="figure-caption">Figure 5. Comparative annual Blue Water Potential (<span class="math inline">\(BWP\)</span>) across Production Systems, or farm types, (1950s vs.&nbsp;2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross.</figcaption>
+</figure>
+</div>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (EXPORT_FIGURES) {</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Save PDF for Manuscript</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">here</span>(<span class="st">"figures/manuscript/Fig.5_Socio_Economic_Group_BWP.pdf"</span>), fig<span class="fl">.5</span>_social, <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="fl">5.65</span>, <span class="at">device =</span> cairo_pdf)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save PNG for Presentation</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">here</span>(<span class="st">"figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"</span>), fig<span class="fl">.5</span>_social, <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="fl">5.65</span>, <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">bg =</span> <span class="st">"white"</span>)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="farm-level-bwp-disparity-demographics-vs.-impact" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="farm-level-bwp-disparity-demographics-vs.-impact"><span class="header-section-number">5.1</span> Farm-Level BWP Disparity: Demographics vs.&nbsp;Impact</h2>
+<p>Scaling <span class="math inline">\(BWP\)</span> by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically propped up by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).</p>
+<div class="cell" data-layout-align="center">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>fig<span class="fl">.6</span>_disparity <span class="ot">&lt;-</span> <span class="fu">plot_farm_bwp_disparity</span>(ps_bwp_volumetric, ps_typology)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fig<span class="fl">.6</span>_disparity)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="02_Blue-Water_files/figure-html/disparity-plot-1.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption class="figure-caption">Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.</figcaption>
+</figure>
+</div>
+</div>
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (EXPORT_FIGURES) {</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Save PDF for Manuscript</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">here</span>(<span class="st">"figures/manuscript/Fig.6_Farm_BWP_Disparity.pdf"</span>), fig<span class="fl">.6</span>_disparity, <span class="at">width =</span> <span class="dv">11</span>, <span class="at">height =</span> <span class="fl">5.5</span>, <span class="at">device =</span> cairo_pdf)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save PNG for Presentation</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">here</span>(<span class="st">"figures/presentation/Fig.6_Farm_BWP_Disparity.png"</span>), fig<span class="fl">.6</span>_disparity, <span class="at">width =</span> <span class="dv">11</span>, <span class="at">height =</span> <span class="fl">5.5</span>, <span class="at">dpi =</span> <span class="dv">300</span>, <span class="at">bg =</span> <span class="st">"white"</span>)</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<hr>
+</section>
+</section>
+<section id="macro-landscape-analysis" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Macro Landscape Analysis</h1>
+<section id="historical-village-comparison" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="historical-village-comparison"><span class="header-section-number">6.1</span> Historical Village Comparison</h2>
+<p>Finally, we aggregate farm-level balances to model a full archetype village. This visualization illustrates the net shift in regional water sustainability over the last several decades.</p>
+<p>Crucially, this macro-level aggregation highlights a structural tipping point in regional water security. The baseline 1950s archetype demonstrates a robust hydrological surplus. In contrast, the 2022 configuration illustrates a system inverted by agricultural intensification. The extraction demands of intensive cropping now overwhelmingly outpace the buffering capacity of rainfed systems.</p>
+<div class="cell" data-layout-align="center">
+<details open="">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>village.bwp_collapsed <span class="ot">&lt;-</span> ps_bwp_volumetric <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">bwp_thousand_m3 =</span> <span class="fu">round</span>(total_vol_m3<span class="sc">/</span><span class="dv">10000</span>)<span class="sc">*</span><span class="dv">10</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(time_period, production_system, bwp_thousand_m3) <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">production_system =</span> <span class="fu">case_when</span>(</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">==</span> <span class="st">"Landless pastoralists"</span> <span class="sc">~</span> <span class="st">"Pastoralists"</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">==</span> <span class="st">"Sheep fatteners"</span> <span class="sc">~</span> <span class="st">"Pastoralists"</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Rainfed groundnut growers (with buffaloes)"</span>, <span class="st">"Rainfed groundnut growers (with bulls)"</span>, <span class="st">"Rainfed groundnut growers (with local cows)"</span>) <span class="sc">~</span> <span class="st">"Groundnut growers (with livestock)"</span>,</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Rainfed groundnut growers (no livestock)"</span>, <span class="st">"Rainfed redgram growers (no livestock)"</span>) <span class="sc">~</span> <span class="st">"Groundnut growers (no livestock)"</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">==</span> <span class="st">"Rice growers"</span> <span class="sc">~</span> <span class="st">"Rice growers"</span>, </span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Small-scale fruit growers (banana)"</span>, <span class="st">"Small-scale fruit growers (grape vines)"</span>, <span class="st">"Small-scale fruit growers (pomegranate)"</span>, <span class="st">"Small-scale fruit growers (sweet lime)"</span>) <span class="sc">~</span> <span class="st">"Small-scale fruit growers (+ dairy)"</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Vegetable growers (no livestock)"</span>, <span class="st">"Vegetable growers with dairy farming"</span>) <span class="sc">~</span> <span class="st">"Vegetable growers"</span>,</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(production_system)</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(time_period, production_system) <span class="sc">%&gt;%</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">bwp_thousand_m3 =</span> <span class="fu">sum</span>(bwp_thousand_m3), <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(village.bwp_collapsed) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"period"</span>, <span class="st">"label"</span>, <span class="st">"val"</span>)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>cfg <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">box_width =</span> <span class="dv">100</span>, <span class="at">min_arrow_w =</span> <span class="dv">5</span>, <span class="at">max_arrow_w =</span> <span class="dv">30</span>, <span class="at">v_stagger_out =</span> <span class="dv">3000</span>)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (EXPORT_FIGURES) {</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Build comprehensive system maps</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">plot_village_bwp</span>(</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">village_bwp_collapsed =</span> village.bwp_collapsed,</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ps_typology = ps_typology,</span></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>  <span class="at">cfg =</span> cfg, </span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">output_dev =</span> cairo_pdf, </span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>  <span class="at">filename =</span> <span class="fu">here</span>(<span class="st">"figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"</span>),</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>  <span class="at">manuscript_style =</span> <span class="cn">TRUE</span></span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a><span class="fu">invisible</span>(<span class="fu">plot_village_bwp</span>(</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>  <span class="at">village_bwp_collapsed =</span> village.bwp_collapsed,</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>  <span class="co"># ps_typology = ps_typology,</span></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">cfg =</span> cfg, </span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">output_dev =</span> png, </span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>  <span class="at">filename =</span> <span class="fu">here</span>(<span class="st">"figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"</span>),</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>  <span class="at">manuscript_style =</span> <span class="cn">FALSE</span></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="fu">here</span>(<span class="st">"figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="../figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png" class="img-fluid figure-img" style="width:100.0%"></p>
+<figcaption class="figure-caption">Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right).</figcaption>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="village-water-balance" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="village-water-balance"><span class="header-section-number">6.2</span> Village Water Balance</h2>
+<p>Figure 8 employs a strict water accounting framework (Inflows = Outflows) to trace the absolute volumetric movement of water through the village ecosystem. This flow visualization demonstrates how the partitioning of relatively constant atmospheric input (Precipitation) has been fundamentally altered.</p>
+<p>By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div style="display: flex; flex-direction: row; justify-content: space-between; width: 100%;">
+<div style="width: 48%;">
+<h3 style="text-align: center; font-family: sans-serif; font-size: 16px;" class="anchored">A. 1950s Archetype Village</h3>
+<div id="htmlwidget-8116103f5f95c84c7158" style="width:100%;height:531px;" class="sankeyNetwork html-widget "></div>
+<script type="application/json" data-for="htmlwidget-8116103f5f95c84c7158">{"x":{"links":{"source":[0,0,0,0],"target":[1,2,3,4],"value":[540,650,1790,2050],"group":["Flow_Rain","Flow_Rain","Flow_Rain","Flow_Rain"]},"nodes":{"name":["Precipitation|5,030 k m³","ET: Irrigated Crops|540 k m³","ET: Rainfed Crops|650 k m³","ET: Grazed Areas|1,790 k m³","Net Recharge |2,050 k m³"],"group":["Rain","Irrigated","Rainfed","Grazed","BWP"]},"options":{"NodeID":"name","NodeGroup":"group","LinkGroup":"group","colourScale":"d3.scaleOrdinal()\n    .domain([\"Rain\", \"Irrigated\", \"Rainfed\", \"Grazed\", \"BWP\", \"Flow_Rain\"])\n    .range([\"#56B4E9\", \"#56B4E9\", \"#E69F00\", \"#009E73\", \"#0072B2\", \"#E8E8E8\"])","fontSize":14,"fontFamily":null,"nodeWidth":30,"nodePadding":40,"units":"k m³","margin":{"top":25,"right":30,"bottom":25,"left":120},"iterations":0,"sinksRight":true}},"evals":[],"jsHooks":{"render":[{"code":"\n    function(el, x) {\n      d3.select(el).selectAll(\".node text\")\n        .style(\"fill\", \"#1a1a1a\")\n        .style(\"font-family\", \"sans-serif\")\n        .style(\"font-weight\", \"600\");\n\n      d3.select(el).selectAll(\".node text\").each(function(d) {\n        if (!d.name) return;\n        var txt = d3.select(this);\n        var parts = d.name.split(\"|\"); \n        if (parts.length > 1) {\n          var x_pos = txt.attr(\"x\");\n          txt.text(\"\"); \n          txt.append(\"tspan\").attr(\"x\", x_pos).attr(\"dy\", \"0.1em\").text(parts[0]);\n          txt.append(\"tspan\").attr(\"x\", x_pos).attr(\"dy\", \"1.3em\")\n             .style(\"font-weight\", \"normal\").style(\"fill\", \"#555555\").text(parts[1]);\n        }\n      });\n\n      var nodes = d3.select(el).selectAll(\".node\").data();\n      var sourceNode = nodes.find(n => n.name && n.name.startsWith(\"Precipitation\"));\n\n      if (sourceNode) {\n        var targetNodes = nodes.filter(n => n.name && !n.name.startsWith(\"Precipitation\"));\n        if (targetNodes.length > 0) {\n          var maxY = d3.max(targetNodes, n => n.y + n.dy);\n          var minY = d3.min(targetNodes, n => n.y);\n\n          var newY = minY + (maxY - minY) / 2 - sourceNode.dy / 2;\n          \n          sourceNode.y = newY;\n          d3.select(el).selectAll(\".node\")\n            .filter(d => d.name && d.name.startsWith(\"Precipitation\"))\n            .attr(\"transform\", d => \"translate(\" + d.x + \",\" + d.y + \")\");\n\n          d3.select(el).selectAll(\".link\").attr(\"d\", function(d) {\n            var curvature = 0.5;\n            var x0 = d.source.x + d.source.dx,\n                x1 = d.target.x,\n                xi = d3.interpolateNumber(x0, x1),\n                x2 = xi(curvature),\n                x3 = xi(1 - curvature),\n                y0 = d.source.y + d.sy + d.dy / 2,\n                y1 = d.target.y + d.ty + d.dy / 2;\n            \n            return \"M\" + x0 + \",\" + y0\n                 + \"C\" + x2 + \",\" + y0\n                 + \" \" + x3 + \",\" + y1\n                 + \" \" + x1 + \",\" + y1;\n          });\n        }\n      }\n    }\n  ","data":null}]}}</script>
+</div>
+<div style="width: 48%;">
+<h3 style="text-align: center; font-family: sans-serif; font-size: 16px;" class="anchored">B. 2022 Archetype Village</h3>
+<div id="htmlwidget-e0067f89d4a439e04c7c" style="width:100%;height:531px;" class="sankeyNetwork html-widget "></div>
+<script type="application/json" data-for="htmlwidget-e0067f89d4a439e04c7c">{"x":{"links":{"source":[0,0,0,0],"target":[1,2,3,4],"value":[1440,1630,580,1480],"group":["Flow_Rain","Flow_Rain","Flow_Rain","Flow_Rain"]},"nodes":{"name":["Precipitation|5,130 k m³","ET: Irrigated Crops|1,440 k m³","ET: Rainfed Crops|1,630 k m³","ET: Grazed Areas|580 k m³","Net Recharge |1,480 k m³"],"group":["Rain","Irrigated","Rainfed","Grazed","BWP"]},"options":{"NodeID":"name","NodeGroup":"group","LinkGroup":"group","colourScale":"d3.scaleOrdinal()\n    .domain([\"Rain\", \"Irrigated\", \"Rainfed\", \"Grazed\", \"BWP\", \"Flow_Rain\"])\n    .range([\"#56B4E9\", \"#56B4E9\", \"#E69F00\", \"#009E73\", \"#0072B2\", \"#E8E8E8\"])","fontSize":14,"fontFamily":null,"nodeWidth":30,"nodePadding":40,"units":"k m³","margin":{"top":25,"right":30,"bottom":25,"left":120},"iterations":0,"sinksRight":true}},"evals":[],"jsHooks":{"render":[{"code":"\n    function(el, x) {\n      d3.select(el).selectAll(\".node text\")\n        .style(\"fill\", \"#1a1a1a\")\n        .style(\"font-family\", \"sans-serif\")\n        .style(\"font-weight\", \"600\");\n\n      d3.select(el).selectAll(\".node text\").each(function(d) {\n        if (!d.name) return;\n        var txt = d3.select(this);\n        var parts = d.name.split(\"|\"); \n        if (parts.length > 1) {\n          var x_pos = txt.attr(\"x\");\n          txt.text(\"\"); \n          txt.append(\"tspan\").attr(\"x\", x_pos).attr(\"dy\", \"0.1em\").text(parts[0]);\n          txt.append(\"tspan\").attr(\"x\", x_pos).attr(\"dy\", \"1.3em\")\n             .style(\"font-weight\", \"normal\").style(\"fill\", \"#555555\").text(parts[1]);\n        }\n      });\n\n      var nodes = d3.select(el).selectAll(\".node\").data();\n      var sourceNode = nodes.find(n => n.name && n.name.startsWith(\"Precipitation\"));\n\n      if (sourceNode) {\n        var targetNodes = nodes.filter(n => n.name && !n.name.startsWith(\"Precipitation\"));\n        if (targetNodes.length > 0) {\n          var maxY = d3.max(targetNodes, n => n.y + n.dy);\n          var minY = d3.min(targetNodes, n => n.y);\n\n          var newY = minY + (maxY - minY) / 2 - sourceNode.dy / 2;\n          \n          sourceNode.y = newY;\n          d3.select(el).selectAll(\".node\")\n            .filter(d => d.name && d.name.startsWith(\"Precipitation\"))\n            .attr(\"transform\", d => \"translate(\" + d.x + \",\" + d.y + \")\");\n\n          d3.select(el).selectAll(\".link\").attr(\"d\", function(d) {\n            var curvature = 0.5;\n            var x0 = d.source.x + d.source.dx,\n                x1 = d.target.x,\n                xi = d3.interpolateNumber(x0, x1),\n                x2 = xi(curvature),\n                x3 = xi(1 - curvature),\n                y0 = d.source.y + d.sy + d.dy / 2,\n                y1 = d.target.y + d.ty + d.dy / 2;\n            \n            return \"M\" + x0 + \",\" + y0\n                 + \"C\" + x2 + \",\" + y0\n                 + \" \" + x3 + \",\" + y1\n                 + \" \" + x1 + \",\" + y1;\n          });\n        }\n      }\n    }\n  ","data":null}]}}</script>
+</div>
+</div>
+<p>Figure 8. Average annual water balance of the archetype village.</p>
+</div>
+</div>
+<pre><code></code></pre>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

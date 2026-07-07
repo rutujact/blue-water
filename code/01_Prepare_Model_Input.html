@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.450">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Rutuja Chitra-Tarak (Code)">
+<meta name="author" content="Charlotte Hemingway (Data and Kc Calculations)">
+<meta name="author" content="Laurent Ruiz (Data and Kc Calculations)">
+
+<title>Data Dictionary &amp; Model Input Preparation</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="01_Prepare_Model_Input_files/libs/clipboard/clipboard.min.js"></script>
+<script src="01_Prepare_Model_Input_files/libs/quarto-html/quarto.js"></script>
+<script src="01_Prepare_Model_Input_files/libs/quarto-html/popper.min.js"></script>
+<script src="01_Prepare_Model_Input_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="01_Prepare_Model_Input_files/libs/quarto-html/anchor.min.js"></script>
+<link href="01_Prepare_Model_Input_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="01_Prepare_Model_Input_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="01_Prepare_Model_Input_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="01_Prepare_Model_Input_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="01_Prepare_Model_Input_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#workflow-data-summary" id="toc-workflow-data-summary" class="nav-link active" data-scroll-target="#workflow-data-summary"><span class="header-section-number">0.0.1</span> 🗂️ Workflow &amp; Data Summary</a></li>
+  <li><a href="#directory-structure-for-this-script" id="toc-directory-structure-for-this-script" class="nav-link" data-scroll-target="#directory-structure-for-this-script"><span class="header-section-number">0.0.2</span> 📂 Directory Structure for this Script</a></li>
+  <li><a href="#climatic-data-forcing-variables" id="toc-climatic-data-forcing-variables" class="nav-link" data-scroll-target="#climatic-data-forcing-variables"><span class="header-section-number">1</span> Climatic Data (Forcing Variables)</a></li>
+  <li><a href="#soil-parameters" id="toc-soil-parameters" class="nav-link" data-scroll-target="#soil-parameters"><span class="header-section-number">2</span> Soil Parameters</a></li>
+  <li><a href="#crop-parameters-coefficients-kc" id="toc-crop-parameters-coefficients-kc" class="nav-link" data-scroll-target="#crop-parameters-coefficients-kc"><span class="header-section-number">3</span> Crop Parameters &amp; Coefficients (Kc)</a>
+  <ul class="collapse">
+  <li><a href="#rooting-depth-and-irrigation-constraints" id="toc-rooting-depth-and-irrigation-constraints" class="nav-link" data-scroll-target="#rooting-depth-and-irrigation-constraints"><span class="header-section-number">3.1</span> Rooting Depth and Irrigation Constraints</a></li>
+  <li><a href="#crop-coefficient-kc-expansion" id="toc-crop-coefficient-kc-expansion" class="nav-link" data-scroll-target="#crop-coefficient-kc-expansion"><span class="header-section-number">3.2</span> Crop Coefficient (Kc) Expansion</a>
+  <ul class="collapse">
+  <li><a href="#standard-fao-56-segmented-curves" id="toc-standard-fao-56-segmented-curves" class="nav-link" data-scroll-target="#standard-fao-56-segmented-curves"><span class="header-section-number">3.2.1</span> Standard FAO-56 Segmented Curves</a></li>
+  <li><a href="#polynomial-curves" id="toc-polynomial-curves" class="nav-link" data-scroll-target="#polynomial-curves"><span class="header-section-number">3.2.2</span> Polynomial Curves</a></li>
+  <li><a href="#fruit-trees" id="toc-fruit-trees" class="nav-link" data-scroll-target="#fruit-trees"><span class="header-section-number">3.2.3</span> Fruit Trees</a></li>
+  <li><a href="#complex-harvesting-regrowth-schedules" id="toc-complex-harvesting-regrowth-schedules" class="nav-link" data-scroll-target="#complex-harvesting-regrowth-schedules"><span class="header-section-number">3.2.4</span> Complex Harvesting &amp; Regrowth Schedules</a></li>
+  <li><a href="#final-merge-and-system-mapping" id="toc-final-merge-and-system-mapping" class="nav-link" data-scroll-target="#final-merge-and-system-mapping"><span class="header-section-number">3.2.5</span> Final Merge and System Mapping</a></li>
+  <li><a href="#plotting-all-crop-curves" id="toc-plotting-all-crop-curves" class="nav-link" data-scroll-target="#plotting-all-crop-curves"><span class="header-section-number">3.2.6</span> Plotting All Crop Curves</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#spatial-land-use-agricultural-demographics" id="toc-spatial-land-use-agricultural-demographics" class="nav-link" data-scroll-target="#spatial-land-use-agricultural-demographics"><span class="header-section-number">4</span> Spatial Land Use &amp; Agricultural Demographics</a>
+  <ul class="collapse">
+  <li><a href="#classify-production-systems-by-hydrological-typology" id="toc-classify-production-systems-by-hydrological-typology" class="nav-link" data-scroll-target="#classify-production-systems-by-hydrological-typology"><span class="header-section-number">4.0.1</span> Classify Production Systems by Hydrological Typology</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data Dictionary &amp; Model Input Preparation</h1>
+<p class="subtitle lead">Assembling Baseline Data, Kc Curves, and Demographics for the BWP Engine</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Authors</div>
+    <div class="quarto-title-meta-contents">
+             <p>Rutuja Chitra-Tarak (Code) </p>
+             <p>Charlotte Hemingway (Data and Kc Calculations) </p>
+             <p>Laurent Ruiz (Data and Kc Calculations) </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<style>
+/* This CSS adds the clean underlines beneath your main section headers */
+h1, h2 {
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+</style>
+
+<p><strong>Note to Users</strong>: The primary requirement to run the BWP Analytical Engine (<code>02_blue-water.qmd</code>) is the set of standardized CSV outputs produced by this script. You do not need to format your data to match any messy or idiosyncratic starting points. Instead, use this document as a blueprint: your goal is simply to provide clean baseline data files that match the formats defined below.</p>
+<section id="workflow-data-summary" class="level3" data-number="0.0.1">
+<h3 data-number="0.0.1" class="anchored" data-anchor-id="workflow-data-summary"><span class="header-section-number">0.0.1</span> 🗂️ Workflow &amp; Data Summary</h3>
+<p>This script processes, standardizes, and expands six distinct categories of input data required by the hydrological model:</p>
+<ol type="1">
+<li><strong>Climatic Forcings</strong>: Daily Precipitation and Reference Evapotranspiration (ET0).</li>
+<li><strong>Soil Properties</strong>: Water Holding Capacity (WHC) and Readily Available Water (RAW).</li>
+<li><strong>Crop Parameters</strong>: Rooting depths and irrigation constraints.</li>
+<li><strong>Crop Coefficients (Kc)</strong>: Dynamic daily vegetative growth curves.</li>
+<li><strong>Crop Systems</strong>: Multi-season crop rotation definitions.</li>
+<li><strong>Landscape Demographics</strong>: Cultivated area (hectares) broken down by production system and historical period.</li>
+</ol>
+</section>
+<section id="directory-structure-for-this-script" class="level3" data-number="0.0.2">
+<h3 data-number="0.0.2" class="anchored" data-anchor-id="directory-structure-for-this-script"><span class="header-section-number">0.0.2</span> 📂 Directory Structure for this Script</h3>
+<p>This script serves two purposes: it documents the reproducible workflow for the manuscript, and it acts as a “cookbook” for adapting the engine to new watersheds.</p>
+<ul>
+<li><strong>Reproducing the Manuscript:</strong> Our original data files in their raw, unformatted state are not provided. However, all clean baseline inputs required to run this script are provided in the <code>data/input/</code> directory.</li>
+<li><strong>Adapting for your own data:</strong> Place your clean baseline data and code dependencies in the correct starting locations shown below. The script will automatically generate the required folder structure for all derived processed outputs if they do not exist. To run this script, open the <code>.Rproj</code> and click “Render”.</li>
+</ul>
+<pre class="text"><code>project_root/
+├── data/
+│   ├── input/               &lt;- REQUIRED: Place your standardized baseline CSVs here
+│   │   ├── 01_precipitation.csv
+│   │   ├── 02_et0.csv
+│   │   ├── 03_soil.parameters.csv
+│   │   ├── 04_crop.parameters.csv
+│   │   ├── 05_crop_kc_curve_parameters_table.csv
+│   │   ├── 06_fruit_kc_curve_parameters_table.csv
+│   │   ├── 07_crop.systems.csv
+│   │   ├── 08_crop_system_area_by_production_system.csv
+│   │   └── 09_no_of_farmers_by_production_system.csv
+│   └── processed/           &lt;- TARGET: Derived model assets (Kc curves, typologies) will land here
+│       └── supplementary/   &lt;- TARGET: Intermediary Kc tables will land here
+├── code/
+│   ├── functions/
+│   │   ├── 01_get_kc.R      &lt;- Required: Biophysical function dependency
+│   │   └── 03_expand_kc.R   &lt;- Required: Biophysical function dependency
+│   ├── 01_Prepare_Model_Inputs.qmd  &lt;- (This file)
+│   └── 01_Prepare_Model_Inputs.html &lt;- Generated: HTML Report created by rendering this script
+└── Blue-Water.Rproj         &lt;- Required: RStudio Project file to render this script
+</code></pre>
+</section>
+<section id="climatic-data-forcing-variables" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Climatic Data (Forcing Variables)</h1>
+<p>The foundation of the water balance model requires continuous, daily forcing variables. Here, we define the required daily Precipitation (P) and Reference Evapotranspiration (ET0).</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>precip <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/01_precipitation.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>et0.daily <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/02_et0.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Error: Precipitation contains missing values (NA)."</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(precip<span class="sc">$</span>p)),</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Error: ET0 contains missing values (NA)."</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(et0.daily<span class="sc">$</span>et0))</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="precipitation-preview" class="level4" data-number="1.0.0.1">
+<h4 data-number="1.0.0.1" class="anchored" data-anchor-id="precipitation-preview"><span class="header-section-number">1.0.0.1</span> Precipitation Preview</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 49%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">date<br><small style="color:gray; font-weight:normal;">Sequential dates (YYYY-MM-DD)</small></th>
+<th style="text-align: right;">p<br><small style="color:gray; font-weight:normal;">Daily Precipitation (mm ≥ 0)</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1980-01-01</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-02</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-03</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-04</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-05</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="soil-parameters" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Soil Parameters</h1>
+<p>The hydrological model requires specific soil properties to determine infiltration and drainage dynamics.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>soil.param <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/03_soil.parameters.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="soil-parameter-matrix" class="level4" data-number="2.0.0.1">
+<h4 data-number="2.0.0.1" class="anchored" data-anchor-id="soil-parameter-matrix"><span class="header-section-number">2.0.0.1</span> Soil Parameter Matrix</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 21%">
+<col style="width: 26%">
+<col style="width: 26%">
+<col style="width: 26%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">soil<br><small style="color:gray; font-weight:normal;">Identifier code</small></th>
+<th style="text-align: left;">soil.type<br><small style="color:gray; font-weight:normal;">Descriptive classification</small></th>
+<th style="text-align: right;">whc.mmpercm<br><small style="color:gray; font-weight:normal;">WHC (mm water / cm soil)</small></th>
+<th style="text-align: right;">raw<br><small style="color:gray; font-weight:normal;">Readily Available Water threshold</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">RED LOAMY</td>
+<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">GREY CLAYEY</td>
+<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="crop-parameters-coefficients-kc" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Crop Parameters &amp; Coefficients (Kc)</h1>
+<section id="rooting-depth-and-irrigation-constraints" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="rooting-depth-and-irrigation-constraints"><span class="header-section-number">3.1</span> Rooting Depth and Irrigation Constraints</h2>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>crop.param <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/04_crop.parameters.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="crop-constraints" class="level4" data-number="3.1.0.1">
+<h4 data-number="3.1.0.1" class="anchored" data-anchor-id="crop-constraints"><span class="header-section-number">3.1.0.1</span> Crop Constraints</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 23%">
+<col style="width: 22%">
+<col style="width: 26%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">crop.ID<br><small style="color:gray; font-weight:normal;">Unique identifier</small></th>
+<th style="text-align: left;">crop<br><small style="color:gray; font-weight:normal;">Standardized name</small></th>
+<th style="text-align: left;">irrigation<br><small style="color:gray; font-weight:normal;">‘irrigated’ or ‘rainfed’</small></th>
+<th style="text-align: right;">rooting_depth_cm<br><small style="color:gray; font-weight:normal;">Max effective root depth</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Rice Long</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Rice Short Monsoon</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">Rice Short Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">Groundnut Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">Banana 2</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: left;">Banana 1 Beg</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: left;">Pulse</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">Tomato Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">Groundnut Monsoon</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">Ragi</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">13</td>
+<td style="text-align: left;">Millet</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">Sweet Lime</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">150</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Napier</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">150</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">17</td>
+<td style="text-align: left;">Napier Short</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">150</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">18</td>
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">150</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">19</td>
+<td style="text-align: left;">Horsegram</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">20</td>
+<td style="text-align: left;">Okra Summer</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">21</td>
+<td style="text-align: left;">Okra Winter</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">22</td>
+<td style="text-align: left;">Tomato Winter</td>
+<td style="text-align: left;">irrigated</td>
+<td style="text-align: right;">70</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">24</td>
+<td style="text-align: left;">Grazed Thrice</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">25</td>
+<td style="text-align: left;">Grazed 1 Aug</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">26</td>
+<td style="text-align: left;">Grazed 1 Sept</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">27</td>
+<td style="text-align: left;">Grazed 1 Oct</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">28</td>
+<td style="text-align: left;">Grazed 1 Nov</td>
+<td style="text-align: left;">rainfed</td>
+<td style="text-align: right;">30</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="crop-coefficient-kc-expansion" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="crop-coefficient-kc-expansion"><span class="header-section-number">3.2</span> Crop Coefficient (Kc) Expansion</h2>
+<p>Evapotranspiration relies heavily on accurate scaling by the crop’s vegetative stage. Our framework dynamically generates daily curves based on underlying mathematical definitions (FAO segmented logic, polynomials, and linear regrowth rules) from the baseline parameters provided.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kc.raw       <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/05_crop_kc_curve_parameters_table.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>raw_params   <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/06_fruit_kc_curve_parameters_table.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>crop.systems <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/07_crop.systems.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the long-format rotation dictionary required by the downstream engine</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>crop.systems.l <span class="ot">&lt;-</span> crop.systems <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Irrigation) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"crop_"</span>), <span class="at">names_prefix =</span> <span class="st">"crop_"</span>, <span class="at">names_to =</span> <span class="st">"ncrop"</span>, <span class="at">values_to =</span> <span class="st">"crop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(crop.param, <span class="at">by =</span> <span class="st">"crop"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(crop.ID, <span class="at">.after =</span> crop) <span class="sc">%&gt;%</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop.rotation.ID =</span> <span class="fu">paste0</span>(crop, <span class="st">"."</span>, rotation.ID))</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(crop.systems.l, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/06_crop.systems.l.csv"</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="fao-segmented-parameters" class="level4" data-number="3.2.0.1">
+<h4 data-number="3.2.0.1" class="anchored" data-anchor-id="fao-segmented-parameters"><span class="header-section-number">3.2.0.1</span> FAO Segmented Parameters</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 3%">
+<col style="width: 2%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 6%">
+<col style="width: 6%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">var</th>
+<th style="text-align: right;">FORMULE</th>
+<th style="text-align: right;">Ragi</th>
+<th style="text-align: right;">Millet</th>
+<th style="text-align: right;">Pulse</th>
+<th style="text-align: right;">Rice_Short_Monsoon</th>
+<th style="text-align: right;">Rice_Short_Summer</th>
+<th style="text-align: right;">Okra_summer</th>
+<th style="text-align: right;">Okra_winter</th>
+<th style="text-align: right;">Tomato_summer</th>
+<th style="text-align: right;">Tomato_winter</th>
+<th style="text-align: right;">Grasslands</th>
+<th style="text-align: right;">Horsegram</th>
+<th style="text-align: right;">Rice_Long</th>
+<th style="text-align: right;">Banana_2</th>
+<th style="text-align: right;">Grapes</th>
+<th style="text-align: right;">Banana_1_beg</th>
+<th style="text-align: right;">Banana_1_next</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sowing</td>
+<td style="text-align: right;">150.00</td>
+<td style="text-align: right;">122.0</td>
+<td style="text-align: right;">197.0</td>
+<td style="text-align: right;">197.0</td>
+<td style="text-align: right;">197.00</td>
+<td style="text-align: right;">32.00</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">153.0</td>
+<td style="text-align: right;">1.0</td>
+<td style="text-align: right;">183.0</td>
+<td style="text-align: right;">122.0</td>
+<td style="text-align: right;">289.0</td>
+<td style="text-align: right;">245.00</td>
+<td style="text-align: right;">214</td>
+<td style="text-align: right;">92.0</td>
+<td style="text-align: right;">340</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kc_ini</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">1.15</td>
+<td style="text-align: right;">1.15</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">0.6</td>
+<td style="text-align: right;">0.2</td>
+<td style="text-align: right;">0.4</td>
+<td style="text-align: right;">1.15</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ini_duration</td>
+<td style="text-align: right;">15.00</td>
+<td style="text-align: right;">15.0</td>
+<td style="text-align: right;">15.0</td>
+<td style="text-align: right;">15.0</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">10.0</td>
+<td style="text-align: right;">10.0</td>
+<td style="text-align: right;">30.0</td>
+<td style="text-align: right;">30.0</td>
+<td style="text-align: right;">30.0</td>
+<td style="text-align: right;">15.0</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">20.0</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">End of ini</td>
+<td style="text-align: right;">165.00</td>
+<td style="text-align: right;">137.0</td>
+<td style="text-align: right;">212.0</td>
+<td style="text-align: right;">212.0</td>
+<td style="text-align: right;">227.00</td>
+<td style="text-align: right;">62.00</td>
+<td style="text-align: right;">11.0</td>
+<td style="text-align: right;">163.0</td>
+<td style="text-align: right;">31.0</td>
+<td style="text-align: right;">213.0</td>
+<td style="text-align: right;">152.0</td>
+<td style="text-align: right;">304.0</td>
+<td style="text-align: right;">275.00</td>
+<td style="text-align: right;">334</td>
+<td style="text-align: right;">112.0</td>
+<td style="text-align: right;">460</td>
+<td style="text-align: right;">96</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dev_duration</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">25.0</td>
+<td style="text-align: right;">25.0</td>
+<td style="text-align: right;">25.0</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">31.0</td>
+<td style="text-align: right;">31.0</td>
+<td style="text-align: right;">40.0</td>
+<td style="text-align: right;">40.0</td>
+<td style="text-align: right;">120.0</td>
+<td style="text-align: right;">25.0</td>
+<td style="text-align: right;">30.00</td>
+<td style="text-align: right;">60</td>
+<td style="text-align: right;">50.0</td>
+<td style="text-align: right;">90</td>
+<td style="text-align: right;">90</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="fruit-tree-parameters" class="level4" data-number="3.2.0.2">
+<h4 data-number="3.2.0.2" class="anchored" data-anchor-id="fruit-tree-parameters"><span class="header-section-number">3.2.0.2</span> Fruit Tree Parameters</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">Month</th>
+<th style="text-align: right;">Pomegranate</th>
+<th style="text-align: right;">Sweet lime</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1.18</td>
+<td style="text-align: right;">1.05</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1.09</td>
+<td style="text-align: right;">1.17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">1.10</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.87</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.77</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.89</td>
+<td style="text-align: right;">0.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.15</td>
+<td style="text-align: right;">0.69</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.63</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.59</td>
+<td style="text-align: right;">0.66</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0.74</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">1.16</td>
+<td style="text-align: right;">0.88</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+<p>We pass the baseline parameters through our biophysical expansion functions. This includes standard FAO-56 segmented curves for standard crops, derived 4th-order polynomial equations for continuous rapid growth crops like Groundnuts, and complex daily linear regrowth rates for pastures and harvested grasses.</p>
+<p><em>(Note: Our functions strictly enforce a 0.01 threshold for baseline dry-season bare soil).</em></p>
+</section>
+<section id="standard-fao-56-segmented-curves" class="level3" data-number="3.2.1">
+<h3 data-number="3.2.1" class="anchored" data-anchor-id="standard-fao-56-segmented-curves"><span class="header-section-number">3.2.1</span> Standard FAO-56 Segmented Curves</h3>
+<p>Generates the classic 4-stage linear growth curves for standard crops.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>kc.raw.long <span class="ot">&lt;-</span> kc.raw <span class="sc">%&gt;%</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>), <span class="at">names_to =</span> <span class="st">"crop"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop =</span> <span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">"_|</span><span class="sc">\\</span><span class="st">."</span>, <span class="st">" "</span>, crop, <span class="at">perl =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>kc <span class="ot">&lt;-</span> kc.raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(stringr<span class="sc">::</span><span class="fu">str_detect</span>(var, stringr<span class="sc">::</span><span class="fu">regex</span>(<span class="st">"kc"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">Kc =</span> value, <span class="at">kc_var =</span> var) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Kc_var =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">"ini"</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">"Kc_ini"</span>, <span class="fu">grepl</span>(<span class="st">"mid"</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">"Kc_mid"</span>, <span class="fu">grepl</span>(<span class="st">"end"</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">"Kc_end"</span>, <span class="cn">TRUE</span> <span class="sc">~</span> kc_var))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>doy <span class="ot">&lt;-</span> kc.raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(var <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Sowing"</span>, <span class="st">"End of ini"</span>, <span class="st">"End of Dev"</span>, <span class="st">"End of Mid"</span>, <span class="st">"Harvest"</span>)) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">doy =</span> value, <span class="at">doy_var =</span> var) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">doy =</span> <span class="fu">if_else</span>(doy <span class="sc">==</span> <span class="fl">365.00</span>, <span class="fl">366.00</span>, doy))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>kc.doy.key <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">doy_var =</span> <span class="fu">c</span>(<span class="st">"Sowing"</span>, <span class="st">"End of ini"</span>, <span class="st">"End of Dev"</span>, <span class="st">"End of Mid"</span>, <span class="st">"Harvest"</span>), <span class="at">kc_var =</span> <span class="fu">c</span>(<span class="st">"Kc_ini"</span>, <span class="st">"Kc_ini"</span>, <span class="st">"Kc_mid"</span>, <span class="st">"Kc_mid"</span>, <span class="st">"Kc_end"</span>))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>doy <span class="ot">&lt;-</span> <span class="fu">left_join</span>(doy, kc.doy.key, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"doy_var"</span>))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>kc.doy <span class="ot">&lt;-</span> <span class="fu">left_join</span>(doy, kc, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"kc_var"</span>, <span class="st">"crop"</span>)) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(crop, doy, Kc) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">doy =</span> <span class="fu">as.numeric</span>(doy), <span class="at">Kc =</span> <span class="fu">as.numeric</span>(Kc))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>kc.doy.crops <span class="ot">&lt;-</span> kc.doy <span class="sc">%&gt;%</span> <span class="fu">select</span>(crop, doy_var, doy, Kc) <span class="sc">%&gt;%</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">doy_var =</span> <span class="fu">factor</span>(doy_var, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Sowing"</span>, <span class="st">"End of ini"</span>, <span class="st">"End of Dev"</span>, <span class="st">"End of Mid"</span>, <span class="st">"Harvest"</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(crop, doy, doy_var)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>kc_wide_build <span class="ot">&lt;-</span> kc.doy.crops <span class="sc">%&gt;%</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> doy_var, <span class="at">values_from =</span> <span class="fu">c</span>(doy, Kc)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">Sow =</span> doy_Sowing, <span class="at">E_ini =</span> <span class="st">`</span><span class="at">doy_End of ini</span><span class="st">`</span>, <span class="at">E_dev =</span> <span class="st">`</span><span class="at">doy_End of Dev</span><span class="st">`</span>,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">E_mid =</span> <span class="st">`</span><span class="at">doy_End of Mid</span><span class="st">`</span>, <span class="at">Harv =</span> doy_Harvest,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">K_ini =</span> Kc_Sowing, <span class="at">K_mid =</span> <span class="st">`</span><span class="at">Kc_End of Dev</span><span class="st">`</span>, <span class="at">K_end =</span> Kc_Harvest</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>kc_segmented_ls <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(kc_wide_build), <span class="cf">function</span>(i) <span class="fu">build_fao_curve</span>(kc_wide_build[i, ]))</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>kc_segmented <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(kc_segmented_ls) <span class="sc">%&gt;%</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop =</span> <span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">"_"</span>, <span class="st">" "</span>, crop, <span class="at">perl =</span> <span class="cn">TRUE</span>)))</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual Check</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kc_segmented, <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> crop) <span class="sc">+</span> theme_baseR <span class="sc">+</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Standard FAO-56 Curves"</span>, <span class="at">x =</span> <span class="st">"Day of Year"</span>, <span class="at">y =</span> <span class="st">"Kc"</span>) <span class="sc">+</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="01_Prepare_Model_Input_files/figure-html/generate-fao-kc-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="polynomial-curves" class="level3" data-number="3.2.2">
+<h3 data-number="3.2.2" class="anchored" data-anchor-id="polynomial-curves"><span class="header-section-number">3.2.2</span> Polynomial Curves</h3>
+<p>Applies 4th-order polynomial equations to capture continuous rapid growth dynamics (e.g., Groundnuts).</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>gs <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">doy =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">366</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop =</span> <span class="st">"Groundnut Summer"</span>, <span class="at">d =</span> doy <span class="sc">-</span> <span class="dv">10</span>, <span class="at">kc =</span> <span class="fu">if_else</span>(d <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> d <span class="sc">&lt;=</span> <span class="dv">104</span>, <span class="fl">1.25</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">7</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">4</span> <span class="sc">-</span> <span class="fl">2.82</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">5</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">3</span> <span class="sc">+</span> <span class="fl">1.8</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">3</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> <span class="fl">2.49</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>)<span class="sc">*</span>d <span class="sc">+</span> <span class="fl">0.3792</span>, <span class="dv">0</span>))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>gm <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">doy =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">366</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop =</span> <span class="st">"Groundnut Monsoon"</span>, <span class="at">d =</span> doy <span class="sc">-</span> <span class="dv">182</span>, <span class="at">kc =</span> <span class="fu">if_else</span>(d <span class="sc">&gt;=</span> <span class="dv">0</span> <span class="sc">&amp;</span> d <span class="sc">&lt;=</span> <span class="dv">104</span>, <span class="fl">1.32</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">7</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">4</span> <span class="sc">-</span> <span class="fl">2.99</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">5</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">3</span> <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">3</span>)<span class="sc">*</span>d<span class="sc">^</span><span class="dv">2</span> <span class="sc">-</span> <span class="fl">3.02</span><span class="sc">*</span><span class="dv">10</span><span class="sc">^</span>(<span class="sc">-</span><span class="dv">2</span>)<span class="sc">*</span>d <span class="sc">+</span> <span class="fl">0.4</span>, <span class="dv">0</span>))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>kc_polynomial <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(gm, gs) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>d)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual Check</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kc_polynomial, <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="fu">facet_grid</span>(crop <span class="sc">~</span> .) <span class="sc">+</span> theme_baseR <span class="sc">+</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Polynomial Curves"</span>, <span class="at">x =</span> <span class="st">"Day of Year"</span>, <span class="at">y =</span> <span class="st">"Kc"</span>) <span class="sc">+</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="01_Prepare_Model_Input_files/figure-html/generate-poly-kc-1.png" class="img-fluid" style="width:70.0%"></p>
+</div>
+</div>
+</section>
+<section id="fruit-trees" class="level3" data-number="3.2.3">
+<h3 data-number="3.2.3" class="anchored" data-anchor-id="fruit-trees"><span class="header-section-number">3.2.3</span> Fruit Trees</h3>
+<p>Processes perennial step-functions for orchard crops.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(raw_params) <span class="ot">&lt;-</span> stringr<span class="sc">::</span><span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">"_|</span><span class="sc">\\</span><span class="st">."</span>, <span class="st">" "</span>, <span class="fu">colnames</span>(raw_params)))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>kc_fruits <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">generate_fruit_step</span>(<span class="st">"Pomegranate"</span>, raw_params), <span class="fu">generate_fruit_step</span>(<span class="st">"Sweet Lime"</span>, raw_params)) </span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual Check</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kc_fruits, <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="fu">facet_grid</span>(crop <span class="sc">~</span> .) <span class="sc">+</span> theme_baseR <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Fruit Tree Curves"</span>, <span class="at">x =</span> <span class="st">"Day of Year"</span>, <span class="at">y =</span> <span class="st">"Kc"</span>) <span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="01_Prepare_Model_Input_files/figure-html/fruit-trees-1.png" class="img-fluid" style="width:70.0%"></p>
+</div>
+</div>
+</section>
+<section id="complex-harvesting-regrowth-schedules" class="level3" data-number="3.2.4">
+<h3 data-number="3.2.4" class="anchored" data-anchor-id="complex-harvesting-regrowth-schedules"><span class="header-section-number">3.2.4</span> Complex Harvesting &amp; Regrowth Schedules</h3>
+<p>Applies calibrated drop-and-regrowth rates for grazed pastures and harvested Napier grass.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>no_crop <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">doy =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">366</span>, <span class="at">crop =</span> <span class="st">"No Crop"</span>, <span class="at">kc =</span> <span class="dv">0</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>grassland_base <span class="ot">&lt;-</span> kc_segmented <span class="sc">%&gt;%</span> <span class="fu">filter</span>(crop <span class="sc">==</span> <span class="st">"Grasslands"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(kc)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>growth_rate  <span class="ot">&lt;-</span> biophysical_parameters<span class="sc">$</span>grazing_growth_rate</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>napier_dec_1 <span class="ot">&lt;-</span> biophysical_parameters<span class="sc">$</span>napier_decline_rate_1</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>napier_dec_2 <span class="ot">&lt;-</span> biophysical_parameters<span class="sc">$</span>napier_decline_rate_2</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>graze_drop   <span class="ot">&lt;-</span> biophysical_parameters<span class="sc">$</span>grazing_drop_kc </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>max_bound    <span class="ot">&lt;-</span> biophysical_parameters<span class="sc">$</span>grazing_max_kc  </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>grassland_sow <span class="ot">&lt;-</span> kc_wide_build<span class="sc">$</span>Sow[kc_wide_build<span class="sc">$</span>crop <span class="sc">==</span> <span class="st">"Grasslands"</span>]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>grazed_thrice <span class="ot">&lt;-</span> <span class="fu">generate_grazed_legacy</span>(<span class="st">"Grazed Thrice"</span>, <span class="fu">c</span>(<span class="dv">182</span>, <span class="dv">243</span>, <span class="dv">304</span>), grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>grazed_1_aug  <span class="ot">&lt;-</span> <span class="fu">generate_grazed_legacy</span>(<span class="st">"Grazed 1 Aug"</span>, <span class="dv">213</span>, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>grazed_1_sept <span class="ot">&lt;-</span> <span class="fu">generate_grazed_legacy</span>(<span class="st">"Grazed 1 Sept"</span>, <span class="dv">244</span>, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>grazed_1_oct  <span class="ot">&lt;-</span> <span class="fu">generate_grazed_legacy</span>(<span class="st">"Grazed 1 Oct"</span>, <span class="dv">274</span>, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>grazed_1_nov  <span class="ot">&lt;-</span> <span class="fu">generate_grazed_legacy</span>(<span class="st">"Grazed 1 Nov"</span>, <span class="dv">306</span>, grassland_base, growth_rate, graze_drop, max_bound, grassland_sow)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>napier       <span class="ot">&lt;-</span> <span class="fu">generate_napier</span>(<span class="st">"Napier"</span>, <span class="dv">1</span>, napier_dec_1, napier_dec_2)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>napier_short <span class="ot">&lt;-</span> <span class="fu">generate_napier</span>(<span class="st">"Napier Short"</span>, <span class="dv">211</span>, napier_dec_1, napier_dec_2)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual Check</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>complex_plot_data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(grazed_thrice, grazed_1_aug, grazed_1_sept, grazed_1_oct, grazed_1_nov, napier, napier_short)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(complex_plot_data, <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> crop) <span class="sc">+</span> theme_baseR <span class="sc">+</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Complex Harvesting &amp; Regrowth Curves"</span>, <span class="at">x =</span> <span class="st">"Day of Year"</span>, <span class="at">y =</span> <span class="st">"Kc"</span>) <span class="sc">+</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="01_Prepare_Model_Input_files/figure-html/kc-complex-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="final-merge-and-system-mapping" class="level3" data-number="3.2.5">
+<h3 data-number="3.2.5" class="anchored" data-anchor-id="final-merge-and-system-mapping"><span class="header-section-number">3.2.5</span> Final Merge and System Mapping</h3>
+<p>Binds all generated curves together and maps them back to the user’s defined multi-season crop rotations.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>kc.doy.crop.all <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  kc_segmented, kc_polynomial, kc_fruits, no_crop,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  grazed_thrice, grazed_1_aug, grazed_1_sept, grazed_1_oct, grazed_1_nov, </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  napier, napier_short</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(crop, doy)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(kc.doy.crop.all, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv"</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="plotting-all-crop-curves" class="level3" data-number="3.2.6">
+<h3 data-number="3.2.6" class="anchored" data-anchor-id="plotting-all-crop-curves"><span class="header-section-number">3.2.6</span> Plotting All Crop Curves</h3>
+<p><em>(Saves a high-resolution PDF for the manuscript).</em></p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">dir.exists</span>(<span class="fu">here</span>(<span class="st">"figures/manuscript"</span>))) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dir.create</span>(<span class="fu">here</span>(<span class="st">"figures/manuscript"</span>), <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>kc_plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(kc.doy.crop.all, <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(<span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> crop) <span class="sc">+</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  theme_baseR <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Generated Crop Coefficient (Kc) Curves - All Types"</span>,</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Day of Year (DOY)"</span>,</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Crop Coefficient (Kc)"</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(kc_plot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="01_Prepare_Model_Input_files/figure-html/plot-all-kc-1.png" class="img-fluid" width="960"></p>
+</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="fu">here</span>(<span class="st">"figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"</span>), <span class="at">plot =</span> kc_plot, <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="dv">8</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>crop.systems.l.kc <span class="ot">&lt;-</span> crop.systems.l <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) <span class="sc">%&gt;%</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(kc.doy.crop.all <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(doy, crop), <span class="at">by =</span> <span class="st">"crop"</span>, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>crop.rotation.kc.ls <span class="ot">&lt;-</span> <span class="fu">split</span>(crop.systems.l.kc, crop.systems.l.kc<span class="sc">$</span>rotation)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(crop.rotation.kc.ls, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/08_crop.rotation.kc.ls.Rdata"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="expanded-daily-kc-matrix-preview" class="level4" data-number="3.2.6.1">
+<h4 data-number="3.2.6.1" class="anchored" data-anchor-id="expanded-daily-kc-matrix-preview"><span class="header-section-number">3.2.6.1</span> Expanded Daily Kc Matrix Preview</h4>
+<p><em>(Example showing the generated continuous timeline for a single rotation).</em></p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 23%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">crop.system<br><small style="color:gray; font-weight:normal;">Rotation Name</small></th>
+<th style="text-align: left;">crop<br><small style="color:gray; font-weight:normal;">Active Crop</small></th>
+<th style="text-align: right;">doy<br><small style="color:gray; font-weight:normal;">Day of Year (1-366)</small></th>
+<th style="text-align: right;">kc<br><small style="color:gray; font-weight:normal;">Daily Crop Coefficient</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="spatial-land-use-agricultural-demographics" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Spatial Land Use &amp; Agricultural Demographics</h1>
+<p>To evaluate Blue Water Potential (or Net Recharge) at the macro level, we must scale our field-level water budgets up to the watershed scale. This requires two distinct scaling factors: the physical footprint of the crops (Spatial Land Use) and the population distribution of the farmers (Agricultural Demographics).</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/08_crop_system_area_by_production_system.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data/input/09_no_of_farmers_by_production_system.csv"</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="production-system-area-preview" class="level4" data-number="4.0.0.1">
+<h4 data-number="4.0.0.1" class="anchored" data-anchor-id="production-system-area-preview"><span class="header-section-number">4.0.0.1</span> Production System Area Preview</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 24%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Historical grouping</small></th>
+<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
+<th style="text-align: left;">crop.system<br><small style="color:gray; font-weight:normal;">Implemented rotation</small></th>
+<th style="text-align: right;">area_ha<br><small style="color:gray; font-weight:normal;">Total cultivated area</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Finger Millet/Rice</td>
+<td style="text-align: right;">1.214575</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: right;">14.200042</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: right;">3.600000</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Millets/Fallow</td>
+<td style="text-align: right;">1.800000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Pulses/Fallow</td>
+<td style="text-align: right;">2.132912</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="historical-farm-counts-preview" class="level4" data-number="4.0.0.2">
+<h4 data-number="4.0.0.2" class="anchored" data-anchor-id="historical-farm-counts-preview"><span class="header-section-number">4.0.0.2</span> Historical Farm Counts Preview</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 28%">
+<col style="width: 35%">
+<col style="width: 36%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
+<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
+<th style="text-align: right;">number_of_farms<br><small style="color:gray; font-weight:normal;">Total farmer count</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: right;">80</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Landless households</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="classify-production-systems-by-hydrological-typology" class="level3" data-number="4.0.1">
+<h3 data-number="4.0.1" class="anchored" data-anchor-id="classify-production-systems-by-hydrological-typology"><span class="header-section-number">4.0.1</span> Classify Production Systems by Hydrological Typology</h3>
+<p>Farm production systems are highly heterogeneous. Because irrigation drives a disproportionately high water deficit, classifying farms strictly by majority land area underestimates their hydrological impact. Instead, we use a hierarchical threshold to define the <strong>System Typology</strong>. If a production system dedicates a significant threshold of its land (<span class="math inline">\(\geq 35\%\)</span>) to irrigation, it is classified as “Irrigation-Driven,” regardless of its remaining acreage.</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1. Map Crop Systems to Core Surface Types</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>cs_surface <span class="ot">&lt;-</span> crop.systems <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(crop.system, Irrigation) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_use =</span> <span class="fu">case_when</span>(</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>      Irrigation <span class="sc">==</span> <span class="st">"Irrigated"</span> <span class="sc">~</span> <span class="st">"Irrigated"</span>,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(crop.system, <span class="st">"(?i)grassland|grazed|pasture"</span>) <span class="sc">~</span> <span class="st">"Pastoral"</span>,</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Rainfed"</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a><span class="co"># 2. Calculate area percentages and pivot to wide format</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>ps_typology <span class="ot">&lt;-</span> ps_by_cs_area <span class="sc">%&gt;%</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cs_surface, <span class="at">by =</span> <span class="st">"crop.system"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(time_period, production_system, land_use) <span class="sc">%&gt;%</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">land_use_area =</span> <span class="fu">sum</span>(area_ha, <span class="at">na.rm =</span> <span class="cn">TRUE</span>), <span class="at">.groups =</span> <span class="st">"drop_last"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">total_area_ha =</span> <span class="fu">sum</span>(land_use_area, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">land_use_pc   =</span> <span class="fu">round</span>((land_use_area <span class="sc">/</span> total_area_ha) <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">2</span>)</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>land_use_area) <span class="sc">%&gt;%</span></span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> land_use, <span class="at">values_from =</span> land_use_pc, <span class="at">values_fill =</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">system_typology =</span> <span class="fu">case_when</span>(</span>
+<span id="cb15-27"><a href="#cb15-27" aria-hidden="true" tabindex="-1"></a>      Irrigated <span class="sc">&gt;=</span> <span class="dv">35</span> <span class="sc">~</span> <span class="st">"Irrigated"</span>,</span>
+<span id="cb15-28"><a href="#cb15-28" aria-hidden="true" tabindex="-1"></a>      Pastoral <span class="sc">&gt;</span> Rainfed <span class="sc">~</span> <span class="st">"Pastoral"</span>,</span>
+<span id="cb15-29"><a href="#cb15-29" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Rainfed"</span></span>
+<span id="cb15-30"><a href="#cb15-30" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb15-31"><a href="#cb15-31" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-32"><a href="#cb15-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(time_period, production_system, total_area_ha, Irrigated, Pastoral, Rainfed, system_typology)</span>
+<span id="cb15-33"><a href="#cb15-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-34"><a href="#cb15-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Save the structured classification for downstream plotting</span></span>
+<span id="cb15-35"><a href="#cb15-35" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(ps_typology, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data/processed/supplementary/05_production_system_typology.csv"</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="derived-typology-preview" class="level4" data-number="4.0.1.1">
+<h4 data-number="4.0.1.1" class="anchored" data-anchor-id="derived-typology-preview"><span class="header-section-number">4.0.1.1</span> Derived Typology Preview</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 13%">
+<col style="width: 16%">
+<col style="width: 15%">
+<col style="width: 13%">
+<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
+<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
+<th style="text-align: right;">total_area_ha<br><small style="color:gray; font-weight:normal;">Total area (ha)</small></th>
+<th style="text-align: right;">Irrigated<br><small style="color:gray; font-weight:normal;">% Area</small></th>
+<th style="text-align: right;">Pastoral<br><small style="color:gray; font-weight:normal;">% Area</small></th>
+<th style="text-align: right;">Rainfed<br><small style="color:gray; font-weight:normal;">% Area</small></th>
+<th style="text-align: left;">system_typology<br><small style="color:gray; font-weight:normal;">Dominant class</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: right;">22.947529</td>
+<td style="text-align: right;">5.29</td>
+<td style="text-align: right;">61.88</td>
+<td style="text-align: right;">32.83</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">14.145211</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: right;">7.759781</td>
+<td style="text-align: right;">5.16</td>
+<td style="text-align: right;">74.22</td>
+<td style="text-align: right;">20.63</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: right;">6.072875</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Irrigated</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">15.195612</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: left;">Pastoral</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<pre><code></code></pre>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
