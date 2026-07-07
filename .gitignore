@@ -18,6 +18,8 @@ temp_combined_sankey.html
 /internal/
 /output/water_budgets/
 /code/lib/
+/code/01_Prepare_Model_Input_files/
+/code/02_Blue-Water_files/
 /data/raw/
 /output/01_processed_water_budgets.Rdata
 /output/02_export_detailed_daily_water_budgets.csv
