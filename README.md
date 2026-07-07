@@ -33,7 +33,7 @@ project_root/
 │       └── supplementary/   <- Intermediary typology and Kc curve tables
 ├── code/
 │   ├── 01_Format_Input_Data.Rmd  <- Data preparation cookbook
-│   ├── 02_blue-water.Rmd         <- Main execution and reporting workflow
+│   ├── 02_Blue-Water.Rmd         <- Main execution and reporting workflow
 │   └── functions/           <- Core biophysical and visualization engine
 │       └── supplementary/   <- Extra utility functions (e.g., get_et0.R)
 ├── output/                  <- Generated budget CSV summaries
