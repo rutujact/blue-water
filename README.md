@@ -67,7 +67,7 @@ standardized CSV formats required by the engine.
   Dictionaries** defined at the beginning of each section to see exactly
   how your final CSVs must be structured.
 
-### Step 2: The Analytical Engine (`02_blue-water.Rmd`)
+### Step 2: The Analytical Engine (`02_Blue-Water.Rmd`)
 
 This is the primary computational workflow. It calculates effective
 precipitation, simulates daily water budgets across all crop rotations,
