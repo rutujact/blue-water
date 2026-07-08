@@ -15,12 +15,11 @@ format:
   html:
     toc: true
     toc-depth: 3
-    toc-location: left
+    toc-location: right
     number-sections: true
-    theme: flatly
-    highlight-style: tango
-    code-fold: show
-    df-print: paged
+    theme: cosmo
+    highlight-style: arrow
+    code-fold: true
 ---
 <!--
  Copyright (C) 2026 Rutuja-Chitra Tarak
@@ -47,6 +46,8 @@ h1, h2 {
   margin-bottom: 1rem;
 }
 </style>
+```
+
 # Overview
 
 This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
@@ -94,7 +95,7 @@ knitr::opts_chunk$set(
 
 options(width = 80)
 
-EXPORT_FIGURES <- FALSE  # Toggle to TRUE only for final manuscript output
+EXPORT_FIGURES <- FALSE # Toggle to TRUE only for final manuscript output
 
 # Load core dependencies
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -203,7 +204,7 @@ knitr::kable(head(crop.systems %>% select(-WB)), caption = "Preview: Active Crop
 
 ```
 
-```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 8, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (color coded by crop). "}
+```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (columns) of each crop system (rows) color coded by crop."}
 crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
 
 fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
@@ -459,6 +460,7 @@ colnames(village.bwp_collapsed) <- c("period", "label", "val")
 cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
 
 if (EXPORT_FIGURES) {
+  
 # Build comprehensive system maps
 invisible(plot_village_bwp(
   village_bwp_collapsed = village.bwp_collapsed,
@@ -468,23 +470,37 @@ invisible(plot_village_bwp(
   filename = here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
   manuscript_style = TRUE
 ))
-}
 invisible(plot_village_bwp(
   village_bwp_collapsed = village.bwp_collapsed,
-  # ps_typology = ps_typology,
+  cfg = cfg, 
+  output_dev = png, 
+  filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison_box.png"),
+  manuscript_style = FALSE
+))}
+
+invisible(plot_village_bwp(
+  village_bwp_collapsed = village.bwp_collapsed,
   cfg = cfg, 
   output_dev = png, 
   filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
-  manuscript_style = FALSE
+  manuscript_style = TRUE
 ))
-
-knitr::include_graphics(here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"))
+# knitr::include_graphics("../figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png")
+# THE FIX: Read the generated image back into R and natively plot it
+# This forces knitr to natively embed it without pathing conflicts.
+img_path <- here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png")
+if (file.exists(img_path)) {
+  img <- png::readPNG(img_path)
+  par(mar = c(0,0,0,0)) 
+  plot.new()
+  rasterImage(img, 0, 0, 1, 1)
+}
 
 ```
 
 ## Village Water Balance
 
-Figure 8 employs a strict water accounting framework (Inflows = Outflows) to trace the absolute volumetric movement of water through the village ecosystem. This flow visualization demonstrates how the partitioning of relatively constant atmospheric input (Precipitation) has been fundamentally altered.
+Figure 8 employs a water accounting framework (Inflows = Outflows) tracing the volumetric movement of water through the village ecosystem. This flow visualization demonstrates how the partitioning of the same atmospheric input (Precipitation) has been fundamentally altered. Here climate input is kept the same - average Precipitation over 1950 through 2018 - to isolate the impact of land use change between 1950s an 2022.
 
 By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.
 
@@ -492,7 +508,7 @@ By 2022, the massive evapotranspiration demands of irrigated crops consume a sig
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
 # Margins for the interactive HTML document
-html_margin_left  <- 120
+html_margin_left  <- 20
 html_margin_right <- 30
 
 # Margins specifically for the PNG/PDF printout

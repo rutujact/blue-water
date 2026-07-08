@@ -382,7 +382,7 @@ ggsave(here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), plot = kc_plot
 
 ```{r map-kc-curves, results='hide'}
 crop.systems.l.kc <- crop.systems.l %>%
-  select(rotation.ID, rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>%
+  select(rotation.ID, rotation, n.rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>%
   left_join(kc.doy.crop.all %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
 
 crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
