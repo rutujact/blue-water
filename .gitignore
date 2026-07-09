@@ -15,11 +15,12 @@ Thumbs.db
 temp_combined_sankey.html
 
 # Excluded Project Folders
+/lib/
 /internal/
 /output/water_budgets/
 /code/lib/
-/code/01_Prepare_Model_Input_files/
-/code/02_Blue-Water_files/
+/code/01_Prepare_Model_Input.html
+/code/02_Blue-Water.html
 /data/raw/
 /output/01_processed_water_budgets.Rdata
 /output/02_export_detailed_daily_water_budgets.csv

@@ -9,6 +9,7 @@ author:
 # date-format: "DD MMMM, YYYY"
 format: 
   html:
+    embed-resources: true
     toc: true
     toc-depth: 3
     toc-location: right
