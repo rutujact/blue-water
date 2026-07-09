@@ -265,12 +265,12 @@ get_budget <- function(cs, p, ts) {
   # 3.12.1 Annual/Yearly Summary ----
   sum.yr <- ts %>% 
     dplyr::group_by(year) %>%
-    dplyr::summarise(dplyr::across(P:balance, sum, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(P:balance, \(x) sum(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::mutate(aet.to.Peff = aet / Peff, runoff.percent = Q / P * 100)
   
   mean.yr <- ts %>% 
     dplyr::group_by(year) %>%
-    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), mean, na.rm = TRUE), .groups = "drop")
+    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) mean(x, na.rm = TRUE)), .groups = "drop")
   sum.yr <- sum.yr %>% dplyr::left_join(mean.yr, by = "year")
   
   # 3.12.2 Long-Term Annual Summary Climatology ----
@@ -296,16 +296,15 @@ get_budget <- function(cs, p, ts) {
   # 3.12.3 Monthly Summary ----
   sum.mo <- ts %>% 
     dplyr::group_by(year, month) %>%
-    dplyr::summarise(dplyr::across(P:balance, sum, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(P:balance, \(x) sum(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::ungroup() %>%
     dplyr::mutate(aet.to.Peff = aet / Peff, runoff.percent = Q / P * 100)
   
   # 3.12.4 Long-Term Monthly Climatology Overviews ----
   mean.mo <- ts %>% 
     dplyr::group_by(year, month) %>%
-    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), mean, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) mean(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::ungroup()
-  sum.mo <- sum.mo %>% dplyr::left_join(mean.mo, by = c("year", "month"))
   
   clim.mo <- sum.mo %>%
     dplyr::select(-year) %>%
@@ -330,7 +329,7 @@ get_budget <- function(cs, p, ts) {
   
   p.daily_1 <- ggplot2::ggplot(ts.l.select %>% base::subset(var %in% c("P", "Q", "irrigation", "sm.end")),
                                ggplot2::aes(x = date, y = value)) +
-    ggplot2::geom_line(ggplot2::aes(group = var, color = var)) +
+    ggplot2::geom_line(ggplot2::aes(group = var, color = var), na.rm = TRUE) +
     ggplot2::ylab("mm") + ggplot2::xlab("Year-DOY") +
     ggplot2::scale_x_date(date_labels = "%Y-%m-%d", date_breaks = "6 months") +
     ggplot2::theme_minimal() +

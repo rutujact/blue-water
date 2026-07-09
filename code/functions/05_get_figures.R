@@ -324,7 +324,7 @@ process_monthly_climatology <- function(budget_ls, crop_systems_df) {
   # Generate the ultimate aggregate averages across the systems
   clim_crop_cs <- clim_crop %>%
     dplyr::group_by(var, crop.system, Irrigation, month) %>%
-    dplyr::summarise(dplyr::across(q025:q975, mean, na.rm = TRUE), .groups = "drop")
+    dplyr::summarise(dplyr::across(q025:q975, \(x) mean(x, na.rm = TRUE)), .groups = "drop")
   
   return(clim_crop_cs)
 }
