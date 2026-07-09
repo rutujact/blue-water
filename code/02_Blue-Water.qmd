@@ -13,6 +13,7 @@ author:
 # date-format: "DD MMMM, YYYY"
 format: 
   html:
+    embed-resources: true
     toc: true
     toc-depth: 3
     toc-location: right
@@ -95,7 +96,18 @@ knitr::opts_chunk$set(
 
 options(width = 80)
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# USER CONFIGURATION
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 EXPORT_FIGURES <- FALSE # Toggle to TRUE only for final manuscript output
+
+# Toggle this based on your available data!
+# TRUE  = Runs the full suite (requires demographic and area data).
+# FALSE = Stops at Cropping Systems (requires ONLY climate, soil, and crop data).
+HAS_DEMOGRAPHICS <- TRUE
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 # Load core dependencies
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -182,7 +194,7 @@ ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regiona
 }
 ```
 
-## Landscape & Cropping Parameter Ingestion
+## Soil & Crop Parameters and Crop System Definitions 
 
 Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific crop rotational systems cultivated in the region.
 
@@ -221,10 +233,11 @@ ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Crop_Co
 
 ## Production Systems & Socio-Agricultural Composition
 
+> ⚠️ **Note to Users:** The following sections execute **Track 2** of this toolkit and require landscape demographic data. If you have set `HAS_DEMOGRAPHICS <- FALSE` in the setup chunk, the remainder of this document will be intentionally skipped during rendering.
 
 These files map the crop systems to social category of farms. They track historical changes in land use structure, count the number of farms belonging to each group, and classify each production system (e.g., Irrigated vs. Pastoral) based on the dominant percentage of their land allocation.
 
-```{r social-ingestion}
+```{r social-ingestion, eval=HAS_DEMOGRAPHICS}
 ps_by_cs_area <- read.csv(file = here("data/processed/09_crop_system_area_by_production_system.csv"), header = TRUE)
 ps_typology <- read.csv(file = here("data/processed/supplementary/05_production_system_typology.csv"), header = TRUE)
 farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), header = TRUE)
@@ -386,7 +399,7 @@ By coupling the physical water fluxes with farm survey demographics, we aggregat
 > 
 > 
 
-```{r Run_Aggregation}
+```{r Run_Aggregation, eval=HAS_DEMOGRAPHICS}
 ps_results <- get_production_system_budgets(budget.yr.l, ps_by_cs_area, farms_count_df)
 
 ps_budget_summary  <- ps_results$ps_budget_summary
@@ -414,7 +427,7 @@ ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.5_so
 
 Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically propped up by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
 
-```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
+```{r disparity-plot, eval=HAS_DEMOGRAPHICS, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
 
 fig.6_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, ps_typology)
 print(fig.6_disparity)
@@ -438,7 +451,7 @@ Finally, we aggregate farm-level balances to model a full archetype village. Thi
 
 Crucially, this macro-level aggregation highlights a structural tipping point in regional water security. The baseline 1950s archetype demonstrates a robust hydrological surplus. In contrast, the 2022 configuration illustrates a system inverted by agricultural intensification. The extraction demands of intensive cropping now overwhelmingly outpace the buffering capacity of rainfed systems.
 
-```{r village-bwp, eval=TRUE, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+```{r village-bwp, eval=HAS_DEMOGRAPHICS, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
 village.bwp_collapsed <- ps_bwp_volumetric %>%
   mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
   select(time_period, production_system, bwp_thousand_m3) %>%
@@ -504,11 +517,11 @@ Figure 8 employs a water accounting framework (Inflows = Outflows) tracing the v
 
 By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.
 
-```{r village-budget, eval=TRUE, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
+```{r village-budget, eval=HAS_DEMOGRAPHICS, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
 # Margins for the interactive HTML document
-html_margin_left  <- 20
+html_margin_left  <- 10
 html_margin_right <- 30
 
 # Margins specifically for the PNG/PDF printout

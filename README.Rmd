@@ -43,19 +43,26 @@ project_root/
 ```
 ---
 
-## 🚀 Getting Started
+## 🚀 Two Ways to Use this Toolkit
 
-To reproduce the findings of the manuscript or adapt this framework for a new watershed, execute the scripts in the following order.
+This toolkit is designed to be modular. Depending on the data you have available, you can run the engine in two different tracks:
+
+* **Track 1: The Biophysical Engine (Crop Systems Only)**
+  If you only have crop parameters and meteorological data, the engine will run a physical water balance. It will output the water supply, demand, and Net Blue Water Potential (BWP) for every defined cropping system in your region.
+  
+* **Track 2: The Socio-Hydrological Engine (Full Watershed Impact)**
+
+  If you also have data for crop areas for each type of farmer and demographic data (farm counts and areas), the engine will execute the full suite. It will scale the field-level biophysical budgets up to the socio-economic farm archetypes to reveal the structural drivers of watershed (un)sustainability.
 
 ### Step 1: Data Preparation (`01_Format_Input_Data.Rmd`)
 
-This script acts as a cookbook. It ingests raw site data (climate, soil, crop phenology, and farm demographics) and translates it into the standardized CSV formats required by the engine.
+This script acts as a cookbook. It ingests raw site data and translates it into the standardized CSV formats required by the engine. 
 
-* **Adapting for your own data:** You do not need to format your raw data to match ours. Open this script and refer to the **Target Output Dictionaries** defined at the beginning of each section to see exactly how your final CSVs must be structured.
+* **Adapting for your own data:** Open the generated HTML report for this script and refer to the descriptive column headers within the data preview tables to see exactly how your final CSVs must be structured.
 
 ### Step 2: The Analytical Engine (`02_blue-water.Rmd`)
 
-This is the primary computational workflow. It calculates effective precipitation, simulates daily water budgets across all crop rotations, aggregates the data by socio-economic farm typology, and generates the final visualizations.
+This is the primary computational workflow. Users can easily toggle the `HAS_DEMOGRAPHICS` switch at the top of the script to `TRUE` or `FALSE` depending on their available data.
 
 ---
 
@@ -63,10 +70,16 @@ This is the primary computational workflow. It calculates effective precipitatio
 
 If applying this toolkit to a new region, you will need the following localized datasets (see `01_Format_Input_Data.Rmd` for strict formatting rules):
 
+**Required for Track 1 (Biophysical Engine):**
+
 1. **Daily Climate Forcing:** Precipitation and Reference Evapotranspiration ($ET_0$).
 2. **Soil Parameters:** Water Holding Capacity (WHC) and Readily Available Water (RAW) thresholds.
 3. **Crop Phenology:** Rooting depths and discrete or polynomial Crop Coefficient ($K_c$) curves.
-4. **Landscape Demographics:** Area (hectares) cultivated per crop system and the number of households belonging to each production system.
+4. **Cropping Systems:** Multi-season crop rotation definitions mapped to soil types.
+
+**Required for Track 2 (Full Socio-Hydrological Engine):**
+
+5. **Landscape Demographics (Optional):** Area (hectares) cultivated per crop system and the number of households belonging to each production system.
 
 ---
 
