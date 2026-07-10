@@ -137,7 +137,7 @@ colnames(preview_precip) <- c(
   "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
   "p<br><small style='color:gray; font-weight:normal;'>Daily Precipitation (mm &ge; 0)</small>"
 )
-knitr::kable(preview_precip, escape = FALSE)
+knitr::kable(preview_precip, escape = FALSE, caption = "Preview: Precipitation Data Sample")
 
 ```
 
@@ -160,7 +160,7 @@ colnames(preview_soil) <- c(
   "whc.mmpercm<br><small style='color:gray; font-weight:normal;'>WHC (mm water / cm soil)</small>",
   "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold</small>"
 )
-knitr::kable(preview_soil, escape = FALSE)
+knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Matrix")
 
 ```
 
@@ -182,7 +182,7 @@ colnames(preview_crop) <- c(
   "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
   "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
 )
-knitr::kable(preview_crop, escape = FALSE)
+knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Irrigation Need")
 
 ```
 
@@ -207,14 +207,14 @@ write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), r
 #### FAO Segmented Parameters
 
 ```{r fao-params-display, echo=FALSE}
-knitr::kable(head(kc.raw, 5))
+knitr::kable(head(kc.raw, 5), caption = "Preview: FAO Segmented Parameters")
 
 ```
 
 #### Fruit Tree Parameters
 
 ```{r fruit-params-display, echo=FALSE}
-knitr::kable(raw_params)
+knitr::kable(raw_params, caption = "Preview: Fruit Tree Parameters")
 
 ```
 
@@ -228,7 +228,7 @@ We pass the baseline parameters through our biophysical expansion functions. Thi
 
 Generates the classic 4-stage linear growth curves for standard crops.
 
-```{r generate-fao-kc, warning=FALSE}
+```{r generate-fao-kc, warning=FALSE, fig.cap="Standard FAO-56 segmented curves based on major crop calendar events such as sowing and harvesting dates, and crop development duration."}
 kc.raw.long <- kc.raw %>% 
   pivot_longer(cols = -1, names_to = "crop") %>% 
   mutate(crop = str_to_title(gsub("_|\\.", " ", crop, perl = TRUE)))
@@ -271,7 +271,7 @@ ggplot(kc_segmented, aes(x = doy, y = kc, color = crop)) +
 
 Applies 4th-order polynomial equations to capture continuous rapid growth dynamics (e.g., Groundnuts).
 
-```{r generate-poly-kc, warning=FALSE, out.width="70%"}
+```{r generate-poly-kc, warning=FALSE, out.width="70%", fig.cap="Continuous polynomial curves modeling the rapid growth dynamics of groundnuts."}
 gs <- data.frame(doy = 1:366) %>%
   mutate(crop = "Groundnut Summer", d = doy - 10, kc = if_else(d >= 0 & d <= 104, 1.25*10^(-7)*d^4 - 2.82*10^(-5)*d^3 + 1.8*10^(-3)*d^2 - 2.49*10^(-2)*d + 0.3792, 0))
 
@@ -292,7 +292,8 @@ ggplot(kc_polynomial, aes(x = doy, y = kc, color = crop)) +
 
 Processes perennial step-functions for orchard crops.
 
-```{r fruit-trees, warning=FALSE, out.width= "70%"}
+```{r fruit-trees, warning=FALSE, out.width= "70%", fig.cap="Monthly step-function curves for specific orchard crops. Note that this does not include all fruit trees; some (such as banana) are modeled using the standard FAO segmented curves."}
+
 colnames(raw_params) <- stringr::str_to_title(gsub("_|\\.", " ", colnames(raw_params)))
 kc_fruits <- bind_rows(generate_fruit_step("Pomegranate", raw_params), generate_fruit_step("Sweet Lime", raw_params)) 
 
@@ -308,7 +309,7 @@ ggplot(kc_fruits, aes(x = doy, y = kc, color = crop)) +
 
 Applies calibrated drop-and-regrowth rates for grazed pastures and harvested Napier grass.
 
-```{r kc-complex, warning=FALSE}
+```{r kc-complex, warning=FALSE, fig.cap="Complex harvesting and regrowth schedules illustrating calibrated drop-and-regrowth rates for grazed pastures and Napier grass."}
 no_crop <- tibble(doy = 1:366, crop = "No Crop", kc = 0)
 grassland_base <- kc_segmented %>% filter(crop == "Grasslands") %>% pull(kc)
 
@@ -399,7 +400,7 @@ colnames(preview_kc) <- c(
   "doy<br><small style='color:gray; font-weight:normal;'>Day of Year (1-366)</small>",
   "kc<br><small style='color:gray; font-weight:normal;'>Daily Crop Coefficient</small>"
 )
-knitr::kable(preview_kc, escape = FALSE)
+knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Expanded Daily Kc Matrix (Single Rotation)")
 ```
 
 # Spatial Land Use & Agricultural Demographics
@@ -422,7 +423,7 @@ colnames(preview_ps) <- c(
   "crop.system<br><small style='color:gray; font-weight:normal;'>Implemented rotation</small>",
   "area_ha<br><small style='color:gray; font-weight:normal;'>Total cultivated area</small>"
 )
-knitr::kable(preview_ps, escape = FALSE)
+knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under each Production System")
 
 ```
 
@@ -434,7 +435,7 @@ colnames(preview_counts) <- c(
   "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
   "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
 )
-knitr::kable(preview_counts, escape = FALSE)
+knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Historical Farm Counts")
 
 ```
 
@@ -493,7 +494,7 @@ colnames(preview_typology) <- c(
   "Rainfed<br><small style='color:gray; font-weight:normal;'>% Area</small>",
   "system_typology<br><small style='color:gray; font-weight:normal;'>Dominant class</small>"
 )
-knitr::kable(preview_typology, escape = FALSE)
+knitr::kable(preview_typology, escape = FALSE, caption = "Preview: Production System Land Use Area & Hydrological Typology")
 
 ```
 
