@@ -203,9 +203,9 @@ Next, we load the physical attributes governing the hydrological routing. This i
 soil.param <- read.csv(file = here("data/processed/04_soil.parameters.csv"), header = TRUE)
 knitr::kable(soil.param, caption = "Preview: Soil Parameter Matrix")
 
-# Crop Phenology Parameters
+# Crop Rooting Depth & Irrigation Need
 crop.param <- read.csv(file = here("data/processed/05_crop.parameters.csv"), header = TRUE)
-knitr::kable(head(crop.param), caption = "Preview: Crop Phenology Matrix")
+knitr::kable(head(crop.param), caption = "Preview: Crop Rooting Depth and Irrigation Requirement")
 
 # Cropping Systems Definitions
 crop.systems.l <- read.csv(file = here("data/processed/06_crop.systems.l.csv"), header = TRUE)
@@ -216,7 +216,7 @@ knitr::kable(head(crop.systems), caption = "Preview: Active Cropping Systems")
 
 ```
 
-```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (columns) of each crop system (rows) color coded by crop."}
+```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (columns) of each crop system (rows) color coded by crop. Off-season and ‘No Crop’ periods default to a defined baseline threshold representing bare-soil evaporation."}
 crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
 
 fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
@@ -242,7 +242,7 @@ ps_by_cs_area <- read.csv(file = here("data/processed/09_crop_system_area_by_pro
 ps_typology <- read.csv(file = here("data/processed/supplementary/05_production_system_typology.csv"), header = TRUE)
 farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), header = TRUE)
 
-knitr::kable(head(ps_by_cs_area), caption = "Preview: Crop Area under each Production System")
+knitr::kable(head(ps_by_cs_area), caption = "Preview: Crop Areas under each Production System")
 
 knitr::kable(head(ps_typology), caption = "Preview: Production System Land Use Area & Hydrological Typology based on the dominant % area of their land allocation under Irrigated [Crops], Rainfed [Crops], or [Rainfed] Pastures")
 
