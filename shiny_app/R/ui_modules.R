@@ -36,6 +36,16 @@ data_upload_ui <- function(id) {
   )
 }
 
+# Module: Pre-Processing Controls (Kc Engine) ----
+preproc_controls_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    p("Click below to dynamically generate the continuous daily Crop Coefficient (Kc) curves. This must be completed before running the Biophysical Engine."),
+    hr(),
+    actionButton(ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
+  )
+}
+
 # Module: Track 1 Controls (Biophysical Engine) ----
 track1_controls_ui <- function(id) {
   ns <- NS(id)

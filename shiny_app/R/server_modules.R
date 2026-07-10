@@ -39,7 +39,7 @@ data_ingestion_server <- function(id) {
     observeEvent(input$load_default_data, {
       data_dir <- here::here("data", "input") 
       
-      showModal(modalDialog("Loading repository baseline data... Please wait.", footer = NULL, fade = FALSE))
+      showNotification("Loading repository baseline data... Please wait.", type = "message")
       
       tryCatch({
         d_precip       <- read_csv(file.path(data_dir, "01_precipitation.csv"), show_col_types = FALSE)
@@ -72,7 +72,7 @@ data_ingestion_server <- function(id) {
       req(input$custom_precip, input$custom_et0, input$custom_soil, input$custom_crop, 
           input$custom_kc, input$custom_systems)
       
-      showModal(modalDialog("Loading and validating custom data... Please wait.", footer = NULL, fade = FALSE))
+      showNotification("Loading and validating custom data... Please wait.", type = "message")
       
       tryCatch({
         d_precip       <- read_csv(input$custom_precip$datapath, show_col_types = FALSE)
@@ -124,16 +124,14 @@ pre_processing_server <- function(id, app_data) {
     
     preproc_data <- reactiveValues(
       climate_summary = NULL, kc_doy_crop_all = NULL,
-      crop_rotation_kc_ls = NULL, crop_systems_l_kc = NULL, is_processed = FALSE
+      crop_rotation_kc_ls = NULL, crop_systems_l_kc = NULL, 
+      is_climate_processed = FALSE, is_kc_processed = FALSE
     )
     
+    # 1. Instantly process the Climate Profile when data is loaded
     observeEvent(app_data$is_loaded, {
       req(app_data$is_loaded)
-      
-      showModal(modalDialog("Pre-processing input data and building phenology curves... This may take a moment.", footer = NULL, fade = FALSE))
-      
       tryCatch({
-        # Generate the exact structure needed for plot_climate_profile()
         df_p <- app_data$precip %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(P = sum(p, na.rm=TRUE), .groups="drop")
         df_et0 <- app_data$et0 %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(ET0 = sum(et0, na.rm=TRUE), .groups="drop")
         
@@ -149,9 +147,20 @@ pre_processing_server <- function(id, app_data) {
             .groups = "drop"
           ) %>%
           rename(Month = month) %>%
-          # Inject NA for Temperature to satisfy the function requirements without breaking
           mutate(Temperature_avg = NA_real_, Temperature_q05 = NA_real_, Temperature_q95 = NA_real_)
         
+        preproc_data$is_climate_processed <- TRUE
+      }, error = function(e) {
+        showNotification(paste("Climate Processing Error:", e$message), type = "error")
+      })
+    })
+    
+    # 2. Wait for the user to explicitly click the button to generate the massive Kc arrays
+    observeEvent(input$run_preproc, {
+      req(app_data$is_loaded)
+      showNotification("Calculating daily Kc curves from phenological stages... Please wait.", type = "message")
+      
+      tryCatch({
         biophysical_parameters <- list(grazing_growth_rate = 0.00458333333333333, grazing_drop_kc = 0.20, grazing_max_kc = 0.75, napier_decline_rate_1 = 0.000307692307692308, napier_decline_rate_2 = 0.000153846153846154)
         
         crop.systems.l <- app_data$crop_systems %>%
@@ -208,12 +217,13 @@ pre_processing_server <- function(id, app_data) {
         
         preproc_data$crop_systems_l_kc <- crop.systems.l.kc
         preproc_data$crop_rotation_kc_ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
-        preproc_data$is_processed <- TRUE
+        preproc_data$is_kc_processed <- TRUE
         
         removeModal()
+        showNotification("Kc Curves successfully generated!", type = "message")
       }, error = function(e) {
         removeModal()
-        showNotification(paste("Pre-processing Error:", e$message), type = "error")
+        showNotification(paste("Kc Pre-processing Error:", e$message), type = "error")
       })
     })
     
@@ -228,7 +238,7 @@ track1_engine_server <- function(id, app_data, preproc_data) {
     engine_results <- reactiveValues(budget_ls = NULL, summary_yr_budgets = NULL, is_calculated = FALSE)
     
     observeEvent(input$run_engine, {
-      req(app_data$is_loaded, preproc_data$is_processed)
+      req(app_data$is_loaded, preproc_data$is_kc_processed)
       
       showModal(modalDialog("Executing parallel Biophysical Engine. This will take several minutes. Please do not close the window...", footer = NULL, fade = FALSE))
       
@@ -270,7 +280,6 @@ track2_engine_server <- function(id, app_data, engine_results) {
     track2_data <- reactive({
       req(engine_results$is_calculated, app_data$is_loaded)
       
-      # Early exit if Track 2 was not enabled
       if (!app_data$has_track2) return(NULL)
       
       sanitize_period <- function(x) { ifelse(str_detect(str_trim(as.character(x)), "1950"), "1950s", "2022") }

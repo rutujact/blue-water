@@ -48,21 +48,24 @@ ui <- navbarPage(
     )
   ),
   
-  # Tab 2: Phenology Engine ----
+  # Tab 2: Kc curve Engine ----
   tabPanel(
     title = "2. Crop Kc Curves (Pre-Processing)",
     icon = icon("seedling"),
-    mainPanel(
-      width = 12,
-      tabsetPanel(
-        type = "pills",
-        tabPanel("Crop Kc Curves based on Growth Stages", 
-                 h4("Crop Kc Curves based on Growth Stages", align = "center"),
-                 plotOutput("plot_raw_kc", height = "600px")
-        ),
-        tabPanel("Figure 2: Kc Curves for Multi-Cropping Systems (rows) by Annual Rotations (columns)", 
-                 h4("Simulated Daily Crop Coefficients", align = "center"),
-                 plotOutput("plot_fig2_kc_curves", height = "800px")
+    sidebarLayout(
+      sidebarPanel(width = 3, h4("Phenology Engine"), preproc_controls_ui("preproc_module")),
+      mainPanel(
+        width = 9,
+        tabsetPanel(
+          type = "pills",
+          tabPanel("Kc Curves for Individual Crops", 
+                   h4("Daily Kc based on Growth Stages", align = "center"),
+                   plotOutput("plot_raw_kc", height = "600px")
+          ),
+          tabPanel("Figure 2: Daily Kc for Crop Systems", 
+                   h4("Daily Kc for Crop Systems (rows) by Rotations (columns)", align = "center"),
+                   plotOutput("plot_fig2_kc_curves", height = "1000px")
+          )
         )
       )
     )
@@ -102,8 +105,8 @@ ui <- navbarPage(
           tabPanel("Figure 6: Farm Disparity", 
                    h4("Micro-Regional Disparity Metrics", align = "center"),
                    fluidRow(
-                     column(12, h5("1950s Archetype", align = "center"), plotOutput("plot_disparity_1950", height = "450px")),
-                     column(12, h5("2022 Archetype", align = "center"), plotOutput("plot_disparity_2022", height = "450px"))
+                     column(6, h5("1950s Archetype", align = "center"), plotOutput("plot_disparity_1950", height = "450px")),
+                     column(6, h5("2022 Archetype", align = "center"), plotOutput("plot_disparity_2022", height = "450px"))
                    )
           ),
           tabPanel("Figure 7: Village BWP Trends", 
@@ -113,8 +116,8 @@ ui <- navbarPage(
           tabPanel("Figure 8: Village Water Balance", 
                    h4("Average Annual Water Balance of the Archetype Village", align = "center"),
                    fluidRow(
-                     column(12, h5("1950s Archetype", align = "center"), sankeyNetworkOutput("plot_village_sankey_1950", height = "450px")),
-                     column(12, h5("2022 Archetype", align = "center"), sankeyNetworkOutput("plot_village_sankey_2022", height = "450px"))
+                     column(6, h5("1950s Archetype", align = "center"), sankeyNetworkOutput("plot_village_sankey_1950", height = "450px")),
+                     column(6, h5("2022 Archetype", align = "center"), sankeyNetworkOutput("plot_village_sankey_2022", height = "450px"))
                    )
           )
         )
@@ -135,9 +138,9 @@ server <- function(input, output, session) {
   
   # --- TAB 1 RENDERING ----
   output$plot_fig1_climate <- renderPlot({
-    req(preproc_data$is_processed)
-    # Directly uses your native function and handles missing temperature cleanly
-    plot_climate_profile(preproc_data$climate_summary)
+    req(preproc_data$is_climate_processed)
+    # Hides the temperature line perfectly for the Shiny app display
+    plot_climate_profile(preproc_data$climate_summary, show_temperature = FALSE)
   }, res = 96, bg = "white")
   
   output$data_dictionary_ui <- renderUI({
@@ -176,12 +179,12 @@ server <- function(input, output, session) {
   
   # --- TAB 2 RENDERING ----
   output$plot_fig2_kc_curves <- renderPlot({
-    req(preproc_data$is_processed)
+    req(preproc_data$is_kc_processed)
     plot_crop_coefficient_curves(preproc_data$crop_systems_l_kc)
   }, res = 96, bg = "white")
   
   output$plot_raw_kc <- renderPlot({
-    req(preproc_data$is_processed)
+    req(preproc_data$is_kc_processed)
     ggplot(preproc_data$kc_doy_crop_all, aes(x = doy, y = kc, color = crop)) +
       geom_line(linewidth = 1) + facet_wrap(~ crop) + theme_bw() +
       labs(title = "Generated Crop Coefficient (Kc) Curves - All Types", x = "Day of Year (DOY)", y = "Crop Coefficient (Kc)") +
@@ -205,7 +208,6 @@ server <- function(input, output, session) {
     validate(need(app_data$has_track2, "Track 2 Socio-Demographic data was not loaded."))
     req(track2_results$track2_data())
     t2_data <- track2_results$track2_data()
-    # Execute native socio-economic mapping function
     plot_socio_economic_bwp(t2_data$ps_bwp_volumetric)
   }, res = 96, bg = "white")
   
@@ -228,7 +230,6 @@ server <- function(input, output, session) {
     req(track2_results$track2_data())
     t2_data <- track2_results$track2_data()
     
-    # Pre-process demographic shifts identically to 02_Blue-Water.Rmd
     village.bwp_collapsed <- t2_data$ps_bwp_volumetric %>%
       mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
       select(time_period, production_system, bwp_thousand_m3) %>%
@@ -248,7 +249,6 @@ server <- function(input, output, session) {
     colnames(village.bwp_collapsed) <- c("period", "label", "val")
     cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
     
-    # Save the base R plot to a temp PNG and render it dynamically
     tmp_png <- tempfile(fileext = ".png")
     invisible(plot_village_bwp(village_bwp_collapsed = village.bwp_collapsed, cfg = cfg, output_dev = png, filename = tmp_png, manuscript_style = TRUE))
     
@@ -294,12 +294,10 @@ server <- function(input, output, session) {
       if (app_data$has_track2) {
         t2_data <- track2_results$track2_data()
         
-        # Inject Titles directly to the PDF renders
         print(plot_socio_economic_bwp(t2_data$ps_bwp_volumetric) + ggtitle("Figure 5: BWP By Farm Type"))
         print(plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, "1950s") + patchwork::plot_annotation(title = "Figure 6: Micro-Regional Disparity Metrics (1950s Archetype)"))
         print(plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, "2022") + patchwork::plot_annotation(title = "Figure 6: Micro-Regional Disparity Metrics (2022 Archetype)"))
         
-        # Build Figure 7 for the PDF
         village.bwp_collapsed <- t2_data$ps_bwp_volumetric %>%
           mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
           select(time_period, production_system, bwp_thousand_m3) %>%
