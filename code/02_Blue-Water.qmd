@@ -212,7 +212,7 @@ crop.systems.l <- read.csv(file = here("data/processed/06_crop.systems.l.csv"), 
 crop.systems <- read.csv(file = here("data/processed/07_crop.systems.csv"), header = TRUE)
 load(file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
 
-knitr::kable(head(crop.systems %>% select(-WB)), caption = "Preview: Active Cropping Systems")
+knitr::kable(head(crop.systems), caption = "Preview: Active Cropping Systems")
 
 ```
 

@@ -381,7 +381,7 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
   ps_annual_data <- budget_yr_l %>%
     dplyr::select(rotation, crop.system, Irrigation, year, var, value) %>%
     dplyr::left_join(ps_by_cs_area, by = "crop.system", relationship = "many-to-many") %>%
-    dplyr::filter(!is.na(production_system_period)) %>%
+    dplyr::filter(!is.na(production_system)) %>%
     # Assign a broad 'land_type' text pattern so we can partition where fluxes occur.
     dplyr::mutate(
       land_type = dplyr::case_when(
@@ -542,60 +542,53 @@ plot_socio_economic_bwp <- function(ps_bwp_volumetric) {
     ggplot2::coord_flip(clip = "off")
 }
 
-#' Plot Micro-Regional Disparity Metrics (Farms Count vs BWP Footprint) 
+#' Plot Micro-Regional Disparity Metrics
 #' @export
-plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
+plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology, target_period = "2022") {
   
-  # STEP 1: Format Social Groups
-  # Remove extra contextual text inside parentheses so labels fit on the axis
+  # Ensure both have the same type (Character) before joining
+  ps_bwp_volumetric <- ps_bwp_volumetric %>% mutate(time_period = as.character(time_period))
+  ps_typology       <- ps_typology %>% mutate(time_period = as.character(time_period))
+  
+  # Safe Join: Now both time_period columns are characters
   clean_data <- ps_bwp_volumetric %>%
-    dplyr::filter(time_period == "2022") %>%
-    dplyr::mutate(short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")) %>%
+    dplyr::filter(time_period == as.character(target_period)) %>%
     dplyr::left_join(
-      ps_typology %>%
-        dplyr::filter(time_period == "2022") %>%
-        dplyr::mutate(short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)")),
-      by = "short_label"
+      ps_typology %>% dplyr::filter(time_period == as.character(target_period)),
+      by = c("production_system", "time_period")
     ) %>%
-    # Append the newly calculated Typology Tag to the end of the clean label
     dplyr::mutate(
+      short_label = stringr::str_remove_all(production_system, "\\s*\\(.*?\\)"),
       typology_tag = stringr::str_remove(system_typology, "-Driven"),
       display_label = paste0(short_label, " [", typology_tag, "]")
     )
   
-  # STEP 2: Aggregate Net Mathematical BWP Status (+/-)
+  # Safe Aggregation: Avoids 'max(-Inf)' errors if demographics are missing
   agg_data <- clean_data %>%
     dplyr::group_by(display_label) %>%
     dplyr::summarise(
       total = sum(total_vol_m3, na.rm = TRUE),
-      farms = max(number_of_farms, na.rm = TRUE),
+      farms = if(all(is.na(number_of_farms))) 0 else max(number_of_farms, na.rm = TRUE),
       .groups = "drop"
     ) %>%
-    # Classify as a Deficit or Surplus for dynamic plot coloring
     dplyr::mutate(
-      bwp_status = dplyr::if_else(total >= 0, "+BWP (Surplus)", "-BWP (Deficit)")
+      bwp_status = dplyr::if_else(total >= 0, "+BWP (Surplus)", "-BWP (Deficit)", missing = "-BWP (Deficit)")
     ) %>%
-    # Sort continuously by absolute BWP impact to create the pyramid effect
     dplyr::arrange(total)
   
-  # Lock factors in place for ggplot rendering
   agg_data <- agg_data %>%
     dplyr::mutate(production_system = factor(display_label, levels = unique(display_label)))
   
-  # STEP 3: Build Left Panel (Farms Count)
   p_count <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = farms, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6, show.legend = FALSE) + 
     ggplot2::coord_flip() +
     ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
-    ggplot2::labs(x = "Production System", y = "Number of Local Farms", title = "Demographic Distribution") +
+    ggplot2::labs(x = "Production System", y = "Number of Local Farms", title = paste(target_period, "Demographics")) +
     ggplot2::theme_bw() +
-    ggplot2::theme(
-      axis.text.y = ggplot2::element_text(color = "black", size = 9),
-      plot.title = ggplot2::element_text(face = "bold", size = 11),
-      panel.grid.major.y = ggplot2::element_blank()
-    )
+    ggplot2::theme(axis.text.y = ggplot2::element_text(color = "black", size = 9),
+                   plot.title = ggplot2::element_text(face = "bold", size = 11),
+                   panel.grid.major.y = ggplot2::element_blank())
   
-  # STEP 4: Build Right Panel (BWP Impact)
   p_bwp <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system, y = total / 1000, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6) +
     ggplot2::geom_hline(yintercept = 0, color = "black", linewidth = 0.6) +
@@ -603,22 +596,16 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology) {
     ggplot2::scale_fill_manual(values = BWP_PALETTES$disparity_bwp) +
     ggplot2::labs(x = NULL, y = expression("Total Volumetric BWP (10"^3~"m"^3*"/year)"), title = "Net Watershed Impact") +
     ggplot2::theme_bw() +
-    ggplot2::theme(
-      # Strip out the Y axis text and ticks, as they will be shared with the left panel
-      axis.text.y = ggplot2::element_blank(),
-      axis.ticks.y = ggplot2::element_blank(),
-      plot.title = ggplot2::element_text(face = "bold", size = 11),
-      legend.title = ggplot2::element_blank(),
-      panel.grid.major.y = ggplot2::element_blank(),
-      legend.position = "bottom" 
-    )
+    ggplot2::theme(axis.text.y = ggplot2::element_blank(),
+                   axis.ticks.y = ggplot2::element_blank(),
+                   plot.title = ggplot2::element_text(face = "bold", size = 11),
+                   legend.title = ggplot2::element_blank(),
+                   panel.grid.major.y = ggplot2::element_blank(),
+                   legend.position = "bottom")
   
-  # STEP 5: Patchwork Assembly
-  # Glue the two panels side-by-side using the `+` operator from library(patchwork)
   p_combined <- p_count + p_bwp + patchwork::plot_layout(widths = c(1.4, 1))
   return(p_combined)
 }
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # SECTION 5: LANDSCAPE & VILLAGE SCALE FLOW DIAGRAMS
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -955,7 +942,13 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
       links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = outflow_vols[i], group = "Flow_Rain")
     }
   }
-  links_df <- do.call(rbind, links_list)
+  
+  # Safe Return: Prevent widget crash if flow is zero
+  if (length(links_list) == 0) {
+    links_df <- data.frame(source = 0, target = 1, value = 0.001, group = "Flow_Rain")
+  } else {
+    links_df <- do.call(rbind, links_list)
+  }
   
   color_scale <- paste0('d3.scaleOrdinal()
     .domain(', BWP_PALETTES$sankey_domain, ')

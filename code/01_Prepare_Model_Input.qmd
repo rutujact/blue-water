@@ -178,7 +178,6 @@ crop.param <- read_csv(here("data/input/04_crop.parameters.csv"), show_col_types
 ```{r crop-display, echo=FALSE}
 preview_crop <- crop.param
 colnames(preview_crop) <- c(
-  "crop.ID<br><small style='color:gray; font-weight:normal;'>Unique identifier</small>",
   "crop<br><small style='color:gray; font-weight:normal;'>Standardized name</small>",
   "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
   "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
@@ -200,10 +199,7 @@ crop.systems <- read_csv(here("data/input/07_crop.systems.csv"), show_col_types 
 crop.systems.l <- crop.systems %>%
   select(-Irrigation) %>%
   pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
-  left_join(crop.param, by = "crop") %>%
-  relocate(crop.ID, .after = crop) %>%
-  mutate(crop.rotation.ID = paste0(crop, ".", rotation.ID))
-
+  left_join(crop.param, by = "crop")
 write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), row.names = FALSE)
 
 ```
@@ -234,7 +230,7 @@ Generates the classic 4-stage linear growth curves for standard crops.
 
 ```{r generate-fao-kc, warning=FALSE}
 kc.raw.long <- kc.raw %>% 
-  pivot_longer(cols = -c(1, 2), names_to = "crop") %>% 
+  pivot_longer(cols = -1, names_to = "crop") %>% 
   mutate(crop = str_to_title(gsub("_|\\.", " ", crop, perl = TRUE)))
 
 kc <- kc.raw.long %>% subset(stringr::str_detect(var, stringr::regex("kc", ignore_case = TRUE))) %>% rename(Kc = value, kc_var = var) %>%
@@ -383,7 +379,7 @@ ggsave(here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), plot = kc_plot
 
 ```{r map-kc-curves, results='hide'}
 crop.systems.l.kc <- crop.systems.l %>%
-  select(rotation.ID, rotation, n.rotation, crop.rotation.ID, crop.system.ID, crop.system, soil, ncrop, crop, crop.ID, irrigation, rooting_depth_cm) %>%
+  select(rotation, n.rotation, crop.system, soil, ncrop, crop, irrigation, rooting_depth_cm) %>%
   left_join(kc.doy.crop.all %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
 
 crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
@@ -419,7 +415,7 @@ farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_syste
 #### Production System Area Preview
 
 ```{r display-area, echo=FALSE}
-preview_ps <- head(ps_by_cs_area[,-1], 5)
+preview_ps <- head(ps_by_cs_area, 5)
 colnames(preview_ps) <- c(
   "time_period<br><small style='color:gray; font-weight:normal;'>Historical grouping</small>",
   "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
