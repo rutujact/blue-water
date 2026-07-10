@@ -25,3 +25,4 @@ temp_combined_sankey.html
 /output/01_processed_water_budgets.Rdata
 /output/02_export_detailed_daily_water_budgets.csv
 /output/03_export_annual_water_budgets_long.csv
+shiny_app/figures/

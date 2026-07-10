@@ -1,0 +1,57 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# R/ui_modules.R
+# User Interface Modules for Track 1 and Track 2
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Module: Data Upload UI ----
+data_upload_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    p("By default, the application reads the standardized baseline files directly from the repository's data directory."),
+    actionButton(ns("load_default_data"), "Load Repository Data", icon = icon("database"), class = "btn-primary w-100"),
+    hr(),
+    checkboxInput(ns("use_custom"), "Upload Custom Data", value = FALSE),
+    conditionalPanel(
+      condition = sprintf("input['%s'] == true", ns("use_custom")),
+      
+      h5("Biophysical Data (Track 1)"),
+      fileInput(ns("custom_precip"), "1. Precipitation (01_precip)", accept = ".csv"),
+      fileInput(ns("custom_et0"), "2. Reference ET0 (02_et0)", accept = ".csv"),
+      fileInput(ns("custom_soil"), "3. Soil Params (03_soil)", accept = ".csv"),
+      fileInput(ns("custom_crop"), "4. Crop Params (04_crop)", accept = ".csv"),
+      fileInput(ns("custom_kc"), "5. Crop Kc Params (05_kc)", accept = ".csv"),
+      fileInput(ns("custom_fruit"), "6. Fruit Kc Params (06_fruit) [Optional]", accept = ".csv"),
+      fileInput(ns("custom_systems"), "7. Crop Systems (07_systems)", accept = ".csv"),
+      
+      hr(),
+      checkboxInput(ns("enable_track2"), "Include Socio-Demographic Data (Track 2)", value = TRUE),
+      conditionalPanel(
+        condition = sprintf("input['%s'] == true", ns("enable_track2")),
+        fileInput(ns("custom_area"), "8. Area by System (08_area)", accept = ".csv"),
+        fileInput(ns("custom_farms"), "9. Farm Counts (09_farms)", accept = ".csv")
+      ),
+      
+      actionButton(ns("load_custom_data"), "Validate & Load Custom Data", icon = icon("upload"), class = "btn-warning w-100")
+    )
+  )
+}
+
+# Module: Track 1 Controls (Biophysical Engine) ----
+track1_controls_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    p("Click below to process the full regional water budget across all crop rotations and soil types. This multi-decadal simulation will take a few minutes."),
+    hr(),
+    actionButton(ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100")
+  )
+}
+
+# Module: Track 2 Controls (Socio-Hydrological Engine) ----
+track2_controls_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    p("These visualisations map the physical water budgets to specific socio-economic farm topologies and historical demographic data."),
+    hr(),
+    downloadButton(ns("download_report"), "Download PDF Report", class = "btn-info w-100")
+  )
+}
