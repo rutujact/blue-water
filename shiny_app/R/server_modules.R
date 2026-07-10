@@ -128,9 +128,14 @@ pre_processing_server <- function(id, app_data) {
       is_climate_processed = FALSE, is_kc_processed = FALSE
     )
     
-    # 1. Instantly process the Climate Profile when data is loaded
+    # Disable the process button initially to prevent crashes
+    shinyjs::disable("run_preproc")
+    
+    # Enable button only after data is loaded
     observeEvent(app_data$is_loaded, {
       req(app_data$is_loaded)
+      shinyjs::enable("run_preproc")
+      
       tryCatch({
         df_p <- app_data$precip %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(P = sum(p, na.rm=TRUE), .groups="drop")
         df_et0 <- app_data$et0 %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(ET0 = sum(et0, na.rm=TRUE), .groups="drop")
@@ -155,10 +160,9 @@ pre_processing_server <- function(id, app_data) {
       })
     })
     
-    # 2. Wait for the user to explicitly click the button to generate the massive Kc arrays
     observeEvent(input$run_preproc, {
       req(app_data$is_loaded)
-      showNotification("Calculating daily Kc curves from phenological stages... Please wait.", type = "message")
+      showModal(modalDialog("Calculating daily Kc curves from phenological stages... Please wait.", footer = NULL, fade = FALSE))
       
       tryCatch({
         biophysical_parameters <- list(grazing_growth_rate = 0.00458333333333333, grazing_drop_kc = 0.20, grazing_max_kc = 0.75, napier_decline_rate_1 = 0.000307692307692308, napier_decline_rate_2 = 0.000153846153846154)
@@ -236,6 +240,15 @@ track1_engine_server <- function(id, app_data, preproc_data) {
   moduleServer(id, function(input, output, session) {
     
     engine_results <- reactiveValues(budget_ls = NULL, summary_yr_budgets = NULL, is_calculated = FALSE)
+    
+    # Disable the run engine button initially
+    shinyjs::disable("run_engine")
+    
+    # Enable the button only when Kc curves are successfully mapped
+    observeEvent(preproc_data$is_kc_processed, {
+      req(preproc_data$is_kc_processed)
+      shinyjs::enable("run_engine")
+    })
     
     observeEvent(input$run_engine, {
       req(app_data$is_loaded, preproc_data$is_kc_processed)

@@ -52,7 +52,9 @@ track1_controls_ui <- function(id) {
   tagList(
     p("Click below to process the full regional water budget across all crop rotations and soil types. This multi-decadal simulation will take a few minutes."),
     hr(),
-    actionButton(ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100")
+    actionButton(ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100"),
+    br(), br(),
+    downloadButton(ns("download_report_t1"), "Download PDF Report", class = "btn-info w-100")
   )
 }
 
