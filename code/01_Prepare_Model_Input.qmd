@@ -1,6 +1,6 @@
 ---
-title: "Data Dictionary & Model Input Preparation" 
-subtitle: "Assembling Baseline Data, Kc Curves, and Demographics for the BWP Engine"
+title: "Model Input Preparation" 
+subtitle: "Assembling Meteorological Data, Crop Parameters, Crop Rotations, Production Systems and Farm Demographics for the Blue Water Potential Engine"
 author: 
   - "Rutuja Chitra-Tarak (Code)"
   - "Charlotte Hemingway (Data and Kc Calculations)"
@@ -129,7 +129,7 @@ stopifnot(
 
 ```
 
-#### Precipitation Preview
+#### Precipitation
 
 ```{r clim-display, echo=FALSE}
 preview_precip <- head(precip, 5)
@@ -260,11 +260,12 @@ kc_segmented <- bind_rows(kc_segmented_ls) %>%
   mutate(crop = str_to_title(gsub("_", " ", crop, perl = TRUE)))
 
 # Visual Check
-ggplot(kc_segmented, aes(x = doy, y = kc, color = crop)) +
-  geom_line(linewidth = 1) + facet_wrap(~ crop) + theme_baseR +
+ggplot(kc_segmented %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), aes(x = doy, y = plot_kc, color = crop)) +
+  # NEW: Add a subtle color fill beneath the curve. This makes active panels stand out.
+  geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+  geom_line(linewidth = 1, na.rm = TRUE) + facet_wrap(~ crop) + theme_baseR +
   labs(title = "Standard FAO-56 Curves", x = "Day of Year", y = "Kc") +
   theme(legend.position = "none")
-
 ```
 
 ### Polynomial Curves
@@ -281,10 +282,20 @@ gm <- data.frame(doy = 1:366) %>%
 kc_polynomial <- bind_rows(gm, gs) %>% select(-d)
 
 # Visual Check
-ggplot(kc_polynomial, aes(x = doy, y = kc, color = crop)) +
-  geom_line(linewidth = 1) + facet_grid(crop ~ .) + theme_baseR +
-  labs(title = "Polynomial Curves", x = "Day of Year", y = "Kc") +
-  theme(legend.position = "none")
+ggplot(kc_polynomial %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), 
+       aes(x = doy, y = plot_kc, color = crop)) +
+  geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+  geom_line(linewidth = 1, na.rm = TRUE) + 
+  facet_wrap(. ~ crop, ncol = 1) + theme_baseR +
+  labs(x = "Day of Year", y = "Kc") +
+  theme(legend.position = "none") +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 12, face = "bold")
+  )
 
 ```
 
@@ -298,10 +309,19 @@ colnames(raw_params) <- stringr::str_to_title(gsub("_|\\.", " ", colnames(raw_pa
 kc_fruits <- bind_rows(generate_fruit_step("Pomegranate", raw_params), generate_fruit_step("Sweet Lime", raw_params)) 
 
 # Visual Check
-ggplot(kc_fruits, aes(x = doy, y = kc, color = crop)) +
-  geom_line(linewidth = 1) + facet_grid(crop ~ .) + theme_baseR +
-  labs(title = "Fruit Tree Curves", x = "Day of Year", y = "Kc") +
-  theme(legend.position = "none")
+ggplot(kc_fruits %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), aes(x = doy, y = plot_kc, color = crop)) +
+  geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+  geom_line(linewidth = 1, na.rm = TRUE) + 
+  facet_wrap(. ~ crop, ncol = 1) + theme_baseR +
+  labs(x = "Day of Year", y = "Kc") +
+  theme(legend.position = "none") +
+  theme(
+    legend.position = "none",
+    plot.title = element_text(size = 18, face = "bold"),
+    axis.title = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12),
+    strip.text = element_text(size = 12, face = "bold")
+  )
 
 ```
 
@@ -331,8 +351,10 @@ napier_short <- generate_napier("Napier Short", 211, napier_dec_1, napier_dec_2)
 
 # Visual Check
 complex_plot_data <- bind_rows(grazed_thrice, grazed_1_aug, grazed_1_sept, grazed_1_oct, grazed_1_nov, napier, napier_short)
-ggplot(complex_plot_data, aes(x = doy, y = kc, color = crop)) +
-  geom_line(linewidth = 1) + facet_wrap(~ crop) + theme_baseR +
+
+ggplot(complex_plot_data %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), aes(x = doy, y = plot_kc, color = crop)) +
+  geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+  geom_line(linewidth = 1, na.rm = TRUE) + facet_wrap(~ crop) + theme_baseR +
   labs(title = "Complex Harvesting & Regrowth Curves", x = "Day of Year", y = "Kc") +
   theme(legend.position = "none")
 
@@ -358,12 +380,21 @@ write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_
 *(Saves a high-resolution PDF for the manuscript).*
 
 ```{r plot-all-kc, fig.width=10, fig.height=8, warning=FALSE}
+#| fig-cap: "**Figure 1. Synthesized daily crop coefficient ($K_c$) trajectories for all modeled agricultural and pastoral classifications.** The panels illustrate the continuous temporal evolution of $K_c$ across a full calendar year (Day of Year), generated via crop-specific mathematical rule sets. The profiles integrate multiple modeling approaches: standard FAO-56 segmented linear growth stages for seasonal crops (e.g., millet, rice, tomato, pulses), continuous polynomial equations for groundnut varieties, discrete monthly step-functions for specific perennial orchards (sweet lime, pomegranate), and calibrated drop-and-regrowth cycles to simulate managed grazing and repeated harvesting schedules (grazed pastures, Napier grass)."
+
 if (!dir.exists(here("figures/manuscript"))) {
   dir.create(here("figures/manuscript"), recursive = TRUE, showWarnings = FALSE)
 }
 
-kc_plot <- ggplot(kc.doy.crop.all, aes(x = doy, y = kc, color = crop)) +
-  geom_line(linewidth = 1) +
+# Create a temporary plotting variable that turns 0 into NA
+plot_data <- kc.doy.crop.all %>%
+  mutate(plot_kc = if_else(kc == 0, NA_real_, kc))
+
+kc_plot <- ggplot(plot_data, aes(x = doy, y = plot_kc, color = crop)) +
+    # NEW: Add a subtle color fill beneath the curve. This makes active panels stand out.
+    ggplot2::geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+  # na.rm = TRUE prevents ggplot from throwing 50 warnings about missing values
+  geom_line(linewidth = 1, na.rm = TRUE) +
   facet_wrap(~ crop) +
   theme_baseR +
   labs(
@@ -375,7 +406,6 @@ kc_plot <- ggplot(kc.doy.crop.all, aes(x = doy, y = kc, color = crop)) +
 
 print(kc_plot)
 ggsave(here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), plot = kc_plot, width = 10, height = 8)
-
 ```
 
 ```{r map-kc-curves, results='hide'}
@@ -388,7 +418,7 @@ save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rda
 
 ```
 
-#### Expanded Daily Kc Matrix Preview
+#### Expanded Daily Kc Matrix
 *(Example showing the generated continuous timeline for a single rotation).*
 ```{r display-kc-expansion, echo=FALSE}
 preview_kc <- head(crop.rotation.kc.ls[[1]], 10) %>%
@@ -413,7 +443,7 @@ farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_syste
 
 ```
 
-#### Production System Area Preview
+#### Production System Area
 
 ```{r display-area, echo=FALSE}
 preview_ps <- head(ps_by_cs_area, 5)
@@ -427,7 +457,7 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 
 ```
 
-#### Historical Farm Counts Preview
+#### Historical Farm Counts
 ```{r display-counts, echo=FALSE}
 preview_counts <- head(farms_count_df, 5)
 colnames(preview_counts) <- c(
@@ -482,7 +512,7 @@ write.csv(ps_typology, file = here("data/processed/supplementary/05_production_s
 
 ```
 
-#### Derived Typology Preview
+#### Derived Typology
 ```{r display-typology, echo=FALSE}
 preview_typology <- head(ps_typology, 5)
 colnames(preview_typology) <- c(
