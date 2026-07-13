@@ -111,8 +111,8 @@ theme_presentation <- function(base_size = 14) {
 
 #' Plot Historical Climate Profile
 #' @export
-plot_climate_profile <- function(climate_summary, scale_factor = 7.5) {
-  
+plot_climate_profile <- function(climate_summary, scale_factor = 7.5, show_temperature = TRUE) {
+
   # STEP 1: Format Month Labels
   # Convert numeric months (1-12) to ordered factor abbreviations (Jan-Dec)
   climate_summary <- climate_summary %>%
@@ -136,24 +136,33 @@ plot_climate_profile <- function(climate_summary, scale_factor = 7.5) {
   climate_summary_long <- dplyr::left_join(climate_summary_long, water_errors, by = c("Month_Name", "Water_Metric"))
   
   # STEP 4: Render Dual-Axis Plot
-  ggplot2::ggplot() +
+  p <-ggplot2::ggplot() +
     # Layer 1: Water Volumes as bars
     ggplot2::geom_bar(data = climate_summary_long, ggplot2::aes(x = Month_Name, y = Volume, fill = Water_Metric), stat = "identity", position = ggplot2::position_dodge(width = 0.9), alpha = 0.85) +
     # Layer 2: 95% Confidence Intervals as error bars
-    ggplot2::geom_errorbar(data = climate_summary_long, ggplot2::aes(x = Month_Name, ymin = q05, ymax = q95, group = Water_Metric), position = ggplot2::position_dodge(width = 0.9), width = 0.2, alpha = 0.7) +
-    # Layer 3: Temperature Envelopes (Scaled). 
-    # Temperature ranges 20-40C, but Rainfall ranges 0-300mm. We multiply temperature by the 
-    # `scale_factor` (e.g., * 7.5) so the line floats visibly in the middle of the chart.
-    ggplot2::geom_ribbon(data = climate_summary, ggplot2::aes(x = Month_Name, ymin = Temperature_q05 * scale_factor, ymax = Temperature_q95 * scale_factor, group = 1), fill = BWP_PALETTES$climate_ribbon, alpha = 0.15) +
-    ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature_Line", group = 1), linewidth = 1) +
-    # Layer 4: Create the illusion of a secondary axis by mathematically dividing the right-side labels back down by the scale_factor.
-    ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), sec.axis = ggplot2::sec_axis(~. / scale_factor, name = "Temperature (°C)"), expand = ggplot2::expansion(mult = c(0, 0.05))) +
+    ggplot2::geom_errorbar(data = climate_summary_long, ggplot2::aes(x = Month_Name, ymin = q05, ymax = q95, group = Water_Metric), position = ggplot2::position_dodge(width = 0.9), width = 0.2, alpha = 0.7)
+  if (show_temperature) {
+    p <- p +
+        # Layer 3: Temperature Envelopes (Scaled). 
+        # Temperature ranges 20-40C, but Rainfall ranges 0-300mm. We multiply temperature by the 
+        # `scale_factor` (e.g., * 7.5) so the line floats visibly in the middle of the chart.
+        ggplot2::geom_ribbon(data = climate_summary, ggplot2::aes(x = Month_Name, ymin = Temperature_q05 * scale_factor, ymax = Temperature_q95 * scale_factor, group = 1), fill = BWP_PALETTES$climate_ribbon, alpha = 0.15) +
+        ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature_Line", group = 1), linewidth = 1) +
+        # Layer 4: Create the illusion of a secondary axis by mathematically dividing the right-side labels back down by the scale_factor.
+        ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), sec.axis = ggplot2::sec_axis(~. / scale_factor, name = "Temperature (°C)"), expand = ggplot2::expansion(mult = c(0, 0.05))) +
+        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature_Line", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
+    } else {
+      p <- p +
+        ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), expand = ggplot2::expansion(mult = c(0, 0.05))) +
+        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = "none")
+    }
+  p <- p +
     ggplot2::scale_fill_manual(values = BWP_PALETTES$climate_fill) +
     ggplot2::scale_color_manual(values = BWP_PALETTES$climate_color) +
     ggplot2::labs(x = "Month") +
     theme_manuscript() +
-    ggplot2::theme(legend.position = "top", legend.box = "vertical", legend.spacing.y = ggplot2::unit(0.1, "cm"), axis.text = ggplot2::element_text(size = 12, color = "black")) +
-    ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature_Line", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
+    ggplot2::theme(legend.position = "top", legend.box = "vertical", legend.spacing.y = ggplot2::unit(0.1, "cm"), axis.text = ggplot2::element_text(size = 12, color = "black"))
+  return(p)
 }
 
 #' Plot Crop Coefficient (Kc) Trajectory Curves
@@ -856,6 +865,8 @@ get_single_village_plot <- function(df, cfg, output_dev, filename) {
 
 #' Generate HTML networkD3 Interactive Sankey Chart
 #' @export
+#' Generate HTML networkD3 Interactive Sankey Chart
+#' @export
 get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, margin_left = 120, margin_right = 30) {
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -874,17 +885,22 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
     dplyr::mutate(dplyr::across(dplyr::ends_with("_m3"), ~ ifelse(is.nan(.) | is.na(.), 0, .)))
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # STEP 2: AREA NORMALIZATION
+  # STEP 2: DYNAMIC AREA NORMALIZATION
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Instead of hardcoding "1950s", we use the earliest time period found in the dataset.
+  all_periods <- sort(unique(ps_volumetric_summary$time_period))
+  baseline_period <- all_periods[1] # Automatically selects the oldest year present
+  
   baseline_data <- ps_volumetric_summary %>%
-    dplyr::filter(time_period == "1950s") %>%
+    dplyr::filter(time_period == baseline_period) %>%
     dplyr::group_by(var) %>%
     dplyr::summarise(total_m3 = sum(total_vol_m3, na.rm = TRUE), .groups = "drop")
   
   baseline_p_vol <- sum(baseline_data$total_m3[baseline_data$var == "P"], na.rm = TRUE)
   current_p_vol  <- sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE)
   
-  area_correction_factor <- baseline_p_vol / current_p_vol
+  # If current period is the baseline, factor is 1; otherwise calculate relative change.
+  area_correction_factor <- if (is.na(current_p_vol) || current_p_vol == 0 || baseline_p_vol == 0) 1 else baseline_p_vol / current_p_vol
   
   tp_data <- tp_data %>%
     dplyr::mutate(
@@ -939,7 +955,7 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
   links_list <- list()
   for (i in seq_along(outflow_vols)) {
     if (outflow_vols[i] > 0) {
-      links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = outflow_vols[i], group = "Flow_Rain")
+      links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = abs(outflow_vols[i]), group = "Flow_Rain")
     }
   }
   
