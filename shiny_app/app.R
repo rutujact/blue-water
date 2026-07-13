@@ -9,121 +9,150 @@ source(here::here("shiny_app", "R", "server_modules.R"))
 
 if (!require("DT", quietly = TRUE)) install.packages("DT")
 library(DT)
-library(shinyjs)
-library(shinycssloaders)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # USER INTERFACE (UI) ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ui <- tagList(
-  shinyjs::useShinyjs(),
-  navbarPage(
-    title = "The Blue Water Toolkit",
-    theme = bs_theme(version = 5, preset = "flatly"),
-    
-    # Tab 1: Data Setup & Climatology ----
-    tabPanel(
-      title = "1. Data Setup",
-      icon = icon("folder-open"),
-      sidebarLayout(
-        sidebarPanel(width = 4, h4("Upload Inputs"), data_upload_ui("data_module")),
-        mainPanel(
-          width = 8,
-          tabsetPanel(
-            type = "pills",
-            tabPanel("Figure 1: Baseline Climate", 
-                     h4("Monthly Climatology Validation", align = "center"),
-                     withSpinner(plotOutput("plot_fig1_climate", height = "500px"), color = "#56B4E9")
-            ),
-            tabPanel("Data Dictionary",
-                     h4("Input Data Requirements", align = "center"),
-                     uiOutput("data_dictionary_ui")
-            ),
-            tabPanel("Raw Data Tables", 
-                     br(),
-                     selectInput("preview_dataset", "Select Dataset to View:", 
-                                 choices = c("1. Precipitation", "2. ET0", "3. Soil Params", "4. Crop Params", 
-                                             "5. Crop Kc Params", "6. Fruit Kc Params", "7. Crop Systems", 
-                                             "8. Area by System", "9. Farm Counts")),
-                     DTOutput("table_preview")
+ui <- navbarPage(
+  title = "The Blue Water Toolkit",
+  theme = bs_theme(version = 5, preset = "cosmo"),
+  
+  # Inject Tooltip JavaScript into the header
+  header = tags$head(
+    tags$script('
+      $(function () {
+        $("body").tooltip({ selector: \'[data-bs-toggle="tooltip"]\' });
+      });
+    '),
+    tags$style(HTML("
+      .tooltip-inner { background-color: #2C3E50; color: #ffffff; }
+      .tooltip.bs-tooltip-end .tooltip-arrow::before { border-right-color: #2C3E50; }
+    "))
+  ),
+  
+  # Tab 1: Data Setup & Climatology ----
+  tabPanel(
+    title = "1. Data Setup",
+    icon = icon("folder-open"),
+    sidebarLayout(
+      sidebarPanel(width = 4, h4("Upload Inputs"), data_upload_ui("data_module")),
+      mainPanel(
+        width = 8,
+        
+        # --- NEW INTRODUCTORY CARD ---
+        div(class = "card mb-4 border-info",
+            div(class = "card-body",
+                h4("Accounting for the Unaccounted: Farm Social Diversity in Water Budgets", class = "card-title text-info"),
+                p(strong("How has the partitioning of our atmospheric water inputs been fundamentally altered by human land use?[cite: 11]")),
+                p("This toolkit provides a framework for modeling net watershed impacts by incorporating farm social diversity[cite: 11]. It calculates Blue Water Potential (BWP) to isolate the absolute net impact of a specific land use decision on the underlying aquifer[cite: 11]."),
+                tags$ul(
+                  tags$li(strong("The Assessment:"), " The engine identifies which farm topologies act as chronic hydrological 'Net Consumers' via artificial irrigation, and which act as 'Net Contributors' by enabling monsoon precipitation to actively recharge the aquifer[cite: 11]."),
+                  tags$li(strong("The Engine:"), " The model processes daily meteorological forcing, soil parameters, and crop rotation definitions[cite: 10]. It dynamically generates continuous crop coefficient (Kc) curves using standard FAO-56 segments, polynomial equations, and complex grazing regrowth schedules to simulate multi-decadal water fluxes[cite: 10]."),
+                  tags$li(strong("The Discovery:"), " Scaling BWP by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape[cite: 11]. Aggregating these balances to an archetype village illustrates structural tipping points in regional water security[cite: 11].")
+                )
             )
+        ),
+        
+        tabsetPanel(
+          type = "pills",
+          tabPanel("Figure 1: Baseline Climate", 
+                   h4("Monthly Climatology Validation", info_tooltip("Monthly baseline metrics showing mean rainfall and reference evapotranspiration (ET0)."), align = "center"),
+                   plotOutput("plot_fig1_climate", height = "500px")
+          ),
+          tabPanel("Data Dictionary",
+                   h4("Input Data Requirements", align = "center"),
+                   uiOutput("data_dictionary_ui")
+          ),
+          tabPanel("Raw Data Tables", 
+                   br(),
+                   selectInput("preview_dataset", "Select Dataset to View:", 
+                               choices = c("1. Precipitation", "2. ET0", "3. Soil Params", "4. Crop Params", 
+                                           "5. Crop Kc Params", "6. Fruit Kc Params", "7. Crop Systems", 
+                                           "8. Area by System", "9. Farm Counts")),
+                   DTOutput("table_preview")
           )
         )
       )
-    ),
-    
-    # Tab 2: Kc curve Engine ----
-    tabPanel(
-      title = "2. Crop Kc Curves (Pre-Processing)",
-      icon = icon("seedling"),
-      sidebarLayout(
-        sidebarPanel(width = 3, h4("Phenology Engine"), preproc_controls_ui("preproc_module")),
-        mainPanel(
-          width = 9,
-          tabsetPanel(
-            type = "pills",
-            tabPanel("Kc Curves for Individual Crops", 
-                     h4("Daily Kc based on Growth Stages", align = "center"),
-                     withSpinner(plotOutput("plot_raw_kc", height = "600px"), color = "#56B4E9")
-            ),
-            tabPanel("Figure 2: Daily Kc for Crop Systems", 
-                     h4("Daily Kc for Crop Systems (rows) by Rotations (columns)", align = "center"),
-                     withSpinner(plotOutput("plot_fig2_kc_curves", height = "1000px"), color = "#56B4E9")
-            )
+    )
+  ),
+  
+  # Tab 2: Phenology Engine ----
+  tabPanel(
+    title = "2. Crop Kc Curves",
+    icon = icon("seedling"),
+    sidebarLayout(
+      sidebarPanel(width = 3, 
+                   h4("Phenology Engine", info_tooltip("Generates daily curves based on underlying mathematical definitions: standard FAO-56 segmented curves, continuous polynomial equations for rapid growth, and complex linear regrowth rates for pastures.")), 
+                   preproc_controls_ui("preproc_module")
+      ),
+      mainPanel(
+        width = 9,
+        tabsetPanel(
+          type = "pills",
+          tabPanel("Individual Curves", 
+                   h4("Daily Kc based on Growth Stages", align = "center"),
+                   plotOutput("plot_raw_kc", height = "600px")
+          ),
+          tabPanel("Figure 2: Daily Kc for Crop Systems", 
+                   h4("Daily Kc for Crop Systems (rows) by Rotations (columns)", align = "center"),
+                   plotOutput("plot_fig2_kc_curves", height = "1000px")
           )
         )
       )
-    ),
-    
-    # Tab 3: Track 1 - Biophysical Engine ----
-    tabPanel(
-      title = "3. Biophysical Engine",
-      icon = icon("leaf"),
-      sidebarLayout(
-        sidebarPanel(width = 4, h4("Model Execution"), track1_controls_ui("track1_module")),
-        mainPanel(
-          width = 8,
-          tabsetPanel(
-            type = "pills",
-            tabPanel("Figure 3: Supply vs Demand", withSpinner(plotOutput("plot_fig3_supply_demand"), color = "#56B4E9")),
-            tabPanel("Figure 4: Blue Water Potential", withSpinner(plotOutput("plot_fig4_bwp"), color = "#56B4E9"))
+    )
+  ),
+  
+  # Tab 3: Track 1 - Biophysical Engine ----
+  tabPanel(
+    title = "3. Biophysical Engine",
+    icon = icon("leaf"),
+    sidebarLayout(
+      sidebarPanel(width = 4, h4("Model Execution"), track1_controls_ui("track1_module")),
+      mainPanel(
+        width = 8,
+        tabsetPanel(
+          type = "pills",
+          tabPanel("Figure 3: Supply vs Demand", 
+                   h4("Annual Supply vs Demand", info_tooltip("Annual Climatology of Water Supply and Demand. Groundwater Recharge is depicted in negative terms on the water fluxes axis."), align = "center"),
+                   plotOutput("plot_fig3_supply_demand")
+          ),
+          tabPanel("Figure 4: Blue Water Potential", 
+                   h4("Blue Water Potential", info_tooltip("Blue Water Potential isolates the absolute net impact of a specific land use decision on the underlying aquifer (Recharge minus Irrigation Requirement)."), align = "center"),
+                   plotOutput("plot_fig4_bwp")
           )
         )
       )
-    ),
-    
-    # Tab 4: Track 2 - Socio-Demographic Impact ----
-    tabPanel(
-      title = "4. Socio-Demographics",
-      icon = icon("users"),
-      sidebarLayout(
-        sidebarPanel(width = 3, h4("Demographic Analysis"), track2_controls_ui("track2_module")),
-        mainPanel(
-          width = 9,
-          tabsetPanel(
-            type = "pills",
-            tabPanel("Figure 5: BWP By Farm Type", 
-                     h4("Comparative Annual Blue Water Potential Across Production Systems", align = "center"),
-                     withSpinner(plotOutput("plot_fig5_bwp_systems", height = "600px"), color = "#56B4E9")
-            ),
-            tabPanel("Figure 6: Farm Disparity", 
-                     h4("Micro-Regional Disparity Metrics", align = "center"),
-                     fluidRow(
-                       column(6, h5("1950s Archetype", align = "center"), withSpinner(plotOutput("plot_disparity_1950", height = "450px"), color = "#56B4E9")),
-                       column(6, h5("2022 Archetype", align = "center"), withSpinner(plotOutput("plot_disparity_2022", height = "450px"), color = "#56B4E9"))
-                     )
-            ),
-            tabPanel("Figure 7: Village BWP Trends", 
-                     h4("Annual Blue Water Potential of the Archetype Village", align = "center"),
-                     withSpinner(plotOutput("plot_fig7_village_bwp", height = "500px"), color = "#56B4E9")
-            ),
-            tabPanel("Figure 8: Village Water Balance", 
-                     h4("Average Annual Water Balance of the Archetype Village", align = "center"),
-                     fluidRow(
-                       column(6, h5("1950s Archetype", align = "center"), withSpinner(sankeyNetworkOutput("plot_village_sankey_1950", height = "450px"), color = "#56B4E9")),
-                       column(6, h5("2022 Archetype", align = "center"), withSpinner(sankeyNetworkOutput("plot_village_sankey_2022", height = "450px"), color = "#56B4E9"))
-                     )
-            )
+    )
+  ),
+  
+  # Tab 4: Track 2 - Socio-Demographic Impact ----
+  tabPanel(
+    title = "4. Socio-Demographics",
+    icon = icon("users"),
+    sidebarLayout(
+      sidebarPanel(width = 3, 
+                   h4("Demographic Analysis", info_tooltip("Net Consumers (Irrigated Farms, BWP < 0): Demand exceeds natural recharge. Net Contributors (Rainfed/Grasslands, BWP > 0): Monsoon precipitation actively recharges the aquifer.")), 
+                   track2_controls_ui("track2_module")
+      ),
+      mainPanel(
+        width = 9,
+        tabsetPanel(
+          type = "pills",
+          tabPanel("Figure 5: BWP By Farm Type", 
+                   h4("Comparative Annual Blue Water Potential Across Production Systems", info_tooltip("BWP contributions (+ve or -ve) from Irrigated, Rainfed, or Grazed areas within each farm type are mapped by colors. Net BWP contribution is identified by a cross."), align = "center"),
+                   plotOutput("plot_fig5_bwp_systems", height = "600px")
+          ),
+          tabPanel("Figure 6: Farm Disparity", 
+                   h4("Micro-Regional Disparity Metrics", info_tooltip("Farm-level demographic composition and net BWP impact. Demographic data reflect total farm counts, while BWP values signify the cumulative water budget aggregated by farm typology."), align = "center"),
+                   uiOutput("dynamic_disparity_ui")
+          ),
+          tabPanel("Figure 7: Village BWP Trends", 
+                   h4("Annual Blue Water Potential of the Archetype Village", align = "center"),
+                   plotOutput("plot_fig7_village_bwp", height = "500px")
+          ),
+          tabPanel("Figure 8: Village Water Balance", 
+                   h4("Average Annual Water Balance of the Archetype Village", info_tooltip("Notice the structural tipping point: By 2022, the massive evapotranspiration demands of irrigated crops physically constrict long-term aquifer replenishment compared to the 1950s baseline."), align = "center"),
+                   uiOutput("dynamic_sankey_ui")
           )
         )
       )
@@ -216,21 +245,31 @@ server <- function(input, output, session) {
     plot_socio_economic_bwp(t2_data$ps_bwp_volumetric)
   }, res = 96, bg = "white")
   
-  output$plot_disparity_1950 <- renderPlot({
-    validate(need(app_data$has_track2, "Track 2 Socio-Demographic data was not loaded."))
-    validate(need(engine_results$is_calculated, ""))
+  # Dynamic UI for Figure 6
+  output$dynamic_disparity_ui <- renderUI({
     req(track2_results$track2_data())
-    t2_data <- track2_results$track2_data()
-    plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, target_period = "1950s")
-  }, res = 96, bg = "white")
+    periods <- sort(unique(track2_results$track2_data()$ps_bwp_volumetric$time_period), decreasing = TRUE)
+    cols <- lapply(seq_along(periods), function(i) {
+      column(12, h5(paste(periods[i], "Archetype"), align = "center"), plotOutput(paste0("plot_disparity_", i), height = "450px"))
+    })
+    do.call(fluidRow, cols)
+  })
   
-  output$plot_disparity_2022 <- renderPlot({
-    validate(need(app_data$has_track2, ""))
-    validate(need(engine_results$is_calculated, ""))
+  # Dynamic Plot Rendering for Figure 6
+  observe({
     req(track2_results$track2_data())
-    t2_data <- track2_results$track2_data()
-    plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, target_period = "2022")
-  }, res = 96, bg = "white")
+    periods <- sort(unique(track2_results$track2_data()$ps_bwp_volumetric$time_period), decreasing = TRUE)
+    for (i in seq_along(periods)) {
+      local({
+        my_i <- i
+        my_p <- periods[my_i]
+        output[[paste0("plot_disparity_", my_i)]] <- renderPlot({
+          t2_data <- track2_results$track2_data()
+          plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, target_period = my_p)
+        }, res = 96, bg = "white")
+      })
+    }
+  })
   
   output$plot_fig7_village_bwp <- renderPlot({
     validate(need(app_data$has_track2, "Track 2 Socio-Demographic data was not loaded."))
@@ -257,6 +296,7 @@ server <- function(input, output, session) {
     colnames(village.bwp_collapsed) <- c("period", "label", "val")
     cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
     
+    # Restored working PNG tempfile logic for Village BWP
     tmp_png <- tempfile(fileext = ".png")
     invisible(plot_village_bwp(village_bwp_collapsed = village.bwp_collapsed, cfg = cfg, output_dev = png, filename = tmp_png, manuscript_style = TRUE))
     
@@ -268,20 +308,33 @@ server <- function(input, output, session) {
     }
   }, res = 96, bg = "white")
   
-  output$plot_village_sankey_1950 <- renderSankeyNetwork({
-    validate(need(app_data$has_track2, "Track 2 Socio-Demographic data was not loaded."))
-    validate(need(engine_results$is_calculated, ""))
+  # Dynamic UI for Figure 8 (Sankey Diagram)
+  output$dynamic_sankey_ui <- renderUI({
     req(track2_results$track2_data())
-    t2_data <- track2_results$track2_data()
-    get_d3_sankey(t2_data$ps_volumetric_summary, "1950s")
+    periods <- sort(unique(track2_results$track2_data()$ps_bwp_volumetric$time_period), decreasing = TRUE)
+    # Stack vertically if only 1 period, place side-by-side if multiple periods
+    col_width <- ifelse(length(periods) > 1, 6, 12) 
+    
+    cols <- lapply(seq_along(periods), function(i) {
+      column(col_width, h5(paste(periods[i], "Archetype"), align = "center"), sankeyNetworkOutput(paste0("plot_village_sankey_", i), height = "450px"))
+    })
+    do.call(fluidRow, cols)
   })
   
-  output$plot_village_sankey_2022 <- renderSankeyNetwork({
-    validate(need(app_data$has_track2, ""))
-    validate(need(engine_results$is_calculated, ""))
+  # Dynamic Plot Rendering for Figure 8
+  observe({
     req(track2_results$track2_data())
-    t2_data <- track2_results$track2_data()
-    get_d3_sankey(t2_data$ps_volumetric_summary, "2022")
+    periods <- sort(unique(track2_results$track2_data()$ps_bwp_volumetric$time_period), decreasing = TRUE)
+    for (i in seq_along(periods)) {
+      local({
+        my_i <- i
+        my_p <- periods[my_i]
+        output[[paste0("plot_village_sankey_", my_i)]] <- renderSankeyNetwork({
+          t2_data <- track2_results$track2_data()
+          get_d3_sankey(t2_data$ps_volumetric_summary, my_p)
+        })
+      })
+    }
   })
   
   # --- CENTRALIZED PDF GENERATOR FUNCTION ----
@@ -303,8 +356,12 @@ server <- function(input, output, session) {
       t2_data <- track2_results$track2_data()
       
       print(plot_socio_economic_bwp(t2_data$ps_bwp_volumetric) + ggtitle("Figure 5: BWP By Farm Type"))
-      print(plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, "1950s") + patchwork::plot_annotation(title = "Figure 6: Micro-Regional Disparity Metrics (1950s Archetype)"))
-      print(plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, "2022") + patchwork::plot_annotation(title = "Figure 6: Micro-Regional Disparity Metrics (2022 Archetype)"))
+      
+      # Dynamic PDF generation for available time periods
+      periods <- sort(unique(t2_data$ps_bwp_volumetric$time_period), decreasing = TRUE)
+      for (p in periods) {
+        print(plot_farm_bwp_disparity(t2_data$ps_bwp_volumetric, t2_data$ps_typology, p) + patchwork::plot_annotation(title = paste("Figure 6: Micro-Regional Disparity Metrics (", p, "Archetype)")))
+      }
       
       village.bwp_collapsed <- t2_data$ps_bwp_volumetric %>%
         mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
@@ -324,6 +381,8 @@ server <- function(input, output, session) {
       
       colnames(village.bwp_collapsed) <- c("period", "label", "val")
       cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
+      
+      # Restored working PNG tempfile logic for Village BWP PDF
       invisible(plot_village_bwp(village_bwp_collapsed = village.bwp_collapsed, cfg = cfg, output_dev = png, filename = tempfile(fileext = ".png"), manuscript_style = TRUE))
     }
     dev.off()

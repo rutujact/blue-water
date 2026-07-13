@@ -39,7 +39,7 @@ data_ingestion_server <- function(id) {
     observeEvent(input$load_default_data, {
       data_dir <- here::here("data", "input") 
       
-      showNotification("Loading repository baseline data... Please wait.", type = "message")
+      id_notify <- showNotification("Loading repository baseline data... Please wait.", duration = NULL, type = "message")
       
       tryCatch({
         d_precip       <- read_csv(file.path(data_dir, "01_precipitation.csv"), show_col_types = FALSE)
@@ -60,10 +60,10 @@ data_ingestion_server <- function(id) {
         app_data$farms_count <- d_farms_count
         app_data$has_track2 <- TRUE
         app_data$is_loaded <- TRUE
-        removeModal()
+        removeNotification(id_notify)
         showNotification("Baseline data successfully validated and loaded.", type = "message")
       }, error = function(e) {
-        removeModal()
+        removeNotification(id_notify)
         showNotification(paste("Validation Error:", e$message), type = "error")
       })
     })
@@ -72,7 +72,7 @@ data_ingestion_server <- function(id) {
       req(input$custom_precip, input$custom_et0, input$custom_soil, input$custom_crop, 
           input$custom_kc, input$custom_systems)
       
-      showNotification("Loading and validating custom data... Please wait.", type = "message")
+      id_notify <- showNotification("Loading and validating custom data... Please wait.", duration = NULL, type = "message")
       
       tryCatch({
         d_precip       <- read_csv(input$custom_precip$datapath, show_col_types = FALSE)
@@ -106,10 +106,10 @@ data_ingestion_server <- function(id) {
         app_data$farms_count <- d_farms_count
         app_data$has_track2 <- has_t2
         app_data$is_loaded <- TRUE
-        removeModal()
+        removeNotification(id_notify)
         showNotification("Custom data successfully validated and loaded.", type = "message")
       }, error = function(e) {
-        removeModal()
+        removeNotification(id_notify)
         showNotification(paste("Validation Error:", e$message), type = "error")
       })
     })
@@ -118,7 +118,7 @@ data_ingestion_server <- function(id) {
   })
 }
 
-# Module 1.5: Pre-Processing Engine (Ports 01_.qmd logic to memory) ----
+# Module 1.5: Pre-Processing Engine ----
 pre_processing_server <- function(id, app_data) {
   moduleServer(id, function(input, output, session) {
     
@@ -128,14 +128,17 @@ pre_processing_server <- function(id, app_data) {
       is_climate_processed = FALSE, is_kc_processed = FALSE
     )
     
-    # Disable the process button initially to prevent crashes
-    shinyjs::disable("run_preproc")
+    # Render Pre-Processing Button Conditionally
+    output$run_preproc_ui <- renderUI({
+      if (isTruthy(app_data$is_loaded)) {
+        actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
+      } else {
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("cogs"), " Calculate Kc Curves")
+      }
+    })
     
-    # Enable button only after data is loaded
     observeEvent(app_data$is_loaded, {
       req(app_data$is_loaded)
-      shinyjs::enable("run_preproc")
-      
       tryCatch({
         df_p <- app_data$precip %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(P = sum(p, na.rm=TRUE), .groups="drop")
         df_et0 <- app_data$et0 %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(ET0 = sum(et0, na.rm=TRUE), .groups="drop")
@@ -162,7 +165,8 @@ pre_processing_server <- function(id, app_data) {
     
     observeEvent(input$run_preproc, {
       req(app_data$is_loaded)
-      showModal(modalDialog("Calculating daily Kc curves from phenological stages... Please wait.", footer = NULL, fade = FALSE))
+      
+      id_notify <- showNotification("Calculating daily Kc curves from phenological stages... Please wait.", duration = NULL, type = "message")
       
       tryCatch({
         biophysical_parameters <- list(grazing_growth_rate = 0.00458333333333333, grazing_drop_kc = 0.20, grazing_max_kc = 0.75, napier_decline_rate_1 = 0.000307692307692308, napier_decline_rate_2 = 0.000153846153846154)
@@ -223,10 +227,10 @@ pre_processing_server <- function(id, app_data) {
         preproc_data$crop_rotation_kc_ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
         preproc_data$is_kc_processed <- TRUE
         
-        removeModal()
+        removeNotification(id_notify)
         showNotification("Kc Curves successfully generated!", type = "message")
       }, error = function(e) {
-        removeModal()
+        removeNotification(id_notify)
         showNotification(paste("Kc Pre-processing Error:", e$message), type = "error")
       })
     })
@@ -241,19 +245,28 @@ track1_engine_server <- function(id, app_data, preproc_data) {
     
     engine_results <- reactiveValues(budget_ls = NULL, summary_yr_budgets = NULL, is_calculated = FALSE)
     
-    # Disable the run engine button initially
-    shinyjs::disable("run_engine")
+    # Render Engine Button Conditionally
+    output$run_engine_ui <- renderUI({
+      if (isTruthy(preproc_data$is_kc_processed)) {
+        actionButton(session$ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100")
+      } else {
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("play"), " Run Biophysical Engine")
+      }
+    })
     
-    # Enable the button only when Kc curves are successfully mapped
-    observeEvent(preproc_data$is_kc_processed, {
-      req(preproc_data$is_kc_processed)
-      shinyjs::enable("run_engine")
+    # Render Track 1 Download Button Conditionally
+    output$download_ui_t1 <- renderUI({
+      if (isTruthy(engine_results$is_calculated)) {
+        downloadButton(session$ns("download_report_t1"), "Download PDF Report", class = "btn-info w-100")
+      } else {
+        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+      }
     })
     
     observeEvent(input$run_engine, {
       req(app_data$is_loaded, preproc_data$is_kc_processed)
       
-      showModal(modalDialog("Executing parallel Biophysical Engine. This will take several minutes. Please do not close the window...", footer = NULL, fade = FALSE))
+      id_notify <- showNotification("Executing parallel Biophysical Engine. This will take several minutes...", duration = NULL, type = "message")
       
       tryCatch({
         p.list <- list(precip = app_data$precip, et0 = app_data$et0, et0.timestep = "daily", CN = 85, soil.input = "P", soil.param = app_data$soil_param, sm.init = 0.5, crop.param = app_data$crop_param, kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2))
@@ -275,10 +288,10 @@ track1_engine_server <- function(id, app_data, preproc_data) {
         engine_results$summary_yr_budgets <- process_annual_budget(budget, app_data$crop_systems)
         engine_results$is_calculated <- TRUE
         
-        removeModal()
+        removeNotification(id_notify)
         showNotification("Engine execution complete! Visualizations are rendering.", type = "message")
       }, error = function(e) {
-        removeModal()
+        removeNotification(id_notify)
         showNotification(paste("Engine execution failed:", e$message), type = "error")
       })
     })
@@ -290,20 +303,26 @@ track1_engine_server <- function(id, app_data, preproc_data) {
 track2_engine_server <- function(id, app_data, engine_results) {
   moduleServer(id, function(input, output, session) {
     
+    # Render Track 2 Download Button Conditionally
+    output$download_ui_t2 <- renderUI({
+      if (isTruthy(engine_results$is_calculated)) {
+        downloadButton(session$ns("download_report"), "Download PDF Report", class = "btn-info w-100")
+      } else {
+        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+      }
+    })
+    
     track2_data <- reactive({
       req(engine_results$is_calculated, app_data$is_loaded)
-      
       if (!app_data$has_track2) return(NULL)
-      
-      sanitize_period <- function(x) { ifelse(str_detect(str_trim(as.character(x)), "1950"), "1950s", "2022") }
       
       budget_yr_ls <- lapply(engine_results$budget_ls, function(x) x$sum.yr)
       budget_yr_l <- data.table::rbindlist(budget_yr_ls, idcol = "rotation") %>%
         tidyr::pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
         dplyr::left_join(app_data$crop_systems, by = "rotation")
       
-      ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = sanitize_period(time_period))
-      farms <- app_data$farms_count %>% mutate(time_period = sanitize_period(time_period))
+      ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = as.character(time_period))
+      farms <- app_data$farms_count %>% mutate(time_period = as.character(time_period))
       farms_clean <- farms %>% group_by(time_period, production_system) %>% summarise(number_of_farms = sum(number_of_farms, na.rm = TRUE), .groups = "drop")
       
       ps_results <- get_production_system_budgets(budget_yr_l = budget_yr_l, ps_by_cs_area = ps_area, farms_count_df = farms_clean)

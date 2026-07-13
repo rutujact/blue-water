@@ -865,6 +865,8 @@ get_single_village_plot <- function(df, cfg, output_dev, filename) {
 
 #' Generate HTML networkD3 Interactive Sankey Chart
 #' @export
+#' Generate HTML networkD3 Interactive Sankey Chart
+#' @export
 get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, margin_left = 120, margin_right = 30) {
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -883,17 +885,22 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
     dplyr::mutate(dplyr::across(dplyr::ends_with("_m3"), ~ ifelse(is.nan(.) | is.na(.), 0, .)))
   
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  # STEP 2: AREA NORMALIZATION
+  # STEP 2: DYNAMIC AREA NORMALIZATION
   # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  # Instead of hardcoding "1950s", we use the earliest time period found in the dataset.
+  all_periods <- sort(unique(ps_volumetric_summary$time_period))
+  baseline_period <- all_periods[1] # Automatically selects the oldest year present
+  
   baseline_data <- ps_volumetric_summary %>%
-    dplyr::filter(time_period == "1950s") %>%
+    dplyr::filter(time_period == baseline_period) %>%
     dplyr::group_by(var) %>%
     dplyr::summarise(total_m3 = sum(total_vol_m3, na.rm = TRUE), .groups = "drop")
   
   baseline_p_vol <- sum(baseline_data$total_m3[baseline_data$var == "P"], na.rm = TRUE)
   current_p_vol  <- sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE)
   
-  area_correction_factor <- baseline_p_vol / current_p_vol
+  # If current period is the baseline, factor is 1; otherwise calculate relative change.
+  area_correction_factor <- if (is.na(current_p_vol) || current_p_vol == 0 || baseline_p_vol == 0) 1 else baseline_p_vol / current_p_vol
   
   tp_data <- tp_data %>%
     dplyr::mutate(
@@ -948,7 +955,7 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
   links_list <- list()
   for (i in seq_along(outflow_vols)) {
     if (outflow_vols[i] > 0) {
-      links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = outflow_vols[i], group = "Flow_Rain")
+      links_list[[i]] <- data.frame(source = 0, target = outflow_indices[i], value = abs(outflow_vols[i]), group = "Flow_Rain")
     }
   }
   

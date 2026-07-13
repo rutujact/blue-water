@@ -3,6 +3,17 @@
 # User Interface Modules for Track 1 and Track 2
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+# Helper to create a native Bootstrap 5 HTML tooltip ----
+info_tooltip <- function(text) {
+  tags$span(
+    icon("info-circle"), 
+    `data-bs-toggle` = "tooltip", 
+    `data-bs-placement` = "right",
+    title = text, 
+    style = "cursor: help; color: #2C3E50; margin-left: 6px; font-size: 0.85em;"
+  )
+}
+
 # Module: Data Upload UI ----
 data_upload_ui <- function(id) {
   ns <- NS(id)
@@ -14,7 +25,7 @@ data_upload_ui <- function(id) {
     conditionalPanel(
       condition = sprintf("input['%s'] == true", ns("use_custom")),
       
-      h5("Biophysical Data (Track 1)"),
+      h5("Biophysical Data (Track 1)", info_tooltip("Files 1-7 define the hydrological forcing, soil types, and crop phenology.")),
       fileInput(ns("custom_precip"), "1. Precipitation (01_precip)", accept = ".csv"),
       fileInput(ns("custom_et0"), "2. Reference ET0 (02_et0)", accept = ".csv"),
       fileInput(ns("custom_soil"), "3. Soil Params (03_soil)", accept = ".csv"),
@@ -42,7 +53,7 @@ preproc_controls_ui <- function(id) {
   tagList(
     p("Click below to dynamically generate the continuous daily Crop Coefficient (Kc) curves. This must be completed before running the Biophysical Engine."),
     hr(),
-    actionButton(ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
+    uiOutput(ns("run_preproc_ui"))
   )
 }
 
@@ -52,9 +63,9 @@ track1_controls_ui <- function(id) {
   tagList(
     p("Click below to process the full regional water budget across all crop rotations and soil types. This multi-decadal simulation will take a few minutes."),
     hr(),
-    actionButton(ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100"),
+    uiOutput(ns("run_engine_ui")),
     br(), br(),
-    downloadButton(ns("download_report_t1"), "Download PDF Report", class = "btn-info w-100")
+    uiOutput(ns("download_ui_t1"))
   )
 }
 
@@ -64,6 +75,6 @@ track2_controls_ui <- function(id) {
   tagList(
     p("These visualisations map the physical water budgets to specific socio-economic farm topologies and historical demographic data."),
     hr(),
-    downloadButton(ns("download_report"), "Download PDF Report", class = "btn-info w-100")
+    uiOutput(ns("download_ui_t2"))
   )
 }
