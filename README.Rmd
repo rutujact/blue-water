@@ -1,16 +1,21 @@
 ---
-title: "The Blue Water Toolkit"
+title: "The Blue Water Potential Calculator"
 output: github_document
 ---
 
-**A Framework for Modeling Net Watershed Impacts**
+**a framework for incorporating farm
+social diversity in micro-regional water budgets**
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
 This repository contains the computational workflow and analytical engine for the manuscript:
 > **Hemingway, C. et al. (2026).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
-The **Blue Water Toolkit** provides a generalized R framework for simulating Blue Water Potential (Recharge minus Irrigation requirement) at the micro-regional or village scale. By coupling biophysical water fluxes (driven by meteorological forcing and dynamic crop coefficients) with agricultural demographics, this toolkit reveals how social diversity of farms drive local groundwater sustainability.
+The **The Blue Water Potential Calculator** provides a generalized R framework for
+simulating Blue Water Potential (Groundwater Recharge minus Irrigation requirement)
+at the micro-regional or village scale. By coupling biophysical water
+fluxes (driven by long term meteorological forcing and dynamic crop coefficients)
+with agricultural demographics, this toolkit reveals how differnt type of farms can be either net consumer or net procuders of blue water in a given climate.
 
 ---
 
