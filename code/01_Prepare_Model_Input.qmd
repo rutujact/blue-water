@@ -42,8 +42,8 @@ This script processes, standardizes, and expands seven distinct categories of in
 3. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
 4. **Crop Cycle**: Sowing date, Crop phenological phase duration and respective crop coefficients (Kc) according to FAO56 method (Allen et al., 1998).
 5. **Cropping Systems**: Crop rotation at the plot scale.
-6. **Farm production systems**: Agrregation of grazed and cropped area (ha) for each farming system.
-7. **agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
+6. **Farm production systems**: Agregation of grazed and cropped area (ha) for each farming system.
+7. **Agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
 
 In Hemingway et., al, XX, this process was run for two agrarian systems, corresponding to two historical periods, 1950s and 2022. The climate time series (1980-2018) was the same for the two periods analysed, while cropping systems, productions systems and agrarian systems were period-specific.
 
