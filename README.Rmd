@@ -13,9 +13,9 @@ This repository contains the computational workflow and analytical engine for th
 
 The **The Blue Water Potential Calculator** provides a generalized R framework for
 simulating Blue Water Potential (Groundwater Recharge minus Irrigation requirement)
-at the micro-regional or village scale. By coupling biophysical water
+at plot, farm, and village/micro-regional scale. By coupling biophysical water
 fluxes (driven by long term meteorological forcing and dynamic crop coefficients)
-with agricultural demographics, this toolkit reveals how differnt type of farms can be either net consumer or net procuders of blue water in a given climate.
+with agricultural demographics, this toolkit reveals how differnt type of farms can be either net consumers or net producers of blue water in a given climate.
 
 ---
 
@@ -120,7 +120,7 @@ If applying this toolkit to a new region, you will need the following localized 
 
 ### Toolkit Development & Attribution
 This repository represents the digital translation and scaling of a micro-regional water accounting model:
-* **Model Logic, Data Collection & Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent Ruiz.
+* **Model Rationale, Data Collection & Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent Ruiz.
 * **R Translation, Framework Design, & Documentation:** Developed by Rutuja Chitra-Tarak.
 
 ### Manuscript Author Statement (CRediT)
@@ -158,6 +158,6 @@ The computational workflow, functions, and codebase contained within this reposi
 ### Preferred Citation
 If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:
 
-* **Software:** Chitra-Tarak, R. et al. (2026). *The Blue Water Toolkit: a new framework for incorporating farm social diversity in micro-regional water budgets* (Version 1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20665272
+* **Software:** Chitra-Tarak, R. et al. (2026). *Blue Water Potential Calculator: a framework for computing and representing water budgets at plot, farm and village/micro-regional scales.* (Version 1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20665272
 
 * **Manuscript:** Hemingway, C. et al. (2026). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]
