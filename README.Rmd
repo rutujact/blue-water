@@ -1,17 +1,16 @@
 ---
-title: "The Blue Water Potential Calculator"
+title: "The Blue Water Potential Toolkit"
 output: github_document
 ---
 
-**a framework for incorporating farm
-social diversity in micro-regional water budgets**
+**A socio-hydrological framework to scale water budgets from plot to agrarian system.**
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
 This repository contains the computational workflow and analytical engine for the manuscript:
 > **Hemingway, C. et al. (2026).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
-The **The Blue Water Potential Calculator** provides a generalized R framework for
+The **The Blue Water Potential Toolkit** provides a generalized R framework for
 simulating Blue Water Potential (Groundwater Recharge minus Irrigation requirement)
 at plot, farm, and village/micro-regional scale. By coupling biophysical water
 fluxes (driven by long term meteorological forcing and dynamic crop coefficients)
@@ -158,6 +157,6 @@ The computational workflow, functions, and codebase contained within this reposi
 ### Preferred Citation
 If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:
 
-* **Software:** Chitra-Tarak, R. et al. (2026). *Blue Water Potential Calculator: a framework for computing and representing water budgets at plot, farm and village/micro-regional scales.* (Version 1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20665272
+* **Software:** Chitra-Tarak, R. et al. (2026). *Blue Water Potential Toolkit: a framework for computing and representing water budgets at plot, farm and village/micro-regional scales.* (Version 1.0.0). Zenodo. https://doi.org/10.5281/zenodo.20665272
 
 * **Manuscript:** Hemingway, C. et al. (2026). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]
