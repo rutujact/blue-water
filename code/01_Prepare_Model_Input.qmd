@@ -1,10 +1,10 @@
 ---
 title: "Model Input Preparation" 
-subtitle: "Assembling Meteorological Data, Crop Parameters, Crop Rotations, Production Systems and Farm Demographics for the Blue Water Potential Engine"
+subtitle: "Assembling Meteorological Data, Crop Parameters, Crop Rotations, Production Systems and Farm Demographics for the Blue Water Potential Toolkit"
 author: 
   - "Rutuja Chitra-Tarak (Code)"
-  - "Charlotte Hemingway (Data and Kc Calculations)"
-  - "Laurent Ruiz (Data and Kc Calculations)"
+  - "Charlotte Hemingway (Data and Calculations)"
+  - "Laurent Ruiz (Data and Calculations)"
 # date: today
 # date-format: "DD MMMM, YYYY"
 format: 
@@ -31,25 +31,28 @@ h1, h2 {
 
 ```
 
-**Note to Users**: The primary requirement to run the BWP Analytical Engine (`02_blue-water.qmd`) is the set of standardized CSV outputs produced by this script. You do not need to format your data to match any messy or idiosyncratic starting points. Instead, use this document as a blueprint: your goal is simply to provide clean baseline data files that match the formats defined below.
+**Note to Users**: The primary requirement to run the Blue Water Potential Toolkit (`02_blue-water.qmd`) is the set of standardized CSV outputs produced by this script. 
 
 ### 🗂️ Workflow & Data Summary
 
-This script processes, standardizes, and expands six distinct categories of input data required by the hydrological model:
+This script processes, standardizes, and expands seven distinct categories of input data required by the hydrological model for a given agrarian system:
 
-1. **Climatic Forcings**: Daily Precipitation and Reference Evapotranspiration (ET0).
+1. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
 2. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
-3. **Crop Parameters**: Rooting depths and irrigation constraints.
-4. **Crop Coefficients (Kc)**: Dynamic daily vegetative growth curves.
-5. **Crop Systems**: Multi-season crop rotation definitions.
-6. **Landscape Demographics**: Cultivated area (hectares) broken down by production system and historical period.
+3. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
+4. **Crop Cycle**: Sowing date, Crop phenological phase duration and respective crop coefficients (Kc) according to FAO56 method (Allen et al., 1998).
+5. **Cropping Systems**: Crop rotation at the plot scale.
+6. **Farm production systems**: Agrregation of grazed and cropped area (ha) for each farming system.
+7. **agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
+
+In Hemingway et., al, XX, this process was run for two agrarian systems, corresponding to two historical periods, 1950s and 2022. The climate time series (1980-2018) was the same for the two periods analysed, while cropping systems, productions systems and agrarian systems were period-specific.
 
 ### 📂 Directory Structure for this Script
 
-This script serves two purposes: it documents the reproducible workflow for the manuscript, and it acts as a "cookbook" for adapting the engine to new watersheds.
+This script serves two purposes: it can be used to reproduce the results presented in the manuscript Hemingwayy et al., and it can be used to apply the method in your specific study sites.
 
-* **Reproducing the Manuscript:** Our original data files in their raw, unformatted state are not provided. However, all clean baseline inputs required to run this script are provided in the `data/input/` directory.
-* **Adapting for your own data:** Place your clean baseline data and code dependencies in the correct starting locations shown below. The script will automatically generate the required folder structure for all derived processed outputs if they do not exist. To run this script, open the `.Rproj` and click "Render".
+* **Reproducing the Manuscript:** All clean inputs required to run this script are provided in the `data/input/` directory.
+* **Adapting for your own study site:** Place your clean data in the correct starting locations shown below. The script will automatically generate the required folder structure for all derived processed outputs if they do not exist. To run this script, open the `.Rproj` and click "Render".
 
 ```text
 project_root/
@@ -60,16 +63,14 @@ project_root/
 │   │   ├── 03_soil.parameters.csv
 │   │   ├── 04_crop.parameters.csv
 │   │   ├── 05_crop_kc_curve_parameters_table.csv
-│   │   ├── 06_fruit_kc_curve_parameters_table.csv
+│   │   ├── 06_fruit_kc_curve_parameters_table.csv (optional)
 │   │   ├── 07_crop.systems.csv
 │   │   ├── 08_crop_system_area_by_production_system.csv
-│   │   └── 09_no_of_farmers_by_production_system.csv
-│   └── processed/           <- TARGET: Derived model assets (Kc curves, typologies) will land here
+│   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
+│   └── processed/           <- TARGET: Derived model requirements (Kc curves, typologies) will land here
 │       └── supplementary/   <- TARGET: Intermediary Kc tables will land here
 ├── code/
 │   ├── functions/
-│   │   ├── 01_get_kc.R      <- Required: Biophysical function dependency
-│   │   └── 03_expand_kc.R   <- Required: Biophysical function dependency
 │   ├── 01_Prepare_Model_Inputs.qmd  <- (This file)
 │   └── 01_Prepare_Model_Inputs.html <- Generated: HTML Report created by rendering this script
 └── Blue-Water.Rproj         <- Required: RStudio Project file to render this script
@@ -92,10 +93,7 @@ source(here("code/functions/01_get_kc.R"))
 source(here("code/functions/03_expand_kc.R"))
 
 # ==============================================================================
-# BIOPHYSICAL CALIBRATION CONSTANTS
-# Note: These parameters define biophysical constraints for grazing and 
-# automated harvesting regimes, including regrowth rates and baseline 
-# bare-soil configurations.
+# GRASSLAND GROWTH CYCLE PARAMETERS
 # ==============================================================================
 biophysical_parameters <- list(
   grazing_growth_rate   = 0.00458333333333333,
@@ -116,7 +114,7 @@ theme_baseR <- theme_bw() + theme(
 
 # Climatic Data (Forcing Variables)
 
-The foundation of the water balance model requires continuous, daily forcing variables. Here, we define the required daily Precipitation (P) and Reference Evapotranspiration (ET0).
+The water balance model requires continuous, daily forcing variables. Here, we read the required daily Precipitation (P) and Reference Evapotranspiration (ET0).
 
 ```{r clim-load}
 precip <- read_csv(here("data/input/01_precipitation.csv"), show_col_types = FALSE)
@@ -143,14 +141,14 @@ knitr::kable(preview_precip, escape = FALSE, caption = "Preview: Precipitation D
 
 # Soil Parameters
 
-The hydrological model requires specific soil properties to determine infiltration and drainage dynamics.
+The hydrological model requires specific soil properties: Water Holding Capacity (WHC) and Readily Available Water (RAW).
 
 ```{r param-load}
 soil.param <- read_csv(here("data/input/03_soil.parameters.csv"), show_col_types = FALSE)
 
 ```
 
-#### Soil Parameter Matrix
+#### Soil Parameters Table
 
 ```{r soil-display, echo=FALSE}
 preview_soil <- soil.param
@@ -160,20 +158,20 @@ colnames(preview_soil) <- c(
   "whc.mmpercm<br><small style='color:gray; font-weight:normal;'>WHC (mm water / cm soil)</small>",
   "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold</small>"
 )
-knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Matrix")
+knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Table")
 
 ```
 
-# Crop Parameters & Coefficients (Kc)
+# Crop Characteristics
 
-## Rooting Depth and Irrigation Constraints
+## Rooting Depth and Irrigated/Rainfed
 
 ```{r crop-param-load}
 crop.param <- read_csv(here("data/input/04_crop.parameters.csv"), show_col_types = FALSE)
 
 ```
 
-#### Crop Constraints
+#### Crop Rooting Depth and Irrigated/Rainfed
 
 ```{r crop-display, echo=FALSE}
 preview_crop <- crop.param
@@ -182,20 +180,20 @@ colnames(preview_crop) <- c(
   "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
   "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
 )
-knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Irrigation Need")
+knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Irrigated/Rainfed Table")
 
 ```
 
-## Crop Coefficient (Kc) Expansion
+## Crop Coefficient (Kc) Curves
 
-Evapotranspiration relies heavily on accurate scaling by the crop's vegetative stage. Our framework dynamically generates daily curves based on underlying mathematical definitions (FAO segmented logic, polynomials, and linear regrowth rules) from the baseline parameters provided.
+Our framework dynamically generates daily Kc curves over a calendar year from the input parameters. As described in the manuscript, daily Kc values are computed based on the FAO method for most crops, monthly step functions for some fruit trees, or polynomial equations for groundnut, or linear regrowth rules for grasslands. Some crops such as banana can span multiple years, in which case we define a crop coefficient curve of each year independently.
 
 ```{r load-kc-params}
 kc.raw       <- read_csv(here("data/input/05_crop_kc_curve_parameters_table.csv"), show_col_types = FALSE)
 raw_params   <- read_csv(here("data/input/06_fruit_kc_curve_parameters_table.csv"), show_col_types = FALSE)
 crop.systems <- read_csv(here("data/input/07_crop.systems.csv"), show_col_types = FALSE)
 
-# Generate the long-format rotation dictionary required by the downstream engine
+# Generate the long-format rotation table required by the downstream Toolkit
 crop.systems.l <- crop.systems %>%
   select(-Irrigation) %>%
   pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
@@ -220,9 +218,7 @@ knitr::kable(raw_params, caption = "Preview: Fruit Tree Parameters")
 
 ---
 
-We pass the baseline parameters through our biophysical expansion functions. This includes standard FAO-56 segmented curves for standard crops, derived 4th-order polynomial equations for continuous rapid growth crops like Groundnuts, and complex daily linear regrowth rates for pastures and harvested grasses.
-
-*(Note: Our functions strictly enforce a 0.01 threshold for baseline dry-season bare soil).*
+We pass the input Kc parameters through mathematical functions. This includes standard FAO-56 segmented curves for standard crops, derived 4th-order polynomial equations for continuous rapid growth crops like Groundnuts, and complex daily linear regrowth rates for pastures and harvested grasses.
 
 ### Standard FAO-56 Segmented Curves
 
@@ -325,7 +321,7 @@ ggplot(kc_fruits %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), aes(x = d
 
 ```
 
-### Complex Harvesting & Regrowth Schedules
+### Grasslands and Fodder Crops
 
 Applies calibrated drop-and-regrowth rates for grazed pastures and harvested Napier grass.
 
@@ -360,9 +356,9 @@ ggplot(complex_plot_data %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), a
 
 ```
 
-### Final Merge and System Mapping
+### Kc Curve compilation for all crops
 
-Binds all generated curves together and maps them back to the user's defined multi-season crop rotations.
+Compile all generated Kc curves. maps them back to the user’s defined multi-season crop rotations.
 
 ```{r kc-merge}
 kc.doy.crop.all <- bind_rows(
@@ -375,12 +371,12 @@ write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_
 
 ```
 
-### Plotting All Crop Curves
+### Plotting All Crop Kc Curves
 
 *(Saves a high-resolution PDF for the manuscript).*
 
 ```{r plot-all-kc, fig.width=10, fig.height=8, warning=FALSE}
-#| fig-cap: "**Figure 1. Synthesized daily crop coefficient ($K_c$) trajectories for all modeled agricultural and pastoral classifications.** The panels illustrate the continuous temporal evolution of $K_c$ across a full calendar year (Day of Year), generated via crop-specific mathematical rule sets. The profiles integrate multiple modeling approaches: standard FAO-56 segmented linear growth stages for seasonal crops (e.g., millet, rice, tomato, pulses), continuous polynomial equations for groundnut varieties, discrete monthly step-functions for specific perennial orchards (sweet lime, pomegranate), and calibrated drop-and-regrowth cycles to simulate managed grazing and repeated harvesting schedules (grazed pastures, Napier grass)."
+#| fig-cap: "**Figure 1. Daily crop coefficient ($K_c$) for all modeled crops.** The panels illustrate the temporal variation of $K_c$ across a full calendar year (Day of Year), generated via crop-specific mathematical rule sets. The profiles integrate multiple modeling approaches: standard FAO-56 segmented linear growth stages for seasonal crops (e.g., millet, rice, tomato, pulses), continuous polynomial equations for groundnut varieties, discrete monthly step-functions for specific perennial orchards (sweet lime, pomegranate), and drop-and-regrowth cycles to simulate managed grazing and repeated harvesting schedules (grazed pastures, Napier grass)."
 
 if (!dir.exists(here("figures/manuscript"))) {
   dir.create(here("figures/manuscript"), recursive = TRUE, showWarnings = FALSE)
@@ -408,6 +404,8 @@ print(kc_plot)
 ggsave(here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), plot = kc_plot, width = 10, height = 8)
 ```
 
+### Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
+
 ```{r map-kc-curves, results='hide'}
 crop.systems.l.kc <- crop.systems.l %>%
   select(rotation, n.rotation, crop.system, soil, ncrop, crop, irrigation, rooting_depth_cm) %>%
@@ -418,7 +416,7 @@ save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rda
 
 ```
 
-#### Expanded Daily Kc Matrix
+#### Daily Kc Table for a Crop Rotation
 *(Example showing the generated continuous timeline for a single rotation).*
 ```{r display-kc-expansion, echo=FALSE}
 preview_kc <- head(crop.rotation.kc.ls[[1]], 10) %>%
@@ -430,20 +428,23 @@ colnames(preview_kc) <- c(
   "doy<br><small style='color:gray; font-weight:normal;'>Day of Year (1-366)</small>",
   "kc<br><small style='color:gray; font-weight:normal;'>Daily Crop Coefficient</small>"
 )
-knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Expanded Daily Kc Matrix (Single Rotation)")
+knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Daily Kc Table (Single Rotation)")
 ```
 
-# Spatial Land Use & Agricultural Demographics
+# Agrarian System
 
 To evaluate Blue Water Potential (or Net Recharge) at the macro level, we must scale our field-level water budgets up to the watershed scale. This requires two distinct scaling factors: the physical footprint of the crops (Spatial Land Use) and the population distribution of the farmers (Agricultural Demographics).
 
+
+#### @Rutuja: Let,s add Cropping Systems Preview here
+
+#### Production System Description
+
+Read the file that describes the composition of each production system in terms of cropping systems and their area. For this case study of Hemingway et al. this information is taken from Table 1 & 2 of Hemingway et al. 2025.
+
 ```{r load-demos}
 ps_by_cs_area  <- read_csv(here("data/input/08_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
-farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
-
 ```
-
-#### Production System Area
 
 ```{r display-area, echo=FALSE}
 preview_ps <- head(ps_by_cs_area, 5)
@@ -457,7 +458,13 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 
 ```
 
-#### Historical Farm Counts
+#### Agrarian System
+
+Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In the our case study these numbers are calculated for two periods  using an optimisation technique as described in Hemingway et al. ZENODO 
+```{r load-demos}
+farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
+```
+
 ```{r display-counts, echo=FALSE}
 preview_counts <- head(farms_count_df, 5)
 colnames(preview_counts) <- c(
@@ -465,67 +472,7 @@ colnames(preview_counts) <- c(
   "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
   "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
 )
-knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Historical Farm Counts")
-
-```
-
-### Classify Production Systems by Hydrological Typology
-
-Farm production systems are highly heterogeneous. Because irrigation drives a disproportionately high water deficit, classifying farms strictly by majority land area underestimates their hydrological impact. Instead, we use a hierarchical threshold to define the **System Typology**. If a production system dedicates a significant threshold of its land ($\geq 35\%$) to irrigation, it is classified as "Irrigation-Driven," regardless of its remaining acreage.
-
-```{r calculate-typology}
-# 1. Map Crop Systems to Core Surface Types
-cs_surface <- crop.systems %>%
-  select(crop.system, Irrigation) %>%
-  distinct() %>%
-  mutate(
-    land_use = case_when(
-      Irrigation == "Irrigated" ~ "Irrigated",
-      str_detect(crop.system, "(?i)grassland|grazed|pasture") ~ "Pastoral",
-      TRUE ~ "Rainfed"
-    )
-  )
-
-# 2. Calculate area percentages and pivot to wide format
-ps_typology <- ps_by_cs_area %>%
-  left_join(cs_surface, by = "crop.system") %>%
-  group_by(time_period, production_system, land_use) %>%
-  summarise(land_use_area = sum(area_ha, na.rm = TRUE), .groups = "drop_last") %>%
-  mutate(
-    total_area_ha = sum(land_use_area, na.rm = TRUE),
-    land_use_pc   = round((land_use_area / total_area_ha) * 100, 2)
-  ) %>%
-  ungroup() %>%
-  select(-land_use_area) %>%
-  pivot_wider(names_from = land_use, values_from = land_use_pc, values_fill = 0) %>%
-  mutate(
-    system_typology = case_when(
-      Irrigated >= 35 ~ "Irrigated",
-      Pastoral > Rainfed ~ "Pastoral",
-      TRUE ~ "Rainfed"
-    )
-  ) %>%
-  select(time_period, production_system, total_area_ha, Irrigated, Pastoral, Rainfed, system_typology)
-
-# Save the structured classification for downstream plotting
-write.csv(ps_typology, file = here("data/processed/supplementary/05_production_system_typology.csv"), row.names = FALSE)
-
-```
-
-#### Derived Typology
-```{r display-typology, echo=FALSE}
-preview_typology <- head(ps_typology, 5)
-colnames(preview_typology) <- c(
-  "time_period<br><small style='color:gray; font-weight:normal;'>Era</small>",
-  "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
-  "total_area_ha<br><small style='color:gray; font-weight:normal;'>Total area (ha)</small>",
-  "Irrigated<br><small style='color:gray; font-weight:normal;'>% Area</small>",
-  "Pastoral<br><small style='color:gray; font-weight:normal;'>% Area</small>",
-  "Rainfed<br><small style='color:gray; font-weight:normal;'>% Area</small>",
-  "system_typology<br><small style='color:gray; font-weight:normal;'>Dominant class</small>"
-)
-knitr::kable(preview_typology, escape = FALSE, caption = "Preview: Production System Land Use Area & Hydrological Typology")
-
+knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
 ```
 
 ```
