@@ -12,9 +12,8 @@ This repository contains the computational workflow and analytical engine for th
 
 The **The Blue Water Potential Toolkit** provides a generalized R framework for
 simulating Blue Water Potential (Groundwater Recharge minus Irrigation requirement)
-at plot, farm, and village/micro-regional scale. By coupling biophysical water
-fluxes (driven by long term meteorological forcing and dynamic crop coefficients)
-with agricultural demographics, this toolkit reveals how differnt type of farms can be either net consumers or net producers of blue water in a given climate.
+at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information
+with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
 
 ---
 
