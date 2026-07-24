@@ -20,7 +20,7 @@ The codebase is modular, separating data preparation, core mathematical function
 ```text
 project_root/
 ├── data/
-│   ├── input/               <- Raw data for 01_Prepare_Model_Inputs.qmd
+│   ├── input/               <- Standardized CSVs for 01_Prepare_Model_Inputs.qmd
 │   └── processed/           <- Standardized CSV outputs to run the Blue Water Calculations in 02_Blue-Water.qmd 
 ├── code/
 │   ├── 01_Prepare_Model_Inputs.qmd  <- Data preparation cookbook (Markdown)
