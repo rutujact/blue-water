@@ -96,6 +96,7 @@ project_root/
 └── 02_Blue-Water.html       <- Generated: HTML Report created by knitting this script
 ```
 
+
 ```{r setup, include=FALSE}
 rm(list = ls(all.names = TRUE)); gc()
 knitr::opts_chunk$set(
@@ -112,7 +113,6 @@ options(width = 80)
 
 EXPORT_FIGURES <- TRUE # Toggle to TRUE only for final manuscript output
 
-
 # By default, the script Runs the full suite at village/micro-region (requires file processed/01 to 09).
 
 # Set this if you have limited data!
@@ -121,7 +121,6 @@ HAS_PRODUCTION_SYSTEM <- TRUE # Set to FALSE to Stop at Cropping Systems (requir
 HAS_AGRARIAN_SYSTEM <- TRUE # Set to FALSE to Stop at Production Systems (requires ONLY processed/01 to 08).
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 # Load core dependencies
 if (!require("pacman")) install.packages("pacman"); library(pacman)
@@ -375,7 +374,8 @@ load(file = here("output/01_processed_water_budgets.Rdata"))
 
 # Output Processing & BWP Calculations
 
-We transform the "output/01_processed_water_budgets.Rdata") file into CSVs of daily outputs: "output/02_export_detailed_daily_water_budgets.csv", as well as yearly outputs: "output/03_export_annual_water_budgets_long.csv", or for an average year (with median and 95% quantiles across years): "output/04_calculated_crop_system_blue_water_potential.csv".
+We transform the "output/01_processed_water_budgets.Rdata") file into CSVs of:
+1. daily outputs: "output/02_export_detailed_daily_water_budgets.csv", 2. yearly outputs: "output/03_export_annual_water_budgets_long.csv", or 3. for an average year (with median and 95% quantiles across years): "output/04_calculated_crop_system_blue_water_potential.csv".
 
 ```{r compile-outputs}
 # Make sure data.table and readr are installed and loaded
@@ -665,8 +665,6 @@ For the case study in Hemingway et al. 202X, a large number of rainfed farmers a
 
 fig.9_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, crop.systems, ps_by_cs_area)
 
-print(fig.9_disparity)
-
 if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.9_Farm_BWP_Disparity.pdf"), fig.9_disparity, width = 11, height = 5.5, device = cairo_pdf)
@@ -674,6 +672,8 @@ ggsave(here("figures/manuscript/Fig.9_Farm_BWP_Disparity.pdf"), fig.9_disparity,
 # Save PNG for Presentation
 ggsave(here("figures/presentation/Fig.9_Farm_BWP_Disparity.png"), fig.9_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
 }
+
+print(fig.9_disparity)
 ```
 
 ```
