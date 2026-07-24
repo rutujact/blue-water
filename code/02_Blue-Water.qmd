@@ -111,7 +111,7 @@ options(width = 80)
 # USER CONFIGURATION
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-EXPORT_FIGURES <- TRUE # Toggle to TRUE only for final manuscript output
+EXPORT_FIGURES <- FALSE # Toggle to TRUE only for final manuscript output
 
 # By default, the script Runs the full suite at village/micro-region (requires file processed/01 to 09).
 

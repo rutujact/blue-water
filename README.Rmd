@@ -42,7 +42,7 @@ project_root/
 To use this toolkit, you will need to run it locally on your machine.
 
 1. **Install R and RStudio:**
-Ensure you have the latest versions of [R](https://cran.r-project.org/) and [RStudio](https://posit.co/download/rstudio-desktop/) installed on your computer.
+Ensure you have [RStudio](https://posit.co/download/rstudio-desktop/) installed. This toolkit was developed and tested using **R version 4.2.2**. To guarantee full compatibility with the `renv` package library, we strongly recommend installing [R 4.2.2](https://cran.r-project.org/src/base/R-4/), though newer versions may still work.
 
 2. **Install Required Packages:**
 Open RStudio, copy the following command, and paste it into your Console to manually install all necessary dependencies. *(If RStudio prompts you to compile from sources, it is generally safer to type "no" and use the pre-compiled binaries).*
