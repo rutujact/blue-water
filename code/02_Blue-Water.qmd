@@ -1,6 +1,6 @@
 ---
 title: "The Blue Water Toolkit"
-subtitle: "A Framework for Modeling Net Watershed Impacts"
+subtitle: "A socio-hydrological framework to scale water budgets from plot to agrarian system."
 author: 
   - "Rutuja Chitra-Tarak"
   - "Charlotte Hemingway"
@@ -53,24 +53,37 @@ h1, h2 {
 
 This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
 
-This repository provides a generalized computational framework for simulating **Blue Water Potential (BWP)** at the micro-regional (aka village) level, driven by area-specific cropping systems and historical meteorological forcing. While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any watershed globally, provided you have local meteorological and cropping system data. 
+The **The Blue Water Potential Toolkit** provides a generalized R framework for
+simulating Blue Water Potential (Groundwater Recharge minus Irrigation requirement)
+at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information
+with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
 
-> 💡 **Using this Toolkit:** See the repository `README.md` for full instructions on how to adapt this framework using your own processed site data (generated via `01_Format_Input_Data.Rmd`).
+While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any case study globally, provided you have local meteorological and cropping system data. 
+
+> 💡 **Using this Toolkit:** See the repository `README.md` for full instructions on how to adapt this framework using your own processed site data (generated via `01_Format_Input_Data.Rmd`) and how to cite this toolkit.
 
 ---
 
 ### 📂 Directory Structure for this Script
 
-This script assumes you have already run `01_Format_Input_Data.Rmd`. It will consume the processed data and automatically generate the necessary subdirectories in `output/` and `figures/` for the final exports. To run this script and generate the report, open the `.Rproj` and click "Knit".
+This script assumes you have already run `01_Format_Input_Data.Rmd`. It will read the processed data and automatically generate the necessary subdirectories in `output/` and `figures/`. To run this script and generate the report, open the `.Rproj` and click "Knit".
 
 ```text
 project_root/
 ├── data/
-│   └── processed/           <- Required: Output data from the 01_Format script
+│   └── processed/           <- Required: Processed data from the 01_Input script
+│   │   ├── 01_precipitation.csv
+│   │   ├── 02_et0.csv
+│   │   ├── 03_soil.parameters.csv
+│   │   ├── 04_crop.parameters.csv
+│   │   ├── 05_crop_kc_curve_parameters_table.csv
+│   │   ├── 06_fruit_kc_curve_parameters_table.csv (optional)
+│   │   ├── 07_crop.systems.csv
+│   │   ├── 08_crop_system_area_by_production_system.csv
+│   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
 ├── code/
-│   ├── functions/           <- Required: Core engine dependencies
-│   │   ├── 02_get_Peff.R
-│   │   ├── 03_expand_kc.R
+│   ├── functions/           <- Required: Core toolkit dependencies
+│   │   ├── 02_get_Peff.R     
 │   │   ├── 04_get_budget.R
 │   │   └── 05_get_figures.R
 │   ├── 01_Format_Input_Data.Rmd
@@ -102,10 +115,12 @@ options(width = 80)
 
 EXPORT_FIGURES <- FALSE # Toggle to TRUE only for final manuscript output
 
-# Toggle this based on your available data!
-# TRUE  = Runs the full suite (requires demographic and area data).
-# FALSE = Stops at Cropping Systems (requires ONLY climate, soil, and crop data).
-HAS_DEMOGRAPHICS <- TRUE
+# Set this based on your available data!
+HAS_CROP_SYSTEMS <- TRUE # Set to FALSE to Stop at Individual Crops (requires ONLY processed/01 to 05 or 01 to 06).
+HAS_PRODUCTION_SYSTEM <- TRUE # Set to FALSE to Stop at Cropping Systems (requires ONLY processed/01 to 07).
+HAS_AREA <- TRUE # Set to FALSE to Stop at Production Systems (requires ONLY processed/01 to 08).
+
+By default, the script Runs the full suite at village/micro-region (requires file processed/01 to 09).
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -136,9 +151,9 @@ theme_set(
 
 ```
 
-## Load Engine Dependencies
+## Load Toolkit Dependencies
 
-These external modular scripts handle the mathematical heavy lifting behind the scenes, processing parameters such as daily reference evapotranspiration ($ET_0$), effective precipitation ($P_{eff}$), and generating the core plot architectures.
+These external modular scripts handle the mathematical heavy lifting behind the scenes, processing forcing variables such as daily reference evapotranspiration ($ET_0$), effective precipitation ($P_{eff}$), and generating the core plot architectures.
 
 ```{r load-functions}
 source(here("code/functions/02_get_Peff.R"))
@@ -155,9 +170,9 @@ quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
 
 ---
 
-# Data Ingestion & Climatology Check
+# Input Data Preview
 
-The foundation of the water balance is driven by daily meteorological forcing. Below, we ingest the processed climate series and provide brief data previews.
+Below, we ingest the processed climate series and provide brief data previews.
 
 ```{r load-met}
 sitename <- "Anantapur"
@@ -177,9 +192,8 @@ knitr::kable(head(et0, 3), caption = "Preview: Reference ET0 Data Sample")
 
 ## Climatological Profile Summary
 
-To visually validate our meteorological inputs before running the engine, we plot the baseline monthly metrics representing the overarching water supply and evaporative demand.
 
-```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Monthly baseline metrics showing mean rainfall, temperature, and reference evapotranspiration.'}
+```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Monthly mean (5-95% quantiles) rainfall, temperature, and reference evapotranspiration.'}
 climate_summary <- read.csv(file = here("data/processed/03_climatology_for_figure.csv"), header = TRUE)
 
 fig.1_journal <- plot_climate_profile(climate_summary)
@@ -194,29 +208,27 @@ ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regiona
 }
 ```
 
-## Soil & Crop Parameters and Crop System Definitions 
-
-Next, we load the physical attributes governing the hydrological routing. This includes mapping soil moisture capacities against crop rooting constraints, and defining the specific crop rotational systems cultivated in the region.
+## Soils, Crops and Cropping Systems 
 
 ```{r load-soil-and-crop}
-# Soil Parameter Matrix
+# Soil Parameters
 soil.param <- read.csv(file = here("data/processed/04_soil.parameters.csv"), header = TRUE)
-knitr::kable(soil.param, caption = "Preview: Soil Parameter Matrix")
+knitr::kable(soil.param, caption = "Preview: Soil Parameter")
 
-# Crop Rooting Depth & Irrigation Need
+# Crop Rooting Depth & Rainfed/Irrigated Crop
 crop.param <- read.csv(file = here("data/processed/05_crop.parameters.csv"), header = TRUE)
-knitr::kable(head(crop.param), caption = "Preview: Crop Rooting Depth and Irrigation Requirement")
+knitr::kable(head(crop.param), caption = "Preview: Crop Rooting Depth and Rainfed/Irrigated Crop")
 
-# Cropping Systems Definitions
+# Cropping Systems
 crop.systems.l <- read.csv(file = here("data/processed/06_crop.systems.l.csv"), header = TRUE)
 crop.systems <- read.csv(file = here("data/processed/07_crop.systems.csv"), header = TRUE)
 load(file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
 
-knitr::kable(head(crop.systems), caption = "Preview: Active Cropping Systems")
+knitr::kable(head(crop.systems), caption = "Preview: Cropping Systems")
 
 ```
 
-```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves mapped across distinct plant rotations (columns) of each crop system (rows) color coded by crop. Off-season and ‘No Crop’ periods default to a defined baseline threshold representing bare-soil evaporation."}
+```{r fig.2, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 2. Annual Crop Coefficient (Kc) curves for each cropping system (rows) for one year (column 1) or multi-year (columns 1-2 or 1-3) rotations, color coded by crop. Off-season and ‘No Crop’ periods default to a defined baseline threshold representing bare-soil evaporation."}
 crop.systems.l.kc <- bind_rows(crop.rotation.kc.ls, .id = "rotation")
 
 fig.2_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
@@ -233,11 +245,11 @@ ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Crop_Co
 
 ## Production Systems & Socio-Agricultural Composition
 
-> ⚠️ **Note to Users:** The following sections execute **Track 2** of this toolkit and require landscape demographic data. If you have set `HAS_DEMOGRAPHICS <- FALSE` in the setup chunk, the remainder of this document will be intentionally skipped during rendering.
+> ⚠️ **Note to Users:** The following sections execute **Track 2** of this toolkit and require landscape demographic data. If you have set `HAS_AREA <- FALSE` in the setup chunk, the remainder of this document will be intentionally skipped during rendering.
 
 These files map the crop systems to social category of farms. They track historical changes in land use structure, count the number of farms belonging to each group, and classify each production system (e.g., Irrigated vs. Pastoral) based on the dominant percentage of their land allocation.
 
-```{r social-ingestion, eval=HAS_DEMOGRAPHICS}
+```{r social-ingestion, eval=HAS_AREA}
 ps_by_cs_area <- read.csv(file = here("data/processed/09_crop_system_area_by_production_system.csv"), header = TRUE)
 ps_typology <- read.csv(file = here("data/processed/supplementary/05_production_system_typology.csv"), header = TRUE)
 farms_count_df <- read.csv(file = here("data/processed/10_no_of_farmers_by_production_system_1950_and_2022.csv"), header = TRUE)
@@ -252,9 +264,9 @@ knitr::kable(head(farms_count_df), caption = "Preview: Historical Farm Counts")
 
 ---
 
-# Core Hydrology Execution Engine
+# Core Hydrology Execution Toolkit
 
-We first transform crude precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) depending on soil type to account for surface runoff, before initializing the core water balance engine.
+We first transform crude precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) depending on soil type to account for surface runoff, before initializing the core water balance Toolkit.
 
 ```{r set_param_budget}
 p.list <- list(
@@ -280,7 +292,7 @@ names(met.forcing.ls) <- soil.param$soil
 > ⚡ **Pro-Tip: Parallel Processing**
 > Simulating multi-decadal daily water fluxes across dozens of crop rotations is computationally expensive. The code block below detects the number of available physical cores on your machine and parallelizes the tasks, drastically reducing execution time.
 
-```{r engine, eval = FALSE}
+```{r Toolkit, eval = FALSE}
 # Multi-Core Setup
 num_cores <- parallel::detectCores(logical = FALSE) 
 cl <- makeCluster(num_cores, type = "PSOCK") 
@@ -299,7 +311,7 @@ save(budget, file = here("output/01_processed_water_budgets.Rdata"))
 
 ```{r load-precalculated-budgets, include=FALSE}
 # Internal loading mechanism to bypass lengthy re-calculations during document knitting
-# (Ensure the engine block has been run at least once locally)
+# (Ensure the Toolkit block has been run at least once locally)
 load(file = here("output/01_processed_water_budgets.Rdata"))
 
 ```
@@ -399,7 +411,7 @@ By coupling the physical water fluxes with farm survey demographics, we aggregat
 > 
 > 
 
-```{r Run_Aggregation, eval=HAS_DEMOGRAPHICS}
+```{r Run_Aggregation, eval=HAS_AREA}
 ps_results <- get_production_system_budgets(budget.yr.l, ps_by_cs_area, farms_count_df)
 
 ps_budget_summary  <- ps_results$ps_budget_summary
@@ -427,7 +439,7 @@ ggsave(here("figures/presentation/Fig.5_Socio_Economic_Group_BWP.png"), fig.5_so
 
 Scaling $BWP$ by farm typology reveals the deeply unequal distribution of net water extraction across the agricultural landscape. A very small number of commercial growers consume a disproportionate volume of groundwater, generating severe localized deficits. However, the structural sustainability of the collective watershed is historically propped up by the low-impact practices of the resource-poor majority (rainfed farmers and pastoralists).
 
-```{r disparity-plot, eval=HAS_DEMOGRAPHICS, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
+```{r disparity-plot, eval=HAS_AREA, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Farm-level demographic composition (left panel) and net Blue Water Potential (BWP) (right panel). Demographic data reflect total farm counts, while BWP values signify the cumulative water budget (thousand m³) aggregated by farm typology.'}
 
 fig.6_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, ps_typology)
 print(fig.6_disparity)
@@ -451,7 +463,7 @@ Finally, we aggregate farm-level balances to model a full archetype village. Thi
 
 Crucially, this macro-level aggregation highlights a structural tipping point in regional water security. The baseline 1950s archetype demonstrates a robust hydrological surplus. In contrast, the 2022 configuration illustrates a system inverted by agricultural intensification. The extraction demands of intensive cropping now overwhelmingly outpace the buffering capacity of rainfed systems.
 
-```{r village-bwp, eval=HAS_DEMOGRAPHICS, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+```{r village-bwp, eval=HAS_AREA, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
 village.bwp_collapsed <- ps_bwp_volumetric %>%
   mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
   select(time_period, production_system, bwp_thousand_m3) %>%
@@ -517,7 +529,7 @@ Figure 8 employs a water accounting framework (Inflows = Outflows) tracing the v
 
 By 2022, the massive evapotranspiration demands of irrigated crops consume a significantly larger slice of the incoming water budget, physically constricting long-term aquifer replenishment.
 
-```{r village-budget, eval=HAS_DEMOGRAPHICS, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
+```{r village-budget, eval=HAS_AREA, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
 # Margins for the interactive HTML document
