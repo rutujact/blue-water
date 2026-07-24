@@ -78,7 +78,7 @@ ui <- navbarPage(
   
   # Tab 2: Phenology Engine ----
   tabPanel(
-    title = "2. Crop Kc Curves",
+    title = "2. Crop Phenology",
     icon = icon("seedling"),
     sidebarLayout(
       sidebarPanel(width = 3, 
@@ -89,8 +89,8 @@ ui <- navbarPage(
         width = 9,
         tabsetPanel(
           type = "pills",
-          tabPanel("Individual Curves", 
-                   h4("Daily Kc based on Growth Stages", align = "center"),
+          tabPanel("Individual Crop", 
+                   h4("Daily Kc curve based on Growth Stages", align = "center"),
                    plotOutput("plot_raw_kc", height = "600px")
           ),
           tabPanel("Figure 2: Daily Kc for Crop Systems", 
@@ -185,12 +185,11 @@ server <- function(input, output, session) {
         <li><b>02_et0:</b> <code>date</code> (YYYY-MM-DD), <code>et0</code> (mm/day).</li>
         <li><b>03_soil.parameters:</b> <code>soil</code> (ID), <code>whc.mmpercm</code> (Water Holding Capacity), <code>raw</code> (Readily Available Water).</li>
         <li><b>04_crop.parameters:</b> <code>crop</code> (Name), <code>rooting_depth_cm</code> (cm).</li>
-        <li><b>05_crop_kc_curve:</b> Columns for each crop defining specific phenological days and Kc values.</li>
+        <li><b>05_crop_kc_curve:</b> Columns for each crop defining days identifying growth stages and Kc values.</li>
         <li><b>07_crop.systems:</b> <code>crop.system</code> (Rotation Name), <code>crop_1</code>, <code>crop_2</code>, <code>crop_3</code> (Sequential crops), <code>rotation</code> (Unique ID).</li>
         <li><b>08_area (Track 2):</b> <code>time_period</code>, <code>production_system</code> (Farm type), <code>area_ha</code> (hectares).</li>
         <li><b>09_farms (Track 2):</b> <code>time_period</code>, <code>production_system</code>, <code>number_of_farms</code>.</li>
       </ul>
-      <p><small><i>Note: Extra columns in your files (like 'FORMULE', 'WB', or 'production_system_period') are safely ignored.</i></small></p>
       </div>
     ")
   })
@@ -202,8 +201,8 @@ server <- function(input, output, session) {
                       "2. ET0" = app_data$et0,
                       "3. Soil Params" = app_data$soil_param,
                       "4. Crop Params" = app_data$crop_param,
-                      "5. Crop Kc Params" = app_data$kc_raw,
-                      "6. Fruit Kc Params" = app_data$raw_params,
+                      "5. FAO Kc Params" = app_data$kc_raw,
+                      "6. Monthly Kc Params" = app_data$raw_params,
                       "7. Crop Systems" = app_data$crop_systems, 
                       "8. Area by System" = app_data$ps_by_cs_area,
                       "9. Farm Counts" = app_data$farms_count)

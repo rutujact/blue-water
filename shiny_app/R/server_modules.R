@@ -118,7 +118,7 @@ data_ingestion_server <- function(id) {
   })
 }
 
-# Module 1.5: Pre-Processing Engine ----
+# Module 1.5: Pre-Processing Engine (Ports 01_.qmd logic to memory) ----
 pre_processing_server <- function(id, app_data) {
   moduleServer(id, function(input, output, session) {
     
@@ -128,15 +128,7 @@ pre_processing_server <- function(id, app_data) {
       is_climate_processed = FALSE, is_kc_processed = FALSE
     )
     
-    # Render Pre-Processing Button Conditionally
-    output$run_preproc_ui <- renderUI({
-      if (isTruthy(app_data$is_loaded)) {
-        actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
-      } else {
-        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("cogs"), " Calculate Kc Curves")
-      }
-    })
-    
+    # 1. Instantly process the Climate Profile when data is loaded
     observeEvent(app_data$is_loaded, {
       req(app_data$is_loaded)
       tryCatch({
@@ -163,6 +155,16 @@ pre_processing_server <- function(id, app_data) {
       })
     })
     
+    # Dynamic rendering: Locks button until data is loaded
+    output$run_preproc_ui <- renderUI({
+      if (isTruthy(app_data$is_loaded)) {
+        actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
+      } else {
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("cogs"), " Calculate Kc Curves")
+      }
+    })
+    
+    # 2. Wait for the user to explicitly click the button to generate the massive Kc arrays
     observeEvent(input$run_preproc, {
       req(app_data$is_loaded)
       
@@ -245,7 +247,7 @@ track1_engine_server <- function(id, app_data, preproc_data) {
     
     engine_results <- reactiveValues(budget_ls = NULL, summary_yr_budgets = NULL, is_calculated = FALSE)
     
-    # Render Engine Button Conditionally
+    # Dynamic rendering: Locks button until Kc curves are processed
     output$run_engine_ui <- renderUI({
       if (isTruthy(preproc_data$is_kc_processed)) {
         actionButton(session$ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100")
@@ -254,12 +256,12 @@ track1_engine_server <- function(id, app_data, preproc_data) {
       }
     })
     
-    # Render Track 1 Download Button Conditionally
+    # Dynamic rendering: Locks Track 1 PDF button until engine finishes
     output$download_ui_t1 <- renderUI({
       if (isTruthy(engine_results$is_calculated)) {
         downloadButton(session$ns("download_report_t1"), "Download PDF Report", class = "btn-info w-100")
       } else {
-        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
       }
     })
     
@@ -303,26 +305,29 @@ track1_engine_server <- function(id, app_data, preproc_data) {
 track2_engine_server <- function(id, app_data, engine_results) {
   moduleServer(id, function(input, output, session) {
     
-    # Render Track 2 Download Button Conditionally
+    # Dynamic rendering: Locks Track 2 PDF button until engine finishes
     output$download_ui_t2 <- renderUI({
       if (isTruthy(engine_results$is_calculated)) {
         downloadButton(session$ns("download_report"), "Download PDF Report", class = "btn-info w-100")
       } else {
-        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
       }
     })
     
     track2_data <- reactive({
       req(engine_results$is_calculated, app_data$is_loaded)
+      
       if (!app_data$has_track2) return(NULL)
+      
+      sanitize_period <- function(x) { ifelse(str_detect(str_trim(as.character(x)), "1950"), "1950s", "2022") }
       
       budget_yr_ls <- lapply(engine_results$budget_ls, function(x) x$sum.yr)
       budget_yr_l <- data.table::rbindlist(budget_yr_ls, idcol = "rotation") %>%
         tidyr::pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
         dplyr::left_join(app_data$crop_systems, by = "rotation")
       
-      ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = as.character(time_period))
-      farms <- app_data$farms_count %>% mutate(time_period = as.character(time_period))
+      ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = sanitize_period(time_period))
+      farms <- app_data$farms_count %>% mutate(time_period = sanitize_period(time_period))
       farms_clean <- farms %>% group_by(time_period, production_system) %>% summarise(number_of_farms = sum(number_of_farms, na.rm = TRUE), .groups = "drop")
       
       ps_results <- get_production_system_budgets(budget_yr_l = budget_yr_l, ps_by_cs_area = ps_area, farms_count_df = farms_clean)
