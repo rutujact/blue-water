@@ -16,7 +16,7 @@ BWP_PALETTES <- list(
   # 1. Climate Profile (Supply vs. Demand)
   climate_fill    = c("Rainfall" = "#56B4E9", "ET0" = "#D55E00"),         
   climate_color   = c("Rainfall" = "#0072B2", "ET0" = "#D55E00",          
-                      "Temperature_Line" = "#CC79A7"),                    
+                      "Temperature" = "#CC79A7"),                    
   climate_ribbon  = "#CC79A7",                                            
   
   # 2. Irrigation Types (Annual Summary)
@@ -147,10 +147,10 @@ plot_climate_profile <- function(climate_summary, scale_factor = 7.5, show_tempe
         # Temperature ranges 20-40C, but Rainfall ranges 0-300mm. We multiply temperature by the 
         # `scale_factor` (e.g., * 7.5) so the line floats visibly in the middle of the chart.
         ggplot2::geom_ribbon(data = climate_summary, ggplot2::aes(x = Month_Name, ymin = Temperature_q05 * scale_factor, ymax = Temperature_q95 * scale_factor, group = 1), fill = BWP_PALETTES$climate_ribbon, alpha = 0.15) +
-        ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature_Line", group = 1), linewidth = 1) +
+        ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature", group = 1), linewidth = 1) +
         # Layer 4: Create the illusion of a secondary axis by mathematically dividing the right-side labels back down by the scale_factor.
         ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), sec.axis = ggplot2::sec_axis(~. / scale_factor, name = "Temperature (°C)"), expand = ggplot2::expansion(mult = c(0, 0.05))) +
-        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature_Line", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
+        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
     } else {
       p <- p +
         ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), expand = ggplot2::expansion(mult = c(0, 0.05))) +
@@ -553,7 +553,40 @@ plot_socio_economic_bwp <- function(ps_bwp_volumetric) {
 
 #' Plot Micro-Regional Disparity Metrics
 #' @export
-plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_typology, target_period = "2022") {
+plot_farm_bwp_disparity <- function(ps_bwp_volumetric, crop.systems, ps_by_cs_area, target_period = "2022") {
+  
+  # 1. Map Crop Systems to Core Surface Types
+  cs_surface <- crop.systems %>%
+    select(crop.system, Irrigation) %>%
+    distinct() %>%
+    mutate(
+      land_use = case_when(
+        Irrigation == "Irrigated" ~ "Irrigated",
+        str_detect(crop.system, "(?i)grassland|grazed|pasture") ~ "Pastoral",
+        TRUE ~ "Rainfed"
+      )
+    )
+  
+  # 2. Calculate area percentages and pivot to wide format
+  ps_typology <- ps_by_cs_area %>%
+    left_join(cs_surface, by = "crop.system") %>%
+    group_by(time_period, production_system, land_use) %>%
+    summarise(land_use_area = sum(area_ha, na.rm = TRUE), .groups = "drop_last") %>%
+    mutate(
+      total_area_ha = sum(land_use_area, na.rm = TRUE),
+      land_use_pc   = round((land_use_area / total_area_ha) * 100, 2)
+    ) %>%
+    ungroup() %>%
+    select(-land_use_area) %>%
+    pivot_wider(names_from = land_use, values_from = land_use_pc, values_fill = 0) %>%
+    mutate(
+      system_typology = case_when(
+        Irrigated >= 35 ~ "Irrigated",
+        Pastoral > Rainfed ~ "Pastoral",
+        TRUE ~ "Rainfed"
+      )
+    ) %>%
+    select(time_period, production_system, total_area_ha, Irrigated, Pastoral, Rainfed, system_typology)
   
   # Ensure both have the same type (Character) before joining
   ps_bwp_volumetric <- ps_bwp_volumetric %>% mutate(time_period = as.character(time_period))
