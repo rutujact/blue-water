@@ -1,22 +1,23 @@
-The Blue Water Toolkit
+The Blue Water Potential Toolkit
 ================
 
-**A Framework for Modeling Net Watershed Impacts**
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
+**A socio-hydrological framework to scale water budgets from plot to
+agrarian
+system.**[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
 This repository contains the computational workflow and analytical
-engine for the manuscript: \> **Hemingway, C. et al. (2026).**
+engine for the manuscript: \> **Hemingway, C. et al. (202X).**
 *Accounting the unaccounted: a new framework for incorporating farm
 social diversity in micro-regional water budgets* \[Journal Name\].
 \[DOI\]
 
-The **Blue Water Toolkit** provides a generalized R framework for
-simulating Blue Water Potential (Recharge minus Irrigation requirement)
-at the micro-regional or village scale. By coupling biophysical water
-fluxes (driven by meteorological forcing and dynamic crop coefficients)
-with agricultural demographics, this toolkit reveals how social
-diversity of farms drive local groundwater sustainability.
+The **The Blue Water Potential Toolkit** provides a generalized R
+framework for simulating Blue Water Potential (Gross Groundwater
+Recharge minus Irrigation Requirement) at plot, farm, and
+village/micro-regional scale. By coupling climate, soil and crop
+information with socio-agricultural data, this toolkit computes and
+displays water fluxes, revealing how different types of farms can be
+either net consumers or net producers of blue water in a given climate.
 
 ------------------------------------------------------------------------
 
@@ -28,14 +29,14 @@ functions, and reproducible reporting.
 ``` text
 project_root/
 ├── data/
-│   ├── input/               <- Standardized baseline data ready for engine execution
-│   └── processed/           <- Intermediary typology and Kc curve tables
+│   ├── input/               <- Raw data for 01_Prepare_Model_Inputs.qmd
+│   └── processed/           <- Standardized CSV outputs to run the Blue Water Calculations in 02_Blue-Water.qmd 
 ├── code/
 │   ├── 01_Prepare_Model_Inputs.qmd  <- Data preparation cookbook (Markdown)
 │   ├── 02_Blue-Water.qmd            <- Main execution and reporting (Markdown)
-│   └── functions/                   <- Core biophysical and visualization engine
+│   └── functions/                   <- Core Calculation and figure functions
 ├── shiny_app/               <- The interactive Web Application UI
-├── output/                  <- Generated budget CSV summaries
+├── output/                  <- Generated water budget CSV summaries
 ├── figures/                 <- Generated visualization outputs
 ├── CONTRIBUTING.md          <- Guidelines for contributing to the codebase
 ├── LICENSE                  <- Main GNU GPLv3 License text
@@ -87,9 +88,7 @@ ways, depending on your comfort level with R code.
 ### Method 1: The Interactive Shiny App (Recommended)
 
 We have provided a fully interactive, point-and-click user interface
-built on R Shiny. This is the easiest way to validate your data, run the
-biophysical models, and explore the socio-economic water disparities
-dynamically.
+built on R Shiny.
 
 1.  Open the `Blue-Water.Rproj` file in RStudio.
 2.  In the R Console, type and run:
@@ -100,21 +99,21 @@ shiny::runApp("shiny_app")
 
 3.  Use the **Data Setup** tab to load the default repository data or
     upload your own localized CSVs.
+
 4.  Navigate through **Track 1** and **Track 2** to generate the water
     budgets and download a compiled PDF report.
 
 ### Method 2: The Quarto Notebooks (For Advanced Users)
 
-For researchers, manuscript reviewers, or users who want to deeply
-interrogate the underlying code, the core workflows are preserved as
-reproducible Quarto markdown scripts in the `code/` directory.
+For researchers, or users who want to deeply interrogate the underlying
+code, the core workflows are preserved as reproducible Quarto markdown
+scripts in the `code/` directory.
 
 - `01_Prepare_Model_Inputs.qmd`: Demonstrates the step-by-step
   mathematical expansion of discrete crop parameters into continuous
   366-day daily curves.
 - `02_Blue-Water.qmd`: Executes the heavy parallelized daily water
-  budget loops and generates the high-resolution vector visualizations
-  for publication.
+  budgets and generates visualizations.
 
 ------------------------------------------------------------------------
 
@@ -124,20 +123,26 @@ If applying this toolkit to a new region, you will need the following
 localized datasets. Refer to the data preview tables in the Shiny App or
 the Quarto HTML reports for strict formatting rules.
 
-**Track 1 (Biophysical Engine):**
+**Scale 1: Blue Water Potential for Cropping Systems.**
 
-1.  **Daily Climate Forcing:** Precipitation and Reference
+1.  **Climatic Forcings**: Multi-year Daily Precipitation and Reference
     Evapotranspiration (ET0).
-2.  **Soil Parameters:** Water Holding Capacity (WHC) and Readily
-    Available Water (RAW) thresholds.
-3.  **Crop Phenology:** Rooting depths and discrete or polynomial Crop
-    Coefficient (Kc) curves.
-4.  **Cropping Systems:** Multi-season crop rotation definitions mapped
-    to soil types.
+2.  **Soil Properties**: Water Holding Capacity (WHC) and Readily
+    Available Water (RAW).
+3.  **Crop Parameters**: Rooting depths and whether the crop is
+    irrigated or rainfed.
+4.  **Crop Cycle**: Sowing date, Crop phenological phase duration and
+    respective crop coefficients (Kc) according to FAO56 method (Allen
+    et al., 1998).
+5.  **Cropping Systems**: Crop rotation at the plot scale.
 
-**Track 2 (Full Socio-Hydrological Engine):** 5. **Landscape
-Demographics:** Area (hectares) cultivated per crop system and the
-number of households belonging to each production system archetype.
+**Scale 2: Blue Water Potential for Production Systems.** 6. **Farm
+production systems**: Agregation of grazed and cropped area (ha) for
+each farming system.
+
+**Scale 3: Blue Water Potential for Agrirarian Systems.** 7. **Agrarian
+system**: Area (ha) of each farm production system (ha) in a given
+village/micro-region.
 
 ------------------------------------------------------------------------
 
@@ -146,23 +151,23 @@ number of households belonging to each production system archetype.
 ### Toolkit Development & Attribution
 
 This repository represents the digital translation and scaling of a
-micro-regional water accounting model: \* **Model Logic, Data Collection
-& Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent
-Ruiz. \* **R Translation, Framework Design, & Documentation:** Developed
-by Rutuja Chitra-Tarak.
+micro-regional water accounting model: \* **Model Rationale, Data
+Collection & Visual Concepts:** Developed in Excel by Charlotte
+Hemingway & Laurent Ruiz. \* **R Translation, Framework Design, &
+Documentation:** Developed by Rutuja Chitra-Tarak.
 
 ### Manuscript Author Statement (CRediT)
 
 For the associated academic publication, contributions are defined as
 follows: \* **Conceptualization / Methodology:** C. Hemingway, C.
 Aubron, M. Vigne, L. Ruiz, R. Chitra-Tarak \* **Software:** R.
-Chitra-Tarak \* **Validation:** C. Hemingway, R. Chitra-Tarak \*
-**Formal Analysis:** C. Hemingway, L. Ruiz, R. Chitra-Tarak \*
-**Investigation:** C. Hemingway \* **Data Curation:** C. Hemingway, R.
-Chitra-Tarak \* **Visualization:** C. Hemingway, R. Chitra-Tarak \*
-**Writing - Original Draft:** C. Hemingway, L. Ruiz \* **Writing -
-Review & Editing:** C. Aubron, M. Vigne, L. Ruiz, G. Boulet, S. Muddu,
-R. Chitra-Tarak \* **Funding Acquisition:** C. Aubron
+Chitra-Tarak, C. Hemingway \* **Validation:** C. Hemingway, R.
+Chitra-Tarak \* **Formal Analysis:** C. Hemingway, L. Ruiz, R.
+Chitra-Tarak \* **Investigation:** C. Hemingway \* **Data Curation:** C.
+Hemingway, R. Chitra-Tarak \* **Visualization:** C. Hemingway, R.
+Chitra-Tarak \* **Writing - Original Draft:** C. Hemingway, L. Ruiz \*
+**Writing - Review & Editing:** C. Aubron, M. Vigne, L. Ruiz, G. Boulet,
+S. Muddu, R. Chitra-Tarak \* **Funding Acquisition:** C. Aubron
 
 ------------------------------------------------------------------------
 
@@ -205,9 +210,9 @@ If you use this toolkit, its underlying logic, or adapt the framework
 for another watershed study, please cite both the software repository
 and the primary manuscript:
 
-- **Software:** Chitra-Tarak, R. et al. (2026). *The Blue Water Toolkit:
-  a new framework for incorporating farm social diversity in
-  micro-regional water budgets* (Version 1.0.0). Zenodo.
+- **Software:** Chitra-Tarak, R. et al. (2026). *The Blue Water
+  Potential Toolkit: a socio-hydrological framework to scale water
+  budgets from plot to agrarian system.* (Version 1.0.0). Zenodo.
   <https://doi.org/10.5281/zenodo.20665272>
 
 - **Manuscript:** Hemingway, C. et al. (2026). *Accounting the
