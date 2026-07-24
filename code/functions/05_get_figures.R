@@ -19,7 +19,7 @@ BWP_PALETTES <- list(
                       "Temperature_Line" = "#CC79A7"),                    
   climate_ribbon  = "#CC79A7",                                            
   
-  # 2. Irrigation Types (Annual Climatology)
+  # 2. Irrigation Types (Annual Summary)
   irrigation      = c("Rainfed" = "#E69F00", "Irrigated" = "#56B4E9"),    
   
   # 3. Monthly Blue Water Potential (BWP) Envelopes
@@ -224,7 +224,7 @@ plot_crop_coefficient_curves <- function(crop_systems_l_kc) {
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# SECTION 3: CROPPING SYSTEM LEVEL (TEMPORAL CLIMATOLOGY)
+# SECTION 3: CROPPING SYSTEM LEVEL (TEMPORAL SUMMARIES)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Process Annual Simulation Water Budgets
@@ -269,9 +269,9 @@ process_annual_budget <- function(budget_ls, crop_systems_df) {
   return(list(summary_yr_crop = summary_yr_crop, summ_qs_cs = summ_qs_cs))
 }
 
-#' Plot Annual Climatology Metrics
+#' Plot Annual Summary Metrics
 #' @export
-plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)") {
+plot_annual_summary <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)") {
   
   # Filter the massive summary frame down to only the specific requested variables
   plot_data <- data %>% 
@@ -290,9 +290,9 @@ plot_annual_climatology <- function(data, vars_to_plot, x_var = "mean", title_x 
   return(p)
 }
 
-#' Process Monthly Climatology Over Long-Term Simulations
+#' Process Monthly Summary Over Long-Term Simulations
 #' @export
-process_monthly_climatology <- function(budget_ls, crop_systems_df) {
+process_monthly_summary <- function(budget_ls, crop_systems_df) {
   
   # STEP 1: Build an internal processor function
   add_clim_mo <- function(x) {

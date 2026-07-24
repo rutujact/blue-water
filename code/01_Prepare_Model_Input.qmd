@@ -358,7 +358,7 @@ ggplot(complex_plot_data %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), a
 
 ### Kc Curve compilation for all crops
 
-Compile all generated Kc curves. maps them back to the user’s defined multi-season crop rotations.
+Compile all generated Kc curves.
 
 ```{r kc-merge}
 kc.doy.crop.all <- bind_rows(
@@ -369,39 +369,6 @@ kc.doy.crop.all <- bind_rows(
 
 write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv"), row.names = FALSE)
 
-```
-
-### Plotting All Crop Kc Curves
-
-*(Saves a high-resolution PDF for the manuscript).*
-
-```{r plot-all-kc, fig.width=10, fig.height=8, warning=FALSE}
-#| fig-cap: "**Figure 1. Daily crop coefficient ($K_c$) for all modeled crops.** The panels illustrate the temporal variation of $K_c$ across a full calendar year (Day of Year), generated via crop-specific mathematical rule sets. The profiles integrate multiple modeling approaches: standard FAO-56 segmented linear growth stages for seasonal crops (e.g., millet, rice, tomato, pulses), continuous polynomial equations for groundnut varieties, discrete monthly step-functions for specific perennial orchards (sweet lime, pomegranate), and drop-and-regrowth cycles to simulate managed grazing and repeated harvesting schedules (grazed pastures, Napier grass)."
-
-if (!dir.exists(here("figures/manuscript"))) {
-  dir.create(here("figures/manuscript"), recursive = TRUE, showWarnings = FALSE)
-}
-
-# Create a temporary plotting variable that turns 0 into NA
-plot_data <- kc.doy.crop.all %>%
-  mutate(plot_kc = if_else(kc == 0, NA_real_, kc))
-
-kc_plot <- ggplot(plot_data, aes(x = doy, y = plot_kc, color = crop)) +
-    # NEW: Add a subtle color fill beneath the curve. This makes active panels stand out.
-    ggplot2::geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
-  # na.rm = TRUE prevents ggplot from throwing 50 warnings about missing values
-  geom_line(linewidth = 1, na.rm = TRUE) +
-  facet_wrap(~ crop) +
-  theme_baseR +
-  labs(
-    title = "Generated Crop Coefficient (Kc) Curves - All Types",
-    x = "Day of Year (DOY)",
-    y = "Crop Coefficient (Kc)"
-  ) +
-  theme(legend.position = "none")
-
-print(kc_plot)
-ggsave(here("figures/manuscript/Figure_Kc_Curves_All_Crops.pdf"), plot = kc_plot, width = 10, height = 8)
 ```
 
 ### Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
@@ -461,6 +428,7 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 #### Agrarian System
 
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In the our case study these numbers are calculated for two periods  using an optimisation technique as described in Hemingway et al. ZENODO 
+
 ```{r load-demos}
 farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
 ```
