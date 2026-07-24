@@ -1,10 +1,10 @@
 ---
 title: "Model Input Preparation" 
-subtitle: "Assembling Meteorological Data, Crop Parameters, Crop Rotations, Production Systems and Farm Demographics for the Blue Water Potential Toolkit"
+subtitle: "Assembling Meteorological Data, Crop Parameters, Cropping Systems, Production Systems and Agrirarian System for the Blue Water Potential Toolkit"
 author: 
   - "Rutuja Chitra-Tarak (Code)"
-  - "Charlotte Hemingway (Data and Calculations)"
-  - "Laurent Ruiz (Data and Calculations)"
+  - "Charlotte Hemingway (Data and Original Calculations)"
+  - "Laurent Ruiz (Data and Original Calculations)"
 # date: today
 # date-format: "DD MMMM, YYYY"
 format: 
@@ -45,11 +45,11 @@ This script processes, standardizes, and expands seven distinct categories of in
 6. **Farm production systems**: Agregation of grazed and cropped area (ha) for each farming system.
 7. **Agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
 
-In Hemingway et., al, XX, this process was run for two agrarian systems, corresponding to two historical periods, 1950s and 2022. The climate time series (1980-2018) was the same for the two periods analysed, while cropping systems, productions systems and agrarian systems were period-specific.
+In Hemingway et al. (202X), this process was run for two agrarian systems, corresponding to two historical periods, 1950s and 2022. The climate time series (1980-2018) was the same for the two periods analysed, while cropping systems, productions systems and agrarian systems were period-specific.
 
 ### 📂 Directory Structure for this Script
 
-This script serves two purposes: it can be used to reproduce the results presented in the manuscript Hemingwayy et al., and it can be used to apply the method in your specific study sites.
+This script serves two purposes: it can be used to reproduce the results presented in the manuscript Hemingway et al. (202X), and it can be used to apply the method in your specific study sites.
 
 * **Reproducing the Manuscript:** All clean inputs required to run this script are provided in the `data/input/` directory.
 * **Adapting for your own study site:** Place your clean data in the correct starting locations shown below. The script will automatically generate the required folder structure for all derived processed outputs if they do not exist. To run this script, open the `.Rproj` and click "Render".
@@ -57,7 +57,7 @@ This script serves two purposes: it can be used to reproduce the results present
 ```text
 project_root/
 ├── data/
-│   ├── input/               <- REQUIRED: Place your standardized baseline CSVs here
+│   ├── input/               <- REQUIRED: Place your standardized CSVs here
 │   │   ├── 01_precipitation.csv
 │   │   ├── 02_et0.csv
 │   │   ├── 03_soil.parameters.csv
@@ -67,7 +67,7 @@ project_root/
 │   │   ├── 07_crop.systems.csv
 │   │   ├── 08_crop_system_area_by_production_system.csv
 │   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
-│   └── processed/           <- TARGET: Derived model requirements (Kc curves, typologies) will land here
+│   └── processed/           <- TARGET: Derived model requirements (e.g., Kc curves) will land here
 │       └── supplementary/   <- TARGET: Intermediary Kc tables will land here
 ├── code/
 │   ├── functions/
@@ -191,14 +191,6 @@ Our framework dynamically generates daily Kc curves over a calendar year from th
 ```{r load-kc-params}
 kc.raw       <- read_csv(here("data/input/05_crop_kc_curve_parameters_table.csv"), show_col_types = FALSE)
 raw_params   <- read_csv(here("data/input/06_fruit_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-crop.systems <- read_csv(here("data/input/07_crop.systems.csv"), show_col_types = FALSE)
-
-# Generate the long-format rotation table required by the downstream Toolkit
-crop.systems.l <- crop.systems %>%
-  select(-Irrigation) %>%
-  pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
-  left_join(crop.param, by = "crop")
-write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), row.names = FALSE)
 
 ```
 
@@ -356,7 +348,7 @@ ggplot(complex_plot_data %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), a
 
 ```
 
-### Kc Curve compilation for all crops
+#### Kc Curve compilation for all crops
 
 Compile all generated Kc curves.
 
@@ -371,7 +363,25 @@ write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_
 
 ```
 
-### Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
+
+# Cropping Systems
+
+Read the file that describes the composition of each cropping system in terms of crop rotations at the plot scale.
+
+```{r, load-cropping-systems}
+crop.systems <- read_csv(here("data/input/07_crop.systems.csv"), show_col_types = FALSE)
+
+knitr::kable(head(crop.systems), caption = "Preview: Cropping Systems")
+
+# Generate the long-format rotation table required by the downstream Toolkit
+crop.systems.l <- crop.systems %>%
+  select(-Irrigation) %>%
+  pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
+  left_join(crop.param, by = "crop")
+write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), row.names = FALSE)
+```
+
+## Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
 
 ```{r map-kc-curves, results='hide'}
 crop.systems.l.kc <- crop.systems.l %>%
@@ -383,7 +393,8 @@ save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rda
 
 ```
 
-#### Daily Kc Table for a Crop Rotation
+### Daily Kc Table for a Crop Rotation
+
 *(Example showing the generated continuous timeline for a single rotation).*
 ```{r display-kc-expansion, echo=FALSE}
 preview_kc <- head(crop.rotation.kc.ls[[1]], 10) %>%
@@ -398,18 +409,11 @@ colnames(preview_kc) <- c(
 knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Daily Kc Table (Single Rotation)")
 ```
 
-# Agrarian System
+# Production Systems
 
-To evaluate Blue Water Potential (or Net Recharge) at the macro level, we must scale our field-level water budgets up to the watershed scale. This requires two distinct scaling factors: the physical footprint of the crops (Spatial Land Use) and the population distribution of the farmers (Agricultural Demographics).
+Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025.
 
-
-#### @Rutuja: Let,s add Cropping Systems Preview here
-
-#### Production System Description
-
-Read the file that describes the composition of each production system in terms of cropping systems and their area. For this case study of Hemingway et al. this information is taken from Table 1 & 2 of Hemingway et al. 2025.
-
-```{r load-demos}
+```{r load-production-system}
 ps_by_cs_area  <- read_csv(here("data/input/08_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
 ```
 
@@ -425,11 +429,11 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 
 ```
 
-#### Agrarian System
+# Agrarian System
 
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In the our case study these numbers are calculated for two periods  using an optimisation technique as described in Hemingway et al. ZENODO 
 
-```{r load-demos}
+```{r load-agrirarian}
 farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
 ```
 
