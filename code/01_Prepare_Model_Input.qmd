@@ -431,7 +431,7 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 
 # Agrarian System
 
-Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In the our case study these numbers are calculated for two periods  using an optimisation technique as described in Hemingway et al. ZENODO 
+Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
 
 ```{r load-agrirarian}
 farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
@@ -446,6 +446,16 @@ colnames(preview_counts) <- c(
 )
 knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
 ```
+
+# References
+
+Allen, R.G., Pereira, L.S., Raes, D., Smith, M., 1998. Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. FAO - Food and Agriculture Organization of the United Nations, Rome, Italy.
+
+Hemingway C., Ruiz L., Vigne M., Aubron C., 2025. The changing role of livestock in agrarian systems: a historical and multifunctional perspective from southern India, Agronomy for Sustainable Development, 45(1) : 7. https://doi.org/10.1007/s13593-024-00999-9
+
+Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator
+
+Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (202X). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. [Journal Name]. [DOI]
 
 ```
 

@@ -218,7 +218,7 @@ knitr::kable(head(crop.param), caption = "Preview: Crop Rooting Depth and Rainfe
 
 ### Kc Curves for All Crops
 kc.doy.crop.all <- read.csv(file =  here("data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv"), header = TRUE)
-knitr::kable(head(crop.param), caption = "Preview: Crop Daily Kc")
+knitr::kable(head(kc.doy.crop.all), caption = "Preview: Crop Daily Kc")
 ```
 
 ### Plotting All Crop Kc Curves
@@ -675,6 +675,10 @@ ggsave(here("figures/presentation/Fig.9_Farm_BWP_Disparity.png"), fig.9_disparit
 
 print(fig.9_disparity)
 ```
+
+# References
+
+Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator
 
 ```
 
