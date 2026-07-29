@@ -278,19 +278,11 @@ get_budget <- function(cs, p, ts) {
     tibble::tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
   }
   
-  summary.mean <- sum.yr %>%
+  summary.yr <- sum.yr %>%
     tidyr::pivot_longer(-year, names_to = "var", values_to = "value") %>%
     dplyr::group_by(var) %>%
-    dplyr::summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
-    dplyr::mutate(quantile = "mean")
-  
-  summary.yr <- sum.yr %>% 
-    tidyr::pivot_longer(-year, names_to = "var", values_to = "value") %>%
-    dplyr::group_by(var) %>%
-    dplyr::reframe(quantile_df(value)) %>%
-    as.data.frame() %>%
-    dplyr::mutate(quantile = as.character(quantile)) %>%
-    dplyr::bind_rows(summary.mean) %>% 
+    dplyr::summarise(mean = mean(value, na.rm = TRUE), 
+                     sd = sd(value, na.rm = TRUE), .groups = "drop") %>% 
     dplyr::arrange(var)
   
   # 3.12.3 Monthly Summary ----
@@ -345,11 +337,12 @@ get_budget <- function(cs, p, ts) {
                                       labels = c("A", "B", "C"),
                                       legend = "top")
   
-  if (!dir.exists("figures/water_budgets/")) dir.create("figures/water_budgets/", recursive = TRUE)
+  if (!dir.exists(here("figures/water_budgets/"))) dir.create(here("figures/water_budgets/"), recursive = TRUE)
   
-  ggplot2::ggsave(plot = p.daily.budget, file = paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
-                                                       "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_", paste(years.to.plot, collapse = "-"), "_daily.pdf"),
-                  width = 9, height = 9)
+  ggplot2::ggsave(plot = p.daily.budget, file = 
+  here(paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
+  "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_", 
+  paste(years.to.plot, collapse = "-"), "_daily.pdf")), width = 9, height = 9)
   
   return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
               sum.mo = sum.mo, clim.mo = clim.mo))

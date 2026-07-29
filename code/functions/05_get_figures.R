@@ -112,7 +112,7 @@ theme_presentation <- function(base_size = 14) {
 #' Plot Historical Climate Profile
 #' @export
 plot_climate_profile <- function(climate_summary, scale_factor = 7.5, show_temperature = TRUE) {
-
+  
   # STEP 1: Format Month Labels
   # Convert numeric months (1-12) to ordered factor abbreviations (Jan-Dec)
   climate_summary <- climate_summary %>%
@@ -127,44 +127,57 @@ plot_climate_profile <- function(climate_summary, scale_factor = 7.5, show_tempe
     dplyr::mutate(Water_Metric = dplyr::recode(Water_Metric, "Rainfall_avg" = "Rainfall", "ET0_avg" = "ET0"))
   
   # STEP 3: Pivot Error Bounds (Whiskers)
-  # Isolate the 5th and 95th percentiles and pivot them to match the volumetric data.
+  # Isolate the standard deviations (SD) and pivot them to match the volumetric data.
   water_errors <- climate_summary %>%
-    dplyr::select(Month_Name, Rainfall_q05, Rainfall_q95, ET0_q05, ET0_q95) %>%
-    tidyr::pivot_longer(cols = -Month_Name, names_to = c("Water_Metric", ".value"), names_pattern = "(Rainfall|ET0)_(q05|q95)")
+    dplyr::select(Month_Name, Rainfall_sd, ET0_sd) %>%
+    tidyr::pivot_longer(
+      cols = -Month_Name, 
+      names_to = "Water_Metric", 
+      names_pattern = "(Rainfall|ET0)_sd",
+      values_to = "SD"
+    )
   
-  # Merge volumes and errors back together into one master dataframe.
-  climate_summary_long <- dplyr::left_join(climate_summary_long, water_errors, by = c("Month_Name", "Water_Metric"))
+  # Merge volumes and errors back together into one master dataframe,
+  # and calculate the error bounds (preventing ymin from falling below 0).
+  climate_summary_long <- dplyr::left_join(climate_summary_long, water_errors, by = c("Month_Name", "Water_Metric")) %>%
+    dplyr::mutate(
+      ymin = pmax(0, Volume - SD),
+      ymax = Volume + SD
+    )
   
   # STEP 4: Render Dual-Axis Plot
-  p <-ggplot2::ggplot() +
+  p <- ggplot2::ggplot() +
     # Layer 1: Water Volumes as bars
     ggplot2::geom_bar(data = climate_summary_long, ggplot2::aes(x = Month_Name, y = Volume, fill = Water_Metric), stat = "identity", position = ggplot2::position_dodge(width = 0.9), alpha = 0.85) +
-    # Layer 2: 95% Confidence Intervals as error bars
-    ggplot2::geom_errorbar(data = climate_summary_long, ggplot2::aes(x = Month_Name, ymin = q05, ymax = q95, group = Water_Metric), position = ggplot2::position_dodge(width = 0.9), width = 0.2, alpha = 0.7)
+    # Layer 2: Standard Deviations as error bars (bounded at 0)
+    ggplot2::geom_errorbar(data = climate_summary_long, ggplot2::aes(x = Month_Name, ymin = ymin, ymax = ymax, group = Water_Metric), position = ggplot2::position_dodge(width = 0.9), width = 0.2, alpha = 0.7)
+  
   if (show_temperature) {
     p <- p +
-        # Layer 3: Temperature Envelopes (Scaled). 
-        # Temperature ranges 20-40C, but Rainfall ranges 0-300mm. We multiply temperature by the 
-        # `scale_factor` (e.g., * 7.5) so the line floats visibly in the middle of the chart.
-        ggplot2::geom_ribbon(data = climate_summary, ggplot2::aes(x = Month_Name, ymin = Temperature_q05 * scale_factor, ymax = Temperature_q95 * scale_factor, group = 1), fill = BWP_PALETTES$climate_ribbon, alpha = 0.15) +
-        ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature", group = 1), linewidth = 1) +
-        # Layer 4: Create the illusion of a secondary axis by mathematically dividing the right-side labels back down by the scale_factor.
-        ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), sec.axis = ggplot2::sec_axis(~. / scale_factor, name = "Temperature (°C)"), expand = ggplot2::expansion(mult = c(0, 0.05))) +
-        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
-    } else {
-      p <- p +
-        ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), expand = ggplot2::expansion(mult = c(0, 0.05))) +
-        ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = "none")
-    }
+      # Layer 3: Temperature Envelopes (Scaled). 
+      # Temperature ranges 20-40C, but Rainfall ranges 0-300mm. We multiply temperature by the 
+      # `scale_factor` (e.g., * 7.5) so the line floats visibly in the middle of the chart.
+      ggplot2::geom_ribbon(data = climate_summary, ggplot2::aes(x = Month_Name, ymin = pmax(0, Temperature_avg - Temperature_sd) * scale_factor, 
+                                                                ymax = (Temperature_avg + Temperature_sd) * scale_factor, group = 1), fill = BWP_PALETTES$climate_ribbon, alpha = 0.15) +
+      ggplot2::geom_line(data = climate_summary, ggplot2::aes(x = Month_Name, y = Temperature_avg * scale_factor, color = "Temperature", group = 1), linewidth = 1) +
+      # Layer 4: Create the illusion of a secondary axis by mathematically dividing the right-side labels back down by the scale_factor.
+      ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), sec.axis = ggplot2::sec_axis(~. / scale_factor, name = "Temperature (°C)"), expand = ggplot2::expansion(mult = c(0, 0.05))) +
+      ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = ggplot2::guide_legend(order = 2, nrow = 1, breaks = "Temperature", labels = "Mean Temp", override.aes = list(linewidth = 2, shape = NA)))
+  } else {
+    p <- p +
+      ggplot2::scale_y_continuous(name = expression(bold(paste("Rainfall & ET"[0], " (mm)"))), expand = ggplot2::expansion(mult = c(0, 0.05))) +
+      ggplot2::guides(fill = ggplot2::guide_legend(order = 1, nrow = 1), color = "none")
+  }
+  
   p <- p +
     ggplot2::scale_fill_manual(values = BWP_PALETTES$climate_fill) +
     ggplot2::scale_color_manual(values = BWP_PALETTES$climate_color) +
     ggplot2::labs(x = "Month") +
     theme_manuscript() +
     ggplot2::theme(legend.position = "top", legend.box = "vertical", legend.spacing.y = ggplot2::unit(0.1, "cm"), axis.text = ggplot2::element_text(size = 12, color = "black"))
+  
   return(p)
 }
-
 #' Plot Crop Coefficient (Kc) Trajectory Curves
 #' @export
 plot_crop_coefficient_curves <- function(crop_systems_l_kc) {
@@ -229,6 +242,8 @@ plot_crop_coefficient_curves <- function(crop_systems_l_kc) {
 
 #' Process Annual Simulation Water Budgets
 #' @export
+#' Process Annual Simulation Water Budgets
+#' @export
 process_annual_budget <- function(budget_ls, crop_systems_df) {
   
   # STEP 1: Extract and Compile
@@ -249,13 +264,16 @@ process_annual_budget <- function(budget_ls, crop_systems_df) {
                                                  "Irrigation Requirement (mm)" = "irrigation", "Groundwater Recharge (mm)" = "recharge", 
                                                  "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent"))
   
-  # STEP 2: Aggregate Quantiles
+  # STEP 2: Aggregate Mean and SD
+  # Because a single crop.system might contain multiple rotations, we average 
+  # the previously calculated means and standard deviations across them.
   summ_qs_cs <- summary_yr_crop %>%
-    dplyr::group_by(crop.system, Irrigation, var, var.plot, quantile) %>%
-    # Average the specific quantiles across the simulation timeline
-    dplyr::summarise(value = mean(value), .groups = "drop") %>%
-    # Pivot so each quantile (0.025, 0.5, 0.975) becomes its own distinct column
-    tidyr::pivot_wider(names_from = quantile, values_from = value)
+    dplyr::group_by(crop.system, Irrigation, var, var.plot) %>%
+    dplyr::summarise(
+      mean = mean(mean, na.rm = TRUE),
+      sd = mean(sd, na.rm = TRUE),
+      .groups = "drop"
+    )
   
   # STEP 3: Factor Ordering
   # We want the charts to display from "Best" to "Worst" BWP performance.
@@ -271,25 +289,46 @@ process_annual_budget <- function(budget_ls, crop_systems_df) {
 
 #' Plot Annual Summary Metrics
 #' @export
-plot_annual_summary <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (95 CI)") {
+#' Plot Annual Summary Metrics
+#' @export
+plot_annual_summary <- function(data, vars_to_plot, x_var = "mean", title_x = "Mean (\u00B1 SD)") {
   
-  # Filter the massive summary frame down to only the specific requested variables
+  # Filter and explicitly calculate error bounds before plotting
   plot_data <- data %>% 
     dplyr::filter(var.plot %in% vars_to_plot) %>%
-    dplyr::mutate(var.plot = factor(var.plot, levels = vars_to_plot))
+    dplyr::mutate(
+      var.plot = factor(var.plot, levels = vars_to_plot),
+      # Calculate bounds here to avoid ggplot2 aes() scoping confusion
+      error_high = .data[[x_var]] + sd,
+      # Use pmax to ensure the lower bound never drops below 0
+      # Robust Lower bound logic:
+      # If the mean is positive (>= 0), floor the error bar at 0.
+      # If the mean is negative (< 0), let the error bar extend normally downwards.
+      error_low  = dplyr::if_else(
+        .data[[x_var]] >= 0, 
+        pmax(.data[[x_var]] - sd, 0), 
+        .data[[x_var]] - sd
+      )
+    )
   
-  # Generate horizontal bar charts. Y is the crop system, X is the specified metric (usually mean volume)
+  # Generate horizontal bar charts
   p <- ggplot2::ggplot(plot_data, ggplot2::aes(y = crop.system)) +
     ggplot2::facet_grid(. ~ var.plot, scales = "free_x") +
+    
+    # Plot the main bars
     ggplot2::geom_col(ggplot2::aes(x = .data[[x_var]], fill = Irrigation)) +
-    ggplot2::geom_errorbar(ggplot2::aes(xmax = `0.975`, xmin = `0.025`), width = 0.2, color = "gray30") +
+    
+    # Plot the error bounds using the pre-calculated columns
+    ggplot2::geom_errorbar(ggplot2::aes(xmin = error_low, xmax = error_high), 
+                           width = 0.2, color = "gray30", na.rm = TRUE) +
+    
     ggplot2::scale_fill_manual(values = BWP_PALETTES$irrigation) +    
     ggplot2::labs(x = title_x, y = "Cropping System") +
     theme_baseR + 
     ggplot2::theme(legend.title = ggplot2::element_blank())
+  
   return(p)
 }
-
 #' Process Monthly Summary Over Long-Term Simulations
 #' @export
 process_monthly_summary <- function(budget_ls, crop_systems_df) {

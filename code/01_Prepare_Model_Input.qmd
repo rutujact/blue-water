@@ -67,8 +67,9 @@ project_root/
 │   │   ├── 07_crop.systems.csv
 │   │   ├── 08_crop_system_area_by_production_system.csv
 │   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
-│   └── processed/           <- TARGET: Derived model requirements (e.g., Kc curves) will land here
-│       └── supplementary/   <- TARGET: Intermediary Kc tables will land here
+│       └── supplementary/01_monthly_climatology_for_figure.csv (optional)
+│   └── processed/           <- Generated: Derived model requirements (e.g., Kc curves) will land here
+│       └── supplementary/   <- Generated: Intermediary Kc tables will land here
 ├── code/
 │   ├── functions/
 │   ├── 01_Prepare_Model_Inputs.qmd  <- (This file)
@@ -92,9 +93,9 @@ lapply(new.dirs, function(x) if (!dir.exists(x)) dir.create(x, recursive = TRUE,
 source(here("code/functions/01_get_kc.R"))
 source(here("code/functions/03_expand_kc.R"))
 
-# ==============================================================================
+# =====================================================================
 # GRASSLAND GROWTH CYCLE PARAMETERS
-# ==============================================================================
+# =====================================================================
 biophysical_parameters <- list(
   grazing_growth_rate   = 0.00458333333333333,
   grazing_drop_kc       = 0.20,
@@ -117,19 +118,20 @@ theme_baseR <- theme_bw() + theme(
 The water balance model requires continuous, daily forcing variables. Here, we read the required daily Precipitation (P) and Reference Evapotranspiration (ET0).
 
 ```{r clim-load}
-precip <- read_csv(here("data/input/01_precipitation.csv"), show_col_types = FALSE)
-et0.daily <- read_csv(here("data/input/02_et0.csv"), show_col_types = FALSE)
+precip <- data.table::fread(here("data/input/01_precipitation.csv")) %>% as_tibble()
+et0.daily <- data.table::fread(here("data/input/02_et0.csv")) %>% as_tibble()
 
 stopifnot(
   "Error: Precipitation contains missing values (NA)." = !any(is.na(precip$p)),
   "Error: ET0 contains missing values (NA)." = !any(is.na(et0.daily$et0))
 )
-
+# Only for figure plotting
+climate_summary <- data.table::fread(here("data/input/supplementary/01_monthly_climatology_for_figure.csv")) %>% as_tibble()
 ```
 
 #### Precipitation
 
-```{r clim-display, echo=FALSE}
+```{r precip-display, echo=FALSE}
 preview_precip <- head(precip, 5)
 colnames(preview_precip) <- c(
   "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
@@ -137,15 +139,40 @@ colnames(preview_precip) <- c(
 )
 knitr::kable(preview_precip, escape = FALSE, caption = "Preview: Precipitation Data Sample")
 
+# Save QA-QCd data for processing by the main script 02_Blue-Water.qmd
+write.csv(precip, file = here("data/processed/01_precipitation.csv"), row.names = FALSE)
+```
+
+#### Reference Evapotranspiration (ET0)
+
+```{r et0-display, echo=FALSE}
+preview_et0 <- head(et0.daily, 5)
+colnames(preview_et0) <- c(
+  "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
+  "p<br><small style='color:gray; font-weight:normal;'>Daily Reference Evapotranspiration (mm &ge; 0)</small>"
+)
+knitr::kable(preview_et0, escape = FALSE, caption = "Preview: ET0 Data Sample")
+write.csv(et0.daily, file = here("data/processed/02_et0.csv"), row.names = FALSE)
+```
+
+#### Monthly Climatology (Only for plotting figure)
+
+```{r clim-display, echo=FALSE}
+# colnames(preview_clim) <- c(
+#   "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
+#   "p<br><small style='color:gray; font-weight:normal;'>Daily Precipitation (mm &ge; 0)</small>"
+# )
+knitr::kable(climate_summary, escape = FALSE, caption = "Study Site Climatology")
+
+write.csv(climate_summary, file = here("data/processed/supplementary/01_monthly_climatology_for_figure.csv"), row.names = FALSE)
 ```
 
 # Soil Parameters
 
 The hydrological model requires specific soil properties: Water Holding Capacity (WHC) and Readily Available Water (RAW).
 
-```{r param-load}
-soil.param <- read_csv(here("data/input/03_soil.parameters.csv"), show_col_types = FALSE)
-
+```{r soil-load}
+soil.param <- data.table::fread(here("data/input/03_soil.parameters.csv")) %>% as_tibble()
 ```
 
 #### Soil Parameters Table
@@ -159,7 +186,7 @@ colnames(preview_soil) <- c(
   "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold</small>"
 )
 knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Table")
-
+write.csv(soil.param, file = here("data/processed/03_soil.parameters.csv"), row.names = FALSE)
 ```
 
 # Crop Characteristics
@@ -167,8 +194,7 @@ knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Ta
 ## Rooting Depth and Irrigated/Rainfed
 
 ```{r crop-param-load}
-crop.param <- read_csv(here("data/input/04_crop.parameters.csv"), show_col_types = FALSE)
-
+crop.param <- data.table::fread(here("data/input/04_crop.parameters.csv")) %>% as_tibble()
 ```
 
 #### Crop Rooting Depth and Irrigated/Rainfed
@@ -180,8 +206,9 @@ colnames(preview_crop) <- c(
   "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
   "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
 )
-knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Irrigated/Rainfed Table")
+knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Crop Irrigated/Rainfed Table")
 
+write.csv(crop.param, file = here("data/processed/04_crop.parameters.csv"), row.names = FALSE)
 ```
 
 ## Crop Coefficient (Kc) Curves
@@ -189,22 +216,21 @@ knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Dept
 Our framework dynamically generates daily Kc curves over a calendar year from the input parameters. As described in the manuscript, daily Kc values are computed based on the FAO method for most crops, monthly step functions for some fruit trees, or polynomial equations for groundnut, or linear regrowth rules for grasslands. Some crops such as banana can span multiple years, in which case we define a crop coefficient curve of each year independently.
 
 ```{r load-kc-params}
-kc.raw       <- read_csv(here("data/input/05_crop_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-raw_params   <- read_csv(here("data/input/06_fruit_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-
+fao_kc_raw       <- data.table::fread(here("data/input/05_crop_kc_curve_parameters_table.csv")) %>% as_tibble()
+fruit_kc_raw   <- data.table::fread(here("data/input/06_fruit_kc_curve_parameters_table.csv")) %>% as_tibble()
 ```
 
 #### FAO Segmented Parameters
 
 ```{r fao-params-display, echo=FALSE}
-knitr::kable(head(kc.raw, 5), caption = "Preview: FAO Segmented Parameters")
+knitr::kable(head(fao_kc_raw, 5), caption = "Preview: FAO Segmented Parameters")
 
 ```
 
 #### Fruit Tree Parameters
 
 ```{r fruit-params-display, echo=FALSE}
-knitr::kable(raw_params, caption = "Preview: Fruit Tree Parameters")
+knitr::kable(fruit_kc_raw, caption = "Preview: Fruit Tree Parameters")
 
 ```
 
@@ -217,14 +243,14 @@ We pass the input Kc parameters through mathematical functions. This includes st
 Generates the classic 4-stage linear growth curves for standard crops.
 
 ```{r generate-fao-kc, warning=FALSE, fig.cap="Standard FAO-56 segmented curves based on major crop calendar events such as sowing and harvesting dates, and crop development duration."}
-kc.raw.long <- kc.raw %>% 
+fao_kc_raw.long <- fao_kc_raw %>% 
   pivot_longer(cols = -1, names_to = "crop") %>% 
   mutate(crop = str_to_title(gsub("_|\\.", " ", crop, perl = TRUE)))
 
-kc <- kc.raw.long %>% subset(stringr::str_detect(var, stringr::regex("kc", ignore_case = TRUE))) %>% rename(Kc = value, kc_var = var) %>%
+kc <- fao_kc_raw.long %>% subset(stringr::str_detect(var, stringr::regex("kc", ignore_case = TRUE))) %>% rename(Kc = value, kc_var = var) %>%
   mutate(Kc_var = case_when(grepl("ini", kc_var, ignore.case = TRUE) ~ "Kc_ini", grepl("mid", kc_var, ignore.case = TRUE) ~ "Kc_mid", grepl("end", kc_var, ignore.case = TRUE) ~ "Kc_end", TRUE ~ kc_var))
 
-doy <- kc.raw.long %>% subset(var %in% c("Sowing", "End of ini", "End of Dev", "End of Mid", "Harvest")) %>% rename(doy = value, doy_var = var) %>% mutate(doy = if_else(doy == 365.00, 366.00, doy))
+doy <- fao_kc_raw.long %>% subset(var %in% c("Sowing", "End of ini", "End of Dev", "End of Mid", "Harvest")) %>% rename(doy = value, doy_var = var) %>% mutate(doy = if_else(doy == 365.00, 366.00, doy))
 
 kc.doy.key <- data.frame(doy_var = c("Sowing", "End of ini", "End of Dev", "End of Mid", "Harvest"), kc_var = c("Kc_ini", "Kc_ini", "Kc_mid", "Kc_mid", "Kc_end"))
 
@@ -293,8 +319,8 @@ Processes perennial step-functions for orchard crops.
 
 ```{r fruit-trees, warning=FALSE, out.width= "70%", fig.cap="Monthly step-function curves for specific orchard crops. Note that this does not include all fruit trees; some (such as banana) are modeled using the standard FAO segmented curves."}
 
-colnames(raw_params) <- stringr::str_to_title(gsub("_|\\.", " ", colnames(raw_params)))
-kc_fruits <- bind_rows(generate_fruit_step("Pomegranate", raw_params), generate_fruit_step("Sweet Lime", raw_params)) 
+colnames(fruit_kc_raw) <- stringr::str_to_title(gsub("_|\\.", " ", colnames(fruit_kc_raw)))
+kc_fruits <- bind_rows(generate_fruit_step("Pomegranate", fruit_kc_raw), generate_fruit_step("Sweet Lime", fruit_kc_raw)) 
 
 # Visual Check
 ggplot(kc_fruits %>% mutate(plot_kc = if_else(kc == 0, NA_real_, kc)), aes(x = doy, y = plot_kc, color = crop)) +
@@ -359,7 +385,7 @@ kc.doy.crop.all <- bind_rows(
   napier, napier_short
 ) %>% arrange(crop, doy)
 
-write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv"), row.names = FALSE)
+write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/02_crop_kc_by_doy_all_crops.csv"), row.names = FALSE)
 
 ```
 
@@ -369,16 +395,17 @@ write.csv(kc.doy.crop.all, file = here("data/processed/supplementary/04_crop_kc_
 Read the file that describes the composition of each cropping system in terms of crop rotations at the plot scale.
 
 ```{r, load-cropping-systems}
-crop.systems <- read_csv(here("data/input/07_crop.systems.csv"), show_col_types = FALSE)
+crop.systems <- data.table::fread(here("data/input/07_crop.systems.csv")) %>% as_tibble()
+
+write.csv(crop.systems, file = here("data/processed/05_crop.systems.csv"), row.names = FALSE)
 
 knitr::kable(head(crop.systems), caption = "Preview: Cropping Systems")
 
-# Generate the long-format rotation table required by the downstream Toolkit
+# Generate the long-format rotation table
 crop.systems.l <- crop.systems %>%
   select(-Irrigation) %>%
   pivot_longer(cols = starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
   left_join(crop.param, by = "crop")
-write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), row.names = FALSE)
 ```
 
 ## Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
@@ -387,16 +414,14 @@ write.csv(crop.systems.l, file = here("data/processed/06_crop.systems.l.csv"), r
 crop.systems.l.kc <- crop.systems.l %>%
   select(rotation, n.rotation, crop.system, soil, ncrop, crop, irrigation, rooting_depth_cm) %>%
   left_join(kc.doy.crop.all %>% arrange(doy, crop), by = "crop", relationship = "many-to-many")
-
-crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
-save(crop.rotation.kc.ls, file = here("data/processed/08_crop.rotation.kc.ls.Rdata"))
-
 ```
 
-### Daily Kc Table for a Crop Rotation
+### Daily Kc Table by Crop Rotation
 
 *(Example showing the generated continuous timeline for a single rotation).*
+
 ```{r display-kc-expansion, echo=FALSE}
+crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
 preview_kc <- head(crop.rotation.kc.ls[[1]], 10) %>%
   select(crop.system, crop, doy, kc)
 
@@ -406,7 +431,11 @@ colnames(preview_kc) <- c(
   "doy<br><small style='color:gray; font-weight:normal;'>Day of Year (1-366)</small>",
   "kc<br><small style='color:gray; font-weight:normal;'>Daily Crop Coefficient</small>"
 )
+
 knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Daily Kc Table (Single Rotation)")
+
+write.csv(crop.systems.l.kc, file = here("data/processed/06_crop.systems.l.kc.csv"), row.names = FALSE)
+
 ```
 
 # Production Systems
@@ -414,7 +443,7 @@ knitr::kable(preview_kc, escape = FALSE, caption = "Preview: Daily Kc Table (Sin
 Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025.
 
 ```{r load-production-system}
-ps_by_cs_area  <- read_csv(here("data/input/08_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
+ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system.csv")) %>% as_tibble()
 ```
 
 ```{r display-area, echo=FALSE}
@@ -423,10 +452,11 @@ colnames(preview_ps) <- c(
   "time_period<br><small style='color:gray; font-weight:normal;'>Historical grouping</small>",
   "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
   "crop.system<br><small style='color:gray; font-weight:normal;'>Implemented rotation</small>",
-  "area_ha<br><small style='color:gray; font-weight:normal;'>Total cultivated area</small>"
+  "area_ha<br><small style='color:gray; font-weight:normal;'>Cultivated area</small>"
 )
 knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under each Production System")
 
+write.csv(ps_by_cs_area, file = here("data/processed/07_crop_system_area_by_production_system.csv"), row.names = FALSE)
 ```
 
 # Agrarian System
@@ -434,7 +464,7 @@ knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under eac
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
 
 ```{r load-agrirarian}
-farms_count_df <- read_csv(here("data/input/09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
+farms_count_df <- data.table::fread(here("data/input/09_no_of_farmers_by_production_system.csv")) %>% as_tibble()
 ```
 
 ```{r display-counts, echo=FALSE}
@@ -445,6 +475,8 @@ colnames(preview_counts) <- c(
   "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
 )
 knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
+
+write.csv(farms_count_df, file = here("data/processed/08_no_of_farmers_by_production_system.csv"), row.names = FALSE)
 ```
 
 # References
