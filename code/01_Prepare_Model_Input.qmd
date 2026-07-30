@@ -120,7 +120,8 @@ The water balance model requires continuous, daily forcing variables. Here, we r
 ```{r clim-load}
 precip <- data.table::fread(here("data/input/01_precipitation.csv")) %>% as_tibble()
 et0.daily <- data.table::fread(here("data/input/02_et0.csv")) %>% as_tibble()
-
+et0.daily <- et0.daily %>%
+  mutate(et0 = round(et0, 3))
 stopifnot(
   "Error: Precipitation contains missing values (NA)." = !any(is.na(precip$p)),
   "Error: ET0 contains missing values (NA)." = !any(is.na(et0.daily$et0))
@@ -149,7 +150,7 @@ write.csv(precip, file = here("data/processed/01_precipitation.csv"), row.names 
 preview_et0 <- head(et0.daily, 5)
 colnames(preview_et0) <- c(
   "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
-  "p<br><small style='color:gray; font-weight:normal;'>Daily Reference Evapotranspiration (mm &ge; 0)</small>"
+  "ET0<br><small style='color:gray; font-weight:normal;'>Daily Reference Evapotranspiration (mm &ge; 0)</small>"
 )
 knitr::kable(preview_et0, escape = FALSE, caption = "Preview: ET0 Data Sample")
 write.csv(et0.daily, file = here("data/processed/02_et0.csv"), row.names = FALSE)
@@ -444,6 +445,8 @@ Read the file that describes the composition of each production system in terms 
 
 ```{r load-production-system}
 ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system.csv")) %>% as_tibble()
+ps_by_cs_area <- ps_by_cs_area %>%
+  mutate(area_ha = round(area_ha, 2))
 ```
 
 ```{r display-area, echo=FALSE}

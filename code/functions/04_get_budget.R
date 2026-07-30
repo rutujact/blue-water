@@ -37,7 +37,7 @@
 #      sm.init       = 0.5,                                    # Initial fractional soil moisture [0-1]
 #      soil.param    = data.frame(soil, soil.type, whc.mmpercm, raw),
 #      crop.param    = data.frame(crop.ID, crop, irrigation, rooting_depth_cm),
-#      kc_no_crop    = list(summer = 0.005, kharip_rabi = 0.2) # Fallow baseline ET coefficients
+#      kc_no_crop    = list(dry_season = 0.005, kharip = 0.2) # Fallow baseline ET coefficients
 #    )
 #
 # cs: Crop system rotation structural data frame mapping:
@@ -138,12 +138,12 @@ get_budget <- function(cs, p, ts) {
     dplyr::ungroup()
   
   # 3.4. Fill fallow periods with baseline land evaporative loss coefficients ----
-  summer.kc <- p$kc_no_crop[["summer"]]
-  kharip_rabi.kc <- p$kc_no_crop[["kharip_rabi"]]
+  dry_season.kc <- p$kc_no_crop[["dry_season"]]
+  kharip.kc <- p$kc_no_crop[["kharip"]]
   
   cs.kcr.irri$sum.kc <- cs.kcr.irri$kcr
-  cs.kcr.irri$kcr[cs.kcr.irri$kcr == 0 & cs.kcr.irri$doy < 120] <- summer.kc
-  cs.kcr.irri$kcr[cs.kcr.irri$kcr == 0 & cs.kcr.irri$doy >= 120] <- kharip_rabi.kc
+  cs.kcr.irri$kcr[cs.kcr.irri$kcr == 0 & cs.kcr.irri$doy < 120] <- dry_season.kc
+  cs.kcr.irri$kcr[cs.kcr.irri$kcr == 0 & cs.kcr.irri$doy >= 120] <- kharip.kc
   
   # 3.5. Join temporal coefficients onto continuous simulation timeline via DOY ----
   ts$doy <- as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), format = "%j"))

@@ -67,32 +67,32 @@ This script assumes you have already run `01_Format_Input_Data.Rmd`. It will rea
 ```text
 project_root/
 ├── data/
-│   └── processed/           <- Required: Processed data from the 01_Input script
-│   │   ├── 01_precipitation.csv
-│   │   ├── 02_et0.csv
-│   │   ├── 03_soil.parameters.csv
-│   │   ├── 04_crop.parameters.csv
-│   │   ├── 05_crop.systems.csv
-│   │   ├── 06_crop.systems.l.kc.csv
-│   │   ├── 07_crop_system_area_by_production_system.csv
-│   │   ├── 08_no_of_production_system_in_the_agrarian_system.csv
+│   └── processed/                   <- Required: Processed data from the 01_Input script
+│       ├── 01_precipitation.csv
+│       ├── 02_et0.csv
+│       ├── 03_soil.parameters.csv
+│       ├── 04_crop.parameters.csv
+│       ├── 05_crop.systems.csv
+│       ├── 06_crop.systems.l.kc.csv
+│       ├── 07_crop_system_area_by_production_system.csv
+│       ├── 08_no_of_production_system_in_the_agrarian_system.csv
 │       └── supplementary/01_monthly_climatology_for_figure.csv (optional)
 ├── code/
-│   ├── functions/           <- Required: Core toolkit dependencies
-│   │   ├── 02_get_Peff.R     
+│   ├── functions/                   <- Required: Core toolkit dependencies
+│   │   ├── 02_get_Peff.R      
 │   │   ├── 04_get_budget.R
 │   │   └── 05_get_figures.R
 │   ├── 01_Format_Input_Data.Rmd
-│   └── 02_Blue-Water.Rmd    <- (This file)
-├── output/                  <- Generated: Final budget summaries 
-│   └── water_budgets/       <- Generated: Wide-format climatology tables
-├── figures/                 <- Generated: Root folder for all visualizations
-│   ├── crop_kc_curves/      <- Generated: Individual Kc curve outputs
-│   ├── water_budgets/       <- Generated: Individual field-level budget plots
-│   ├── manuscript/          <- Generated: High-res print-ready PDFs/TIFFs
-│   └── presentation/        <- Generated: Screen-ready PNGs and web layouts
-├── Blue-Water.Rproj         <- Required: RStudio Project file to knit this script
-└── 02_Blue-Water.html       <- Generated: HTML Report created by knitting this script
+│   └── 02_Blue-Water.Rmd            <- (This file)
+├── output/                          <- Generated: Final budget summaries 
+│   └── water_budgets/               <- Generated: Wide-format climatology tables
+├── figures/                         <- Generated: Root folder for all visualizations
+│   ├── crop_kc_curves/              <- Generated: Individual Kc curve outputs
+│   ├── water_budgets/               <- Generated: Individual field-level budget plots
+│   ├── manuscript/                  <- Generated: High-res print-ready PDFs/TIFFs
+│   └── presentation/                <- Generated: Screen-ready PNGs and web layouts
+├── Blue-Water.Rproj                 <- Required: RStudio Project file to knit this script
+└── 02_Blue-Water.html               <- Generated: HTML Report created by knitting this script
 ```
 
 
@@ -135,16 +135,11 @@ theme_set(
 
 ## User Configuration
 
-For speeding up rendering of this report, by-default figure file saving is turned OFF (they will get displayed in any case). You can turn it back ON here. 
-
 If you are running this script for your own data but you don't have data at all scales, you can limit the scale of the analyses here.
 
-```{r, user-config}
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 1. Do you need to save figures? ----
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-EXPORT_FIGURES <- FALSE # If rendering this report is slow on your computer, you can toggle this to FALSE. Toggle to TRUE for final manuscript output. Slightly slows down
+The main Water Budget function calculations can be turned ON/OFF here. 
 
+```{r, user-config}
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 2. If applying for your study site, is production or production as well as agrarian system scale data missing? ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -154,6 +149,9 @@ EXPORT_FIGURES <- FALSE # If rendering this report is slow on your computer, you
 # Set this if you have limited data!
 HAS_PRODUCTION_SYSTEM <- TRUE # Set to FALSE to Stop at Cropping Systems (requires ONLY processed/01 to 07 data files).
 HAS_AGRARIAN_SYSTEM <- TRUE # Set to FALSE to Stop at Production Systems (requires ONLY processed/01 to 08 data files).
+
+# The main Water Budget Calculator function can be turned ON/OFF here. 
+CALCULATE_BUDGET <- FALSE # Toggle this to FALSE, for example, if you have already run the water budget calculations once (so budget outputs are saved), and are manipulating the output processing code.
 ```
 
 ## Load Toolkit Dependencies
@@ -204,13 +202,12 @@ climate_summary <- read.csv(file = here("data/processed/supplementary/01_monthly
 fig.1_journal <- plot_climate_profile(climate_summary)
 print(fig.1_journal)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(plot = fig.1_journal, filename = here("figures/manuscript/Fig.1_Regional_Monthly_Climate_Profile.pdf"), width = 180, height = 90, units = "mm", device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regional_Monthly_Climate_Profile.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white")
-}
+ggsave(plot = fig.1_journal, filename = here("figures/presentation/Fig.1_Regional_Monthly_Climate_Profile.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white",
+       device = ragg::agg_png) # <--- The magic speed bullet)
 ```
 
 ## Soils and Crops
@@ -233,36 +230,21 @@ knitr::kable(head(kc.doy.crop.all), caption = "Preview: Crop Daily Kc")
 
 *(Saves a high-resolution PDF for the manuscript).*
 
-```{r plot-all-kc, fig.width=10, fig.height=8, warning=FALSE}
+```{r plot-all-kc, fig.width=10, fig.height=6, warning=FALSE}
 #| fig-cap: "**Figure 2. Daily crop coefficient ($K_c$) for all modeled crops.** The panels illustrate the temporal variation of $K_c$ across a full calendar year (Day of Year), generated via crop-specific mathematical rule sets. The profiles integrate multiple modeling approaches: standard FAO-56 segmented linear growth stages for seasonal crops (e.g., millet, rice, tomato, pulses), continuous polynomial equations for groundnut varieties, discrete monthly step-functions for specific perennial orchards (sweet lime, pomegranate), and drop-and-regrowth cycles to simulate managed grazing and repeated harvesting schedules (grazed pastures, Napier grass)."
 
 if (!dir.exists(here("figures/manuscript"))) {
   dir.create(here("figures/manuscript"), recursive = TRUE, showWarnings = FALSE)
 }
 
-# Create a temporary plotting variable that turns 0 into NA
-plot_data <- kc.doy.crop.all %>%
-  mutate(plot_kc = if_else(kc == 0, NA_real_, kc))
-
-fig.2_journal <- ggplot(plot_data, aes(x = doy, y = plot_kc, color = crop)) +
-    # NEW: Add a subtle color fill beneath the curve. This makes active panels stand out.
-    ggplot2::geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
-  # na.rm = TRUE prevents ggplot from throwing 50 warnings about missing values
-  geom_line(linewidth = 1, na.rm = TRUE) +
-  facet_wrap(~ crop) +
-  theme_baseR +
-  labs(
-    title = "Generated Crop Coefficient (Kc) Curves - All Types",
-    x = "Day of Year (DOY)",
-    y = "Crop Coefficient (Kc)"
-  ) +
-  theme(legend.position = "none")
+fig.2_journal <- plot_crop_coefficient_curves(kc.doy.crop.all)
 print(fig.2_journal)
 
-if (EXPORT_FIGURES) {
-ggsave(here("figures/manuscript/Fig.2_Kc_Curves_All_Crops.pdf"), plot = fig.2_journal, width = 10, height = 8)
-}
 
+ggsave(here("figures/manuscript/Fig.2_Kc_Curves_All_Crops.pdf"), plot = fig.2_journal, width = 10, height = 6)
+  
+# Save PNG for Presentation
+ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Kc_Curves_All_Crops.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ## Cropping Systems 
@@ -279,20 +261,21 @@ crop.systems.l.kc <- read.csv(file = here("data/processed/06_crop.systems.l.kc.c
 
 #### Kc Curves for each Cropping System
 
-```{r fig.3, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 3. Annual Crop Coefficient (Kc) curves for each cropping system (rows) for one year (column 1) or multi-year (columns 1-2 or 1-3) rotations, color coded by crop. Off-season and ‘No Crop’ periods default to a defined baseline threshold representing bare-soil evaporation."}
+```{r fig.3, echo = FALSE, fig.align = 'center', fig.height = 10, out.width="100%", fig.cap="Figure 3. Annual Crop Coefficient (Kc) curves for each cropping system (rows) for one year (column 1) or multi-year (columns 1-2 or 1-3) rotations, color coded by crop. Off-season and ‘No Crop’ periods are defaulted to a defined seasonal threshold representing bare-soil evaporation (tan sections)."}
+# Define seasonal baseline Kc thresholds representing bare-soil evaporation.
+
+KC_FALLOW_CONSTANTS <- list(dry_season = 0.005, kharip = 0.2, doy_switch = 120)
 
 # Determine Irrigation Status for the System based on underlying crop params
 
-fig.3_journal <- plot_crop_coefficient_curves(crop.systems.l.kc)
+fig.3_journal <- plot_crop_system_coefficient_curves(crop.systems.l.kc, KC_FALLOW_CONSTANTS)
 print(fig.3_journal)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(plot = fig.3_journal, filename = here("figures/manuscript/Fig.3_Crop_Coefficient_Curves_by_Rotation.pdf"), width = 180, height = 225, units = "mm", device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(plot = fig.3_journal, filename = here("figures/presentation/Fig.3_Crop_Coefficient_Curves_by_Rotation.png"), width = 180, height = 225, units = "mm", dpi = 300, bg = "white")
-}
+ggsave(plot = fig.3_journal, filename = here("figures/presentation/Fig.3_Crop_Coefficient_Curves_by_Rotation.png"), width = 180, height = 225, units = "mm", dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ## Production Systems
@@ -339,7 +322,8 @@ p.list <- list(
   soil.param = soil.param,
   sm.init = 0.5, # Initial soil water content
   crop.param = crop.param,
-  kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2) # Kc value depending on season
+  # Kc value depending on seasons governing bare-soil evaporation. 
+  kc_no_crop = KC_FALLOW_CONSTANTS # Given in section # Kc Curves for Crop Systems
 )
 
 # The Water Budget Calculator operates on individual rotations
@@ -359,13 +343,13 @@ When the calculator finishes running, all daily data outputs are saved as well a
 
 output/01_processed_water_budgets.Rdata
 
-```{r budget-calculator, eval = FALSE}
+```{r budget-calculator, eval = CALCULATE_BUDGET}
 # Multi-Core Setup
 num_cores <- parallel::detectCores(logical = FALSE) 
 cl <- makeCluster(num_cores, type = "PSOCK")
 
 clusterExport(cl, varlist = c("p.list", "met.forcing.ls", "get_budget", "quantile_df"), envir = environment()) 
-clusterEvalQ(cl, {library(tidyverse); library(ggpubr); library(here)})
+invisible(clusterEvalQ(cl, {library(tidyverse); library(ggpubr); library(here)}))
 
 # Process budget arrays iteratively
 budget <- pblapply(crop.rotation.kc.ls, get_budget, cl = cl, p = p.list, ts = met.forcing.ls)
@@ -387,8 +371,11 @@ load(file = here("output/01_processed_water_budgets.Rdata"))
 
 # Output Processing & BWP Calculations
 
-We transform the "output/01_processed_water_budgets.Rdata") file into CSVs of:
-1. daily outputs: "output/02_export_detailed_daily_water_budgets.csv", 2. yearly outputs: "output/03_export_annual_water_budgets_long.csv", or 3. for an average year (with median and 95% quantiles across years): "output/04_calculated_crop_system_blue_water_potential.csv".
+We transform the "output/01_processed_water_budgets.Rdata") file into CSVs of:<br>
+1. Daily outputs: "output/02_export_detailed_daily_water_budgets.csv",<br>
+2. Yearly outputs: "output/03_export_annual_water_budgets_long.csv", and<br>
+3. For an average year (with SD across years):
+"output/04_calculated_crop_system_blue_water_potential.csv.
 
 ```{r compile-outputs}
 # 1. Optimize Daily Processing
@@ -438,13 +425,11 @@ vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)")
 fig.4_irrig_recharge <- plot_annual_summary(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (\u00B1 SD)")
 print(fig.4_irrig_recharge)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.4_Crop_Systems_Irrigation_Requirement_and_Gross_Groundwater_Recharge.pdf"), fig.4_irrig_recharge, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.4_Crop_Systems_Irrigation_Requirement_and_Gross_Groundwater_Recharge.png"), fig.4_irrig_recharge, width = 10, height = 5.65, dpi = 300, bg = "white")
-}
+ggsave(here("figures/presentation/Fig.4_Crop_Systems_Irrigation_Requirement_and_Gross_Groundwater_Recharge.png"), fig.4_irrig_recharge, width = 10, height = 5.65, dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ## Blue Water Potential ($BWP$) by Cropping Systems
@@ -456,13 +441,11 @@ This plot displays the core metric: **Blue Water Potential**, which is the mean 
 fig.5_cs_bwp <- plot_annual_summary(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Gross Recharge - Irrigation] (mm)")
 print(fig.5_cs_bwp)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.5_Crop_System_Blue_Water_Potential.pdf"), fig.5_cs_bwp, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.5_Crop_System_Blue_Water_Potential.png"), fig.5_cs_bwp, width = 10, height = 5.65, dpi = 300, bg = "white")
-}
+ggsave(here("figures/presentation/Fig.5_Crop_System_Blue_Water_Potential.png"), fig.5_cs_bwp, width = 10, height = 5.65, dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ---
@@ -487,34 +470,31 @@ ps_volumetric_summary <- ps_results$ps_volumetric_summary
 ps_bwp_volumetric <- ps_results$ps_bwp_volumetric
 
 write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contributions.csv"), row.names = FALSE)
-
 ```
 
 ```{r ann-social, eval=HAS_PRODUCTION_SYSTEM, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Comparative annual Blue Water Potential ($BWP$) across Production Systems, or farm types, (1950s vs. 2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross.'}
 fig.6_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
 print(fig.6_social)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.6_Socio_Economic_Group_BWP.pdf"), fig.6_social, width = 10, height = 5.65, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.6_Socio_Economic_Group_BWP.png"), fig.6_social, width = 10, height = 5.65, dpi = 300, bg = "white")
-}
+ggsave(here("figures/presentation/Fig.6_Socio_Economic_Group_BWP.png"), fig.6_social, width = 10, height = 5.65, dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ---
 
 # Blue Water Potential at Agrarian System Scale
 
-## Contribution of Production Systems (or Social Categories of Farmers) to Annual Blue Water Potential at Village/Micro-regional Scale
+## Contribution of Production Systems to Annual Blue Water Potential at Village Scale
 
-Finally, we aggregate the Blue Water Potential of all the production systems to understand how they contribute to the Blue Water Potential of the agrarian system. In the case study of Hemingway et al. 202X, this is done at the scale of the archetype village, at two historical periods: 1950s and 2022. In the 1950s, all the social category had a positive Blue Water Potential (and were thus Net Producers), while in 2022 the social categories are divided in Net Consumers and Net Producers.
+Finally, we aggregate the Blue Water Potential of all the production systems, or Social Categories of Farmers, to understand how they contribute to the Blue Water Potential of the agrarian system. In the case study of Hemingway et al. 202X, this is done at the scale of the archetype village, at two historical periods: 1950s and 2022. In the 1950s, all the social category had a positive Blue Water Potential (and were thus Net Producers), while in 2022 the social categories are divided in Net Consumers and Net Producers.
 
 This figure highlights the role of often ignored social category such as Pastoralists who in 2022 are main Net Contributers of Blue Water in the archetype village. 
 
-```{r village-bwp, eval=HAS_AGRARIAN_SYSTEM, fig.width=17, fig.height=9.5, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
-# Note to Users with their own data: Even with one historical Period, the following figure function will work.
+```{r village-bwp, eval=HAS_AGRARIAN_SYSTEM, fig.width=17, fig.height=7, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+# Note to Users with their own data: Even with one Historical Period, the following figure function will work.
 
 village.bwp_collapsed <- ps_bwp_volumetric %>%
   mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
@@ -535,8 +515,6 @@ village.bwp_collapsed <- ps_bwp_volumetric %>%
 colnames(village.bwp_collapsed) <- c("period", "label", "val")
 
 cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
-
-if (EXPORT_FIGURES) {
   
 # Build comprehensive system maps
 invisible(plot_village_bwp(
@@ -553,7 +531,7 @@ invisible(plot_village_bwp(
   output_dev = png, 
   filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison_box.png"),
   manuscript_style = FALSE
-))}
+))
 
 invisible(plot_village_bwp(
   village_bwp_collapsed = village.bwp_collapsed,
@@ -572,7 +550,6 @@ if (file.exists(img_path)) {
   plot.new()
   rasterImage(img, 0, 0, 1, 1)
 }
-
 ```
 
 ## Classical Representation of Water Balance
@@ -580,7 +557,7 @@ if (file.exists(img_path)) {
 Here we illustrate how water balance is commonly represented as aggregated Inflows minus Outflows by land-use. In contrast to the new framework (as illustrated in the last figure), here all land uses are represented as net water consumers. This representation ignores the complementarity between land-uses for the Blue Water Balance at the village/micro-regional scale and can lead to maladaptive management decisions (e.g., getting rid of pastoral systems, or relacement of rainfed crops by irrigated crops).
 
 
-```{r village-budget, eval=HAS_AGRARIAN_SYSTEM, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village."}
+```{r village-budget, eval=HAS_AGRARIAN_SYSTEM, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village.", message = FALSE}
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
 # Margins for the interactive HTML document
@@ -613,8 +590,6 @@ combined_panels_html <- htmltools::tagList(
   )
 )
 
-if (EXPORT_FIGURES) {
-  
   # 2. Build a completely separate Export version with its own margins
   sankey_1950s_export <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
   sankey_2022_export  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
@@ -657,14 +632,13 @@ try({
     }
   }, silent = TRUE)
   unlink(html_path)
-}
 
 # 3. Print the HTML version to your actual knitted document
 combined_panels_html
 ```
 
 
-## Impact of social category demographics on Blue Water Potential of the village/micro-region
+## Impact of Social Category Demographics on Blue Water Potential of the Village
 
 This figure show how some social category (Production System) disproportionately affect the Blue Water Potential of the village/micro-region.
 
@@ -675,13 +649,11 @@ For the case study in Hemingway et al. 202X, a large number of rainfed farmers a
 
 fig.9_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, crop.systems, ps_by_cs_area)
 
-if (EXPORT_FIGURES) {
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.9_Farm_BWP_Disparity.pdf"), fig.9_disparity, width = 11, height = 5.5, device = cairo_pdf)
 
 # Save PNG for Presentation
-ggsave(here("figures/presentation/Fig.9_Farm_BWP_Disparity.png"), fig.9_disparity, width = 11, height = 5.5, dpi = 300, bg = "white")
-}
+ggsave(here("figures/presentation/Fig.9_Farm_BWP_Disparity.png"), fig.9_disparity, width = 11, height = 5.5, dpi = 300, bg = "white", device = ragg::agg_png)
 
 print(fig.9_disparity)
 ```

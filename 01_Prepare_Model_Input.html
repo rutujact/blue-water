@@ -3045,7 +3045,7 @@ vertical-align: -.125em;
   <ul class="collapse">
   <li><a href="#build-annualmulti-annual-cropping-systemsrotations-by-compiling-individual-crop-kc-curves." id="toc-build-annualmulti-annual-cropping-systemsrotations-by-compiling-individual-crop-kc-curves." class="nav-link" data-scroll-target="#build-annualmulti-annual-cropping-systemsrotations-by-compiling-individual-crop-kc-curves."><span class="header-section-number">4.1</span> Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.</a>
   <ul class="collapse">
-  <li><a href="#daily-kc-table-for-a-crop-rotation" id="toc-daily-kc-table-for-a-crop-rotation" class="nav-link" data-scroll-target="#daily-kc-table-for-a-crop-rotation"><span class="header-section-number">4.1.1</span> Daily Kc Table for a Crop Rotation</a></li>
+  <li><a href="#daily-kc-table-by-crop-rotation" id="toc-daily-kc-table-by-crop-rotation" class="nav-link" data-scroll-target="#daily-kc-table-by-crop-rotation"><span class="header-section-number">4.1.1</span> Daily Kc Table by Crop Rotation</a></li>
   </ul></li>
   </ul></li>
   <li><a href="#production-systems" id="toc-production-systems" class="nav-link" data-scroll-target="#production-systems"><span class="header-section-number">5</span> Production Systems</a></li>
@@ -3125,8 +3125,9 @@ margin-bottom: 1rem;
 │   │   ├── 07_crop.systems.csv
 │   │   ├── 08_crop_system_area_by_production_system.csv
 │   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
-│   └── processed/           &lt;- TARGET: Derived model requirements (e.g., Kc curves) will land here
-│       └── supplementary/   &lt;- TARGET: Intermediary Kc tables will land here
+│       └── supplementary/01_monthly_climatology_for_figure.csv (optional)
+│   └── processed/           &lt;- Generated: Derived model requirements (e.g., Kc curves) will land here
+│       └── supplementary/   &lt;- Generated: Intermediary Kc tables will land here
 ├── code/
 │   ├── functions/
 │   ├── 01_Prepare_Model_Inputs.qmd  &lt;- (This file)
@@ -3140,13 +3141,15 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>precip <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/01_precipitation.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>et0.daily <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/02_et0.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>precip <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/01_precipitation.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>et0.daily <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/02_et0.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: Precipitation contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(precip<span class="sc">$</span>p)),</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: ET0 contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(et0.daily<span class="sc">$</span>et0))</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Only for figure plotting</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>climate_summary <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/supplementary/01_monthly_climatology_for_figure.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="precipitation" class="level4" data-number="1.0.0.1">
@@ -3191,6 +3194,188 @@ margin-bottom: 1rem;
 </div>
 </div>
 </section>
+<section id="reference-evapotranspiration-et0" class="level4" data-number="1.0.0.2">
+<h4 data-number="1.0.0.2" class="anchored" data-anchor-id="reference-evapotranspiration-et0"><span class="header-section-number">1.0.0.2</span> Reference Evapotranspiration (ET0)</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Preview: ET0 Data Sample</caption>
+<colgroup>
+<col style="width: 46%">
+<col style="width: 53%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">date<br><small style="color:gray; font-weight:normal;">Sequential dates (YYYY-MM-DD)</small></th>
+<th style="text-align: right;">p<br><small style="color:gray; font-weight:normal;">Daily Reference Evapotranspiration (mm ≥ 0)</small></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1980-01-01</td>
+<td style="text-align: right;">3.799466</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-02</td>
+<td style="text-align: right;">4.036208</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-03</td>
+<td style="text-align: right;">4.315340</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1980-01-04</td>
+<td style="text-align: right;">4.124532</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1980-01-05</td>
+<td style="text-align: right;">4.575594</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="monthly-climatology-only-for-plotting-figure" class="level4" data-number="1.0.0.3">
+<h4 data-number="1.0.0.3" class="anchored" data-anchor-id="monthly-climatology-only-for-plotting-figure"><span class="header-section-number">1.0.0.3</span> Monthly Climatology (Only for plotting figure)</h4>
+<div class="cell">
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Study Site Climatology</caption>
+<colgroup>
+<col style="width: 7%">
+<col style="width: 19%">
+<col style="width: 18%">
+<col style="width: 16%">
+<col style="width: 14%">
+<col style="width: 11%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">Month</th>
+<th style="text-align: right;">Temperature_avg</th>
+<th style="text-align: right;">Temperature_sd</th>
+<th style="text-align: right;">Rainfall_avg</th>
+<th style="text-align: right;">Rainfall_sd</th>
+<th style="text-align: right;">ET0_avg</th>
+<th style="text-align: right;">ET0_sd</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">23.83592</td>
+<td style="text-align: right;">0.6598859</td>
+<td style="text-align: right;">1.2621622</td>
+<td style="text-align: right;">3.857774</td>
+<td style="text-align: right;">135.0416</td>
+<td style="text-align: right;">8.504149</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">26.38003</td>
+<td style="text-align: right;">0.7647114</td>
+<td style="text-align: right;">0.4081081</td>
+<td style="text-align: right;">1.089949</td>
+<td style="text-align: right;">148.7539</td>
+<td style="text-align: right;">9.115549</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">29.83910</td>
+<td style="text-align: right;">0.6895697</td>
+<td style="text-align: right;">7.1702703</td>
+<td style="text-align: right;">17.184002</td>
+<td style="text-align: right;">189.0007</td>
+<td style="text-align: right;">8.872707</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">32.49207</td>
+<td style="text-align: right;">0.6865452</td>
+<td style="text-align: right;">13.1378378</td>
+<td style="text-align: right;">17.247840</td>
+<td style="text-align: right;">195.3633</td>
+<td style="text-align: right;">9.200021</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">32.58827</td>
+<td style="text-align: right;">0.8598354</td>
+<td style="text-align: right;">48.2918919</td>
+<td style="text-align: right;">37.291810</td>
+<td style="text-align: right;">206.9541</td>
+<td style="text-align: right;">16.333980</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">29.99820</td>
+<td style="text-align: right;">0.6712919</td>
+<td style="text-align: right;">59.7216216</td>
+<td style="text-align: right;">49.315093</td>
+<td style="text-align: right;">170.0643</td>
+<td style="text-align: right;">14.863722</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">28.74494</td>
+<td style="text-align: right;">0.7484835</td>
+<td style="text-align: right;">77.8378378</td>
+<td style="text-align: right;">89.676717</td>
+<td style="text-align: right;">154.0007</td>
+<td style="text-align: right;">13.987306</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">28.15575</td>
+<td style="text-align: right;">0.6928468</td>
+<td style="text-align: right;">89.4702703</td>
+<td style="text-align: right;">84.182533</td>
+<td style="text-align: right;">144.5593</td>
+<td style="text-align: right;">13.745262</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">27.90450</td>
+<td style="text-align: right;">0.8774095</td>
+<td style="text-align: right;">128.4459459</td>
+<td style="text-align: right;">83.016342</td>
+<td style="text-align: right;">136.7659</td>
+<td style="text-align: right;">13.361401</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">27.08361</td>
+<td style="text-align: right;">0.7523710</td>
+<td style="text-align: right;">83.8270270</td>
+<td style="text-align: right;">57.219673</td>
+<td style="text-align: right;">124.6432</td>
+<td style="text-align: right;">11.277104</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">24.90707</td>
+<td style="text-align: right;">0.7802360</td>
+<td style="text-align: right;">32.1189189</td>
+<td style="text-align: right;">45.225864</td>
+<td style="text-align: right;">110.6244</td>
+<td style="text-align: right;">9.809149</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">23.39603</td>
+<td style="text-align: right;">0.7527474</td>
+<td style="text-align: right;">6.7864865</td>
+<td style="text-align: right;">11.045315</td>
+<td style="text-align: right;">115.9046</td>
+<td style="text-align: right;">9.903963</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 </section>
 <section id="soil-parameters" class="level1" data-number="2">
 <h1 data-number="2"><span class="header-section-number">2</span> Soil Parameters</h1>
@@ -3198,7 +3383,7 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>soil.param <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/03_soil.parameters.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>soil.param <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/03_soil.parameters.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="soil-parameters-table" class="level4" data-number="2.0.0.1">
@@ -3247,7 +3432,7 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>crop.param <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/04_crop.parameters.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>crop.param <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/04_crop.parameters.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="crop-rooting-depth-and-irrigatedrainfed" class="level4" data-number="3.1.0.1">
@@ -3255,7 +3440,7 @@ margin-bottom: 1rem;
 <div class="cell">
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
-<caption>Preview: Crop Rooting Depth and Irrigated/Rainfed Table</caption>
+<caption>Preview: Crop Rooting Depth and Crop Irrigated/Rainfed Table</caption>
 <colgroup>
 <col style="width: 29%">
 <col style="width: 34%">
@@ -3421,8 +3606,8 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>kc.raw       <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/05_crop_kc_curve_parameters_table.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>raw_params   <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/06_fruit_kc_curve_parameters_table.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fao_kc_raw       <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/05_crop_kc_curve_parameters_table.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>fruit_kc_raw   <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/06_fruit_kc_curve_parameters_table.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="fao-segmented-parameters" class="level4" data-number="3.2.0.1">
@@ -3659,14 +3844,14 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>kc.raw.long <span class="ot">&lt;-</span> kc.raw <span class="sc">%&gt;%</span> </span>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>fao_kc_raw.long <span class="ot">&lt;-</span> fao_kc_raw <span class="sc">%&gt;%</span> </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">names_to =</span> <span class="st">&quot;crop&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">crop =</span> <span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">&quot;_|</span><span class="sc">\\</span><span class="st">.&quot;</span>, <span class="st">&quot; &quot;</span>, crop, <span class="at">perl =</span> <span class="cn">TRUE</span>)))</span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>kc <span class="ot">&lt;-</span> kc.raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(stringr<span class="sc">::</span><span class="fu">str_detect</span>(var, stringr<span class="sc">::</span><span class="fu">regex</span>(<span class="st">&quot;kc&quot;</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">Kc =</span> value, <span class="at">kc_var =</span> var) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>kc <span class="ot">&lt;-</span> fao_kc_raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(stringr<span class="sc">::</span><span class="fu">str_detect</span>(var, stringr<span class="sc">::</span><span class="fu">regex</span>(<span class="st">&quot;kc&quot;</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">Kc =</span> value, <span class="at">kc_var =</span> var) <span class="sc">%&gt;%</span></span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Kc_var =</span> <span class="fu">case_when</span>(<span class="fu">grepl</span>(<span class="st">&quot;ini&quot;</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;Kc_ini&quot;</span>, <span class="fu">grepl</span>(<span class="st">&quot;mid&quot;</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;Kc_mid&quot;</span>, <span class="fu">grepl</span>(<span class="st">&quot;end&quot;</span>, kc_var, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>) <span class="sc">~</span> <span class="st">&quot;Kc_end&quot;</span>, <span class="cn">TRUE</span> <span class="sc">~</span> kc_var))</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>doy <span class="ot">&lt;-</span> kc.raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(var <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Sowing&quot;</span>, <span class="st">&quot;End of ini&quot;</span>, <span class="st">&quot;End of Dev&quot;</span>, <span class="st">&quot;End of Mid&quot;</span>, <span class="st">&quot;Harvest&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">doy =</span> value, <span class="at">doy_var =</span> var) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">doy =</span> <span class="fu">if_else</span>(doy <span class="sc">==</span> <span class="fl">365.00</span>, <span class="fl">366.00</span>, doy))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>doy <span class="ot">&lt;-</span> fao_kc_raw.long <span class="sc">%&gt;%</span> <span class="fu">subset</span>(var <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;Sowing&quot;</span>, <span class="st">&quot;End of ini&quot;</span>, <span class="st">&quot;End of Dev&quot;</span>, <span class="st">&quot;End of Mid&quot;</span>, <span class="st">&quot;Harvest&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">doy =</span> value, <span class="at">doy_var =</span> var) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">doy =</span> <span class="fu">if_else</span>(doy <span class="sc">==</span> <span class="fl">365.00</span>, <span class="fl">366.00</span>, doy))</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>kc.doy.key <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">doy_var =</span> <span class="fu">c</span>(<span class="st">&quot;Sowing&quot;</span>, <span class="st">&quot;End of ini&quot;</span>, <span class="st">&quot;End of Dev&quot;</span>, <span class="st">&quot;End of Mid&quot;</span>, <span class="st">&quot;Harvest&quot;</span>), <span class="at">kc_var =</span> <span class="fu">c</span>(<span class="st">&quot;Kc_ini&quot;</span>, <span class="st">&quot;Kc_ini&quot;</span>, <span class="st">&quot;Kc_mid&quot;</span>, <span class="st">&quot;Kc_mid&quot;</span>, <span class="st">&quot;Kc_end&quot;</span>))</span>
 <span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
@@ -3753,8 +3938,8 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(raw_params) <span class="ot">&lt;-</span> stringr<span class="sc">::</span><span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">&quot;_|</span><span class="sc">\\</span><span class="st">.&quot;</span>, <span class="st">&quot; &quot;</span>, <span class="fu">colnames</span>(raw_params)))</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>kc_fruits <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">generate_fruit_step</span>(<span class="st">&quot;Pomegranate&quot;</span>, raw_params), <span class="fu">generate_fruit_step</span>(<span class="st">&quot;Sweet Lime&quot;</span>, raw_params)) </span>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(fruit_kc_raw) <span class="ot">&lt;-</span> stringr<span class="sc">::</span><span class="fu">str_to_title</span>(<span class="fu">gsub</span>(<span class="st">&quot;_|</span><span class="sc">\\</span><span class="st">.&quot;</span>, <span class="st">&quot; &quot;</span>, <span class="fu">colnames</span>(fruit_kc_raw)))</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>kc_fruits <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">generate_fruit_step</span>(<span class="st">&quot;Pomegranate&quot;</span>, fruit_kc_raw), <span class="fu">generate_fruit_step</span>(<span class="st">&quot;Sweet Lime&quot;</span>, fruit_kc_raw)) </span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Visual Check</span></span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(kc_fruits <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">plot_kc =</span> <span class="fu">if_else</span>(kc <span class="sc">==</span> <span class="dv">0</span>, <span class="cn">NA_real_</span>, kc)), <span class="fu">aes</span>(<span class="at">x =</span> doy, <span class="at">y =</span> plot_kc, <span class="at">color =</span> crop)) <span class="sc">+</span></span>
@@ -3836,7 +4021,7 @@ margin-bottom: 1rem;
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  napier, napier_short</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(crop, doy)</span>
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(kc.doy.crop.all, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/supplementary/04_crop_kc_by_doy_all_crops.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(kc.doy.crop.all, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/supplementary/02_crop_kc_by_doy_all_crops.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>
@@ -3849,9 +4034,11 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>crop.systems <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/07_crop.systems.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>crop.systems <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/07_crop.systems.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(crop.systems), <span class="at">caption =</span> <span class="st">&quot;Preview: Cropping Systems&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(crop.systems, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/05_crop.systems.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(crop.systems), <span class="at">caption =</span> <span class="st">&quot;Preview: Cropping Systems&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
@@ -3922,7 +4109,7 @@ margin-bottom: 1rem;
 <tr class="odd">
 <td style="text-align: left;">Grasslands (Grazed Once)</td>
 <td style="text-align: left;">Rainfed</td>
-<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: left;">Grazed 1 Sept</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">Grazed 1 Sept</td>
@@ -3932,7 +4119,7 @@ margin-bottom: 1rem;
 <tr class="even">
 <td style="text-align: left;">Grasslands (Grazed Once)</td>
 <td style="text-align: left;">Rainfed</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
 <td style="text-align: left;">Grazed 1 Oct</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">Grazed 1 Oct</td>
@@ -3944,12 +4131,11 @@ margin-bottom: 1rem;
 </div>
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the long-format rotation table required by the downstream Toolkit</span></span>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the long-format rotation table</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>crop.systems.l <span class="ot">&lt;-</span> crop.systems <span class="sc">%&gt;%</span></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Irrigation) <span class="sc">%&gt;%</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">&quot;crop_&quot;</span>), <span class="at">names_prefix =</span> <span class="st">&quot;crop_&quot;</span>, <span class="at">names_to =</span> <span class="st">&quot;ncrop&quot;</span>, <span class="at">values_to =</span> <span class="st">&quot;crop&quot;</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(crop.param, <span class="at">by =</span> <span class="st">&quot;crop&quot;</span>)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(crop.systems.l, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/06_crop.systems.l.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(crop.param, <span class="at">by =</span> <span class="st">&quot;crop&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="build-annualmulti-annual-cropping-systemsrotations-by-compiling-individual-crop-kc-curves." class="level2" data-number="4.1">
@@ -3959,14 +4145,11 @@ margin-bottom: 1rem;
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>crop.systems.l.kc <span class="ot">&lt;-</span> crop.systems.l <span class="sc">%&gt;%</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(rotation, n.rotation, crop.system, soil, ncrop, crop, irrigation, rooting_depth_cm) <span class="sc">%&gt;%</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(kc.doy.crop.all <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(doy, crop), <span class="at">by =</span> <span class="st">&quot;crop&quot;</span>, <span class="at">relationship =</span> <span class="st">&quot;many-to-many&quot;</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>crop.rotation.kc.ls <span class="ot">&lt;-</span> <span class="fu">split</span>(crop.systems.l.kc, crop.systems.l.kc<span class="sc">$</span>rotation)</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(crop.rotation.kc.ls, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/08_crop.rotation.kc.ls.Rdata&quot;</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(kc.doy.crop.all <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(doy, crop), <span class="at">by =</span> <span class="st">&quot;crop&quot;</span>, <span class="at">relationship =</span> <span class="st">&quot;many-to-many&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<section id="daily-kc-table-for-a-crop-rotation" class="level3" data-number="4.1.1">
-<h3 data-number="4.1.1" class="anchored" data-anchor-id="daily-kc-table-for-a-crop-rotation"><span class="header-section-number">4.1.1</span> Daily Kc Table for a Crop Rotation</h3>
+<section id="daily-kc-table-by-crop-rotation" class="level3" data-number="4.1.1">
+<h3 data-number="4.1.1" class="anchored" data-anchor-id="daily-kc-table-by-crop-rotation"><span class="header-section-number">4.1.1</span> Daily Kc Table by Crop Rotation</h3>
 <p><em>(Example showing the generated continuous timeline for a single rotation).</em></p>
 <div class="cell">
 <div class="cell-output-display">
@@ -4060,7 +4243,7 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area  <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/08_crop_system_area_by_production_system.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area  <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/08_crop_system_area_by_production_system.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -4071,43 +4254,43 @@ margin-bottom: 1rem;
 <col style="width: 25%">
 <col style="width: 25%">
 <col style="width: 25%">
-<col style="width: 24%">
+<col style="width: 23%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Historical grouping</small></th>
+<th style="text-align: left;">time_period<br><small style="color:gray; font-weight:normal;">Historical grouping</small></th>
 <th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
 <th style="text-align: left;">crop.system<br><small style="color:gray; font-weight:normal;">Implemented rotation</small></th>
-<th style="text-align: right;">area_ha<br><small style="color:gray; font-weight:normal;">Total cultivated area</small></th>
+<th style="text-align: right;">area_ha<br><small style="color:gray; font-weight:normal;">Cultivated area</small></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Finger Millet/Rice</td>
 <td style="text-align: right;">1.214575</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Grasslands (Grazed Once)</td>
 <td style="text-align: right;">14.200042</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Groundnut/Fallow</td>
 <td style="text-align: right;">3.600000</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Millets/Fallow</td>
 <td style="text-align: right;">1.800000</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Pulses/Fallow</td>
 <td style="text-align: right;">2.132912</td>
@@ -4123,7 +4306,7 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/09_no_of_farmers_by_production_system.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/09_no_of_farmers_by_production_system.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -4137,34 +4320,34 @@ margin-bottom: 1rem;
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
+<th style="text-align: left;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
 <th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
 <th style="text-align: right;">number_of_farms<br><small style="color:gray; font-weight:normal;">Total farmer count</small></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: right;">8</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Pastoralists</td>
 <td style="text-align: right;">8</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Smallholders</td>
 <td style="text-align: right;">80</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">1950</td>
+<td style="text-align: left;">1950s</td>
 <td style="text-align: left;">Landless households</td>
 <td style="text-align: right;">64</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">2022</td>
+<td style="text-align: left;">2022</td>
 <td style="text-align: left;">Large-scale fruit growers</td>
 <td style="text-align: right;">2</td>
 </tr>
