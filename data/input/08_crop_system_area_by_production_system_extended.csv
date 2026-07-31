@@ -1,0 +1,49 @@
+time_period;Broad_Category;Broad_Category_No;Sub_Category;Sub_Category_No;Crop_system;Type_Land_Use;Area_ha
+1950;Large landholders;1;Large landholders;1;Finger Millet/Rice;Irrigated;1.21457489878543
+1950;Large landholders;1;Large landholders;1;Grasslands;Grasslands;0.670793326088397
+1950;Large landholders;1;Large landholders;1;Grasslands (Grazed Once);Grazed;14.2000423
+1950;Large landholders;1;Large landholders;1;Groundnut/Fallow;Rainfed;3.6
+1950;Large landholders;1;Large landholders;1;Millets/Fallow;Rainfed;1.8
+1950;Large landholders;1;Large landholders;1;Pulses/Fallow;Rainfed;2.13291201737928
+1950;Smallholders;2;Smallholders;2;Finger Millet/Rice;Irrigated;0.400170850202429
+1950;Smallholders;2;Smallholders;2;Grasslands;Grasslands;0.272044956721976
+1950;Smallholders;2;Smallholders;2;Grasslands (Grazed Once);Grazed;5.758927143
+1950;Smallholders;2;Smallholders;2;Millets/Fallow;Rainfed;1.20051255060729
+1950;Smallholders;2;Smallholders;2;Pulses/Fallow;Rainfed;0.400170850202429
+1950;Pastoralists;3;Pastoralists;3;Grasslands;Grasslands;0.668203150405652
+1950;Pastoralists;3;Pastoralists;3;Grasslands (Grazed Once);Grazed;14.1452108
+1950;Landless households;4;Landless;4;Groundnut/Fallow;Rainfed;0
+2022;Vegetable growers_dairy farming;1;Vegetable growers_dairy farming;1;Groundnut/Tomato/Tomato/Fallow;Irrigated;1.94882152893546
+2022;Vegetable growers_dairy farming;1;Vegetable growers_dairy farming;1;Rice/Napier;Irrigated;0.0754699690402478
+2022;Vegetable growers_no livestock;2;Vegetable growers_no livestock;2;Groundnut/Okra/Okra/Fallow;Irrigated;2.024291498
+2022;Small-scale fruit growers;3;Small-scale fruit growers_sweet lime;31;Groundnut/Fallow;Rainfed;1.16194331983806
+2022;Small-scale fruit growers;3;Small-scale fruit growers_sweet lime;31;Rice/Napier;Irrigated;0.0754699690402478
+2022;Small-scale fruit growers;3;Small-scale fruit growers_sweet lime;31;Sweet Lime;Irrigated;0.789473684210526
+2022;Small-scale fruit growers;3;Small-scale fruit growers_grape vines;32;Grapes;Irrigated;0.789473684210526
+2022;Small-scale fruit growers;3;Small-scale fruit growers_grape vines;32;Groundnut/Fallow;Rainfed;1.16194331983806
+2022;Small-scale fruit growers;3;Small-scale fruit growers_grape vines;32;Rice/Napier;Irrigated;0.0754699690402478
+2022;Small-scale fruit growers;3;Small-scale fruit growers_pomegranate;33;Groundnut/Fallow;Rainfed;1.16194331983806
+2022;Small-scale fruit growers;3;Small-scale fruit growers_pomegranate;33;Pomegranate;Irrigated;0.789473684210526
+2022;Small-scale fruit growers;3;Small-scale fruit growers_pomegranate;33;Rice/Napier;Irrigated;0.0754699690402478
+2022;Small-scale fruit growers;3;Small-scale fruit growers_banana;34;Groundnut/Fallow;Rainfed;1.16194331983806
+2022;Small-scale fruit growers;3;Small-scale fruit growers_banana;34;Rice/Banana;Irrigated;0.789473684210526
+2022;Small-scale fruit growers;3;Small-scale fruit growers_banana;34;Rice/Napier;Irrigated;0.0754699690402478
+2022;Rice growers;4;Rice growers;4;Groundnut/Fallow;Rainfed;1.28744939271255
+2022;Rice growers;4;Rice growers;4;Rice/Fallow;Irrigated;0.736842105263158
+2022;Large-scale fruit growers;5;Large-scale fruit growers;5;Grapes;Irrigated;2.02429149797571
+2022;Large-scale fruit growers;5;Large-scale fruit growers;5;Pomegranate;Irrigated;4.04858299595142
+2022;Pastoralists;6;Pastoralists;6;Grasslands (Grazed 3 Times);Grazed;13.17132056
+2022;Pastoralists;6;Pastoralists;6;Horsegram (Grazed);Rainfed;2.02429149797571
+2022;Rainfed groundnut growers_bulls;7;Rainfed groundnut growers_bulls;7;Grasslands (Grazed 3 Times);Grazed;0.285176507
+2022;Rainfed groundnut growers_bulls;7;Rainfed groundnut growers_bulls;7;Groundnut/Fallow;Rainfed;2.02429149797571
+2022;Rainfed groundnut growers_bulls;7;Rainfed groundnut growers_bulls;7;Rice/Fallow (Red Soils);Irrigated;0.263157894736842
+2022;Rainfed groundnut growers_with other livestock;8;Sheep fatteners;81;Grasslands (Grazed 3 Times);Grazed;0.159915455508937
+2022;Rainfed groundnut growers_with other livestock;8;Sheep fatteners;81;Groundnut/Fallow;Rainfed;2.02429149797571
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_buffaloes;82;Grasslands (Grazed 3 Times);Grazed;0.728541895586418
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_buffaloes;82;Groundnut/Fallow;Rainfed;2.02429149797571
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_cows;83;Grasslands (Grazed 3 Times);Grazed;0.751152882531409
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_cows;83;Groundnut/Fallow;Rainfed;2.02429149797571
+2022;Rainfed groundnut or redgram growers_no livestock;9;Rainfed groundnut growers_no livestock;91;Groundnut/Fallow;Rainfed;2.02429149797571
+2022;Rainfed groundnut or redgram growers_no livestock;9;Rainfed redgram growers_no livestock;92;Pulses/Fallow;Rainfed;2.02429149797571
+2022;Landless households;10;Landless;10;Groundnut/Fallow;Rainfed;0
+2022;unused land;11;unused land;11;Grasslands;Grasslands;7.61649058959995

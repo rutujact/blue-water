@@ -3143,13 +3143,14 @@ margin-bottom: 1rem;
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>precip <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/01_precipitation.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>et0.daily <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/02_et0.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: Precipitation contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(precip<span class="sc">$</span>p)),</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: ET0 contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(et0.daily<span class="sc">$</span>et0))</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Only for figure plotting</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>climate_summary <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/supplementary/01_monthly_climatology_for_figure.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>et0.daily <span class="ot">&lt;-</span> et0.daily <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">et0 =</span> <span class="fu">round</span>(et0, <span class="dv">3</span>))</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: Precipitation contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(precip<span class="sc">$</span>p)),</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Error: ET0 contains missing values (NA).&quot;</span> <span class="ot">=</span> <span class="sc">!</span><span class="fu">any</span>(<span class="fu">is.na</span>(et0.daily<span class="sc">$</span>et0))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Only for figure plotting</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>climate_summary <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/supplementary/01_monthly_climatology_for_figure.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="precipitation" class="level4" data-number="1.0.0.1">
@@ -3207,29 +3208,29 @@ margin-bottom: 1rem;
 <thead>
 <tr class="header">
 <th style="text-align: left;">date<br><small style="color:gray; font-weight:normal;">Sequential dates (YYYY-MM-DD)</small></th>
-<th style="text-align: right;">p<br><small style="color:gray; font-weight:normal;">Daily Reference Evapotranspiration (mm ≥ 0)</small></th>
+<th style="text-align: right;">ET0<br><small style="color:gray; font-weight:normal;">Daily Reference Evapotranspiration (mm ≥ 0)</small></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">1980-01-01</td>
-<td style="text-align: right;">3.799466</td>
+<td style="text-align: right;">3.799</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">1980-01-02</td>
-<td style="text-align: right;">4.036208</td>
+<td style="text-align: right;">4.036</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1980-01-03</td>
-<td style="text-align: right;">4.315340</td>
+<td style="text-align: right;">4.315</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">1980-01-04</td>
-<td style="text-align: right;">4.124532</td>
+<td style="text-align: right;">4.125</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">1980-01-05</td>
-<td style="text-align: right;">4.575594</td>
+<td style="text-align: right;">4.576</td>
 </tr>
 </tbody>
 </table>
@@ -4038,20 +4039,20 @@ margin-bottom: 1rem;
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(crop.systems, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">&quot;data/processed/05_crop.systems.csv&quot;</span>), <span class="at">row.names =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">head</span>(crop.systems), <span class="at">caption =</span> <span class="st">&quot;Preview: Cropping Systems&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(crop.systems, <span class="at">caption =</span> <span class="st">&quot;Preview: Cropping Systems&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <caption>Preview: Cropping Systems</caption>
 <colgroup>
-<col style="width: 25%">
+<col style="width: 26%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 4%">
+<col style="width: 16%">
 <col style="width: 11%">
-<col style="width: 11%">
-<col style="width: 14%">
-<col style="width: 5%">
-<col style="width: 14%">
-<col style="width: 10%">
-<col style="width: 8%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -4123,6 +4124,186 @@ margin-bottom: 1rem;
 <td style="text-align: left;">Grazed 1 Oct</td>
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">Grazed 1 Oct</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Nov</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed 1 Nov</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Groundnut Monsoon</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Groundnut Monsoon</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Rice Banana 1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Rice Short Summer</td>
+<td style="text-align: left;">Banana 1 Beg</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Banana 1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Banana 1 Next</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">Banana 2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Banana 2</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sweet Lime</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Sweet Lime</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Sweet Lime</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Rice Napier</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Rice Short Summer</td>
+<td style="text-align: left;">Napier Short</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Napier</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Napier</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rice/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Rice Fallow</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Rice Short Monsoon</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Horsegram (Grazed)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Horsegram</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Horsegram</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed Thrice</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Grazed Thrice</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Groundnut/Tomato/Tomato/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Tomato Groundnut</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Groundnut Monsoon</td>
+<td style="text-align: left;">Tomato Summer</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Groundnut/Tomato/Tomato/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Tomato Fallow</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Tomato Winter</td>
+<td style="text-align: left;">No Crop</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Groundnut/Okra/Okra/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Okra Groundnut</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Groundnut Monsoon</td>
+<td style="text-align: left;">Okra Summer</td>
+<td style="text-align: left;">No Crop</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Groundnut/Okra/Okra/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">Okra Fallow</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">Okra Winter</td>
 <td style="text-align: left;">No Crop</td>
 <td style="text-align: left;">No Crop</td>
 </tr>
@@ -4239,11 +4420,26 @@ margin-bottom: 1rem;
 </section>
 <section id="production-systems" class="level1" data-number="5">
 <h1 data-number="5"><span class="header-section-number">5</span> Production Systems</h1>
-<p>Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 &amp; 2 of Hemingway et al. 2025.</p>
+<p>Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 &amp; 2 of Hemingway et al. 2025 and modified in Hemingway et al. 2026.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area  <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/08_crop_system_area_by_production_system.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area  <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/08_crop_system_area_by_production_system_extended.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>ps_by_cs_area <span class="ot">&lt;-</span> ps_by_cs_area <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>Broad_Category_No, <span class="sc">-</span>Sub_Category_No) <span class="sc">%&gt;%</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">rename</span>(</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">production_system =</span> Broad_Category,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_production_system =</span> Sub_Category,</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">crop.system =</span> Crop_system,</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">area_ha =</span> Area_ha</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">production_system =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">==</span> <span class="st">&quot;unused land&quot;</span> <span class="sc">~</span> <span class="st">&quot;Unused land&quot;</span>, </span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(production_system)),</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_production_system =</span> stringr<span class="sc">::</span><span class="fu">str_replace</span>(sub_production_system, <span class="st">&quot;_(.*)$&quot;</span>, <span class="st">&quot; (</span><span class="sc">\\</span><span class="st">1)&quot;</span>),</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">area_ha =</span> <span class="fu">round</span>(area_ha, <span class="dv">2</span>)</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -4251,49 +4447,407 @@ margin-bottom: 1rem;
 <table class="table table-sm table-striped small">
 <caption>Preview: Crop Area under each Production System</caption>
 <colgroup>
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 25%">
-<col style="width: 23%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 18%">
+<col style="width: 16%">
+<col style="width: 15%">
+<col style="width: 15%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">time_period<br><small style="color:gray; font-weight:normal;">Historical grouping</small></th>
-<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
+<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Historical grouping</small></th>
+<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Agrarian Group</small></th>
+<th style="text-align: left;">sub-production_system<br><small style="color:gray; font-weight:normal;">Agrarian Sub-Group</small></th>
 <th style="text-align: left;">crop.system<br><small style="color:gray; font-weight:normal;">Implemented rotation</small></th>
+<th style="text-align: left;">Type_Land_Use<br><small style="color:gray; font-weight:normal;">Land Use Type</small></th>
 <th style="text-align: right;">area_ha<br><small style="color:gray; font-weight:normal;">Cultivated area</small></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Finger Millet/Rice</td>
-<td style="text-align: right;">1.214575</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1.21</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Grasslands (Grazed Once)</td>
-<td style="text-align: right;">14.200042</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">1950s</td>
-<td style="text-align: left;">Large landholders</td>
-<td style="text-align: left;">Groundnut/Fallow</td>
-<td style="text-align: right;">3.600000</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">14.20</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
 <td style="text-align: left;">Large landholders</td>
-<td style="text-align: left;">Millets/Fallow</td>
-<td style="text-align: right;">1.800000</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">3.60</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Large landholders</td>
+<td style="text-align: left;">Millets/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.80</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Pulses/Fallow</td>
-<td style="text-align: right;">2.132912</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Finger Millet/Rice</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.40</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">5.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Millets/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Smallholders</td>
+<td style="text-align: left;">Pulses/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">0.40</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: right;">0.67</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Grasslands (Grazed Once)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">14.15</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Landless households</td>
+<td style="text-align: left;">Landless</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Vegetable growers_dairy farming</td>
+<td style="text-align: left;">Vegetable growers (dairy farming)</td>
+<td style="text-align: left;">Groundnut/Tomato/Tomato/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">1.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Vegetable growers_dairy farming</td>
+<td style="text-align: left;">Vegetable growers (dairy farming)</td>
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Vegetable growers_no livestock</td>
+<td style="text-align: left;">Vegetable growers (no livestock)</td>
+<td style="text-align: left;">Groundnut/Okra/Okra/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (sweet lime)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (sweet lime)</td>
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.08</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (sweet lime)</td>
+<td style="text-align: left;">Sweet Lime</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (grape vines)</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.79</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (grape vines)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (grape vines)</td>
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.08</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (pomegranate)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (pomegranate)</td>
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.79</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (pomegranate)</td>
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (banana)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (banana)</td>
+<td style="text-align: left;">Rice/Banana</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (banana)</td>
+<td style="text-align: left;">Rice/Napier</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.08</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">1.29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: left;">Rice/Fallow</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.74</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">Grapes</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
+<td style="text-align: left;">Pomegranate</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">4.05</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">13.17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Horsegram (Grazed)</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_bulls</td>
+<td style="text-align: left;">Rainfed groundnut growers (bulls)</td>
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">0.29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_bulls</td>
+<td style="text-align: left;">Rainfed groundnut growers (bulls)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_bulls</td>
+<td style="text-align: left;">Rainfed groundnut growers (bulls)</td>
+<td style="text-align: left;">Rice/Fallow (Red Soils)</td>
+<td style="text-align: left;">Irrigated</td>
+<td style="text-align: right;">0.26</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Sheep fatteners</td>
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">0.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Sheep fatteners</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (buffaloes)</td>
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">0.73</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (buffaloes)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (cows)</td>
+<td style="text-align: left;">Grasslands (Grazed 3 Times)</td>
+<td style="text-align: left;">Grazed</td>
+<td style="text-align: right;">0.75</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (cows)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut or redgram growers_no livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (no livestock)</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut or redgram growers_no livestock</td>
+<td style="text-align: left;">Rainfed redgram growers (no livestock)</td>
+<td style="text-align: left;">Pulses/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">2.02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Landless households</td>
+<td style="text-align: left;">Landless</td>
+<td style="text-align: left;">Groundnut/Fallow</td>
+<td style="text-align: left;">Rainfed</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Unused land</td>
+<td style="text-align: left;">unused land</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: left;">Grasslands</td>
+<td style="text-align: right;">7.62</td>
 </tr>
 </tbody>
 </table>
@@ -4306,7 +4860,21 @@ margin-bottom: 1rem;
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/09_no_of_farmers_by_production_system.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> data.table<span class="sc">::</span><span class="fu">fread</span>(<span class="fu">here</span>(<span class="st">&quot;data/input/09_no_of_farmers_by_production_system_extended.csv&quot;</span>)) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>()</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>farms_count_df <span class="ot">&lt;-</span> farms_count_df <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span>Broad_Category_No, <span class="sc">-</span>Sub_Category_No) <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">rename</span>(</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">production_system =</span> Broad_Category,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_production_system =</span> Sub_Category,</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">number_of_farms =</span> Number_of_farms</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">production_system =</span> <span class="fu">case_when</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    production_system <span class="sc">==</span> <span class="st">&quot;unused land&quot;</span> <span class="sc">~</span> <span class="st">&quot;Unused land&quot;</span>, </span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(production_system)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">sub_production_system =</span> stringr<span class="sc">::</span><span class="fu">str_replace</span>(sub_production_system, <span class="st">&quot;_(.*)$&quot;</span>, <span class="st">&quot; (</span><span class="sc">\\</span><span class="st">1)&quot;</span>)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
@@ -4314,42 +4882,145 @@ margin-bottom: 1rem;
 <table class="table table-sm table-striped small">
 <caption>Preview: Farm Counts Per Production System</caption>
 <colgroup>
-<col style="width: 28%">
-<col style="width: 35%">
-<col style="width: 36%">
+<col style="width: 20%">
+<col style="width: 25%">
+<col style="width: 27%">
+<col style="width: 26%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
-<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Farm archetype</small></th>
+<th style="text-align: right;">time_period<br><small style="color:gray; font-weight:normal;">Era</small></th>
+<th style="text-align: left;">production_system<br><small style="color:gray; font-weight:normal;">Agrarian Group</small></th>
+<th style="text-align: left;">sub_production_system<br><small style="color:gray; font-weight:normal;">Agrarian Sub-Group</small></th>
 <th style="text-align: right;">number_of_farms<br><small style="color:gray; font-weight:normal;">Total farmer count</small></th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Large landholders</td>
 <td style="text-align: left;">Large landholders</td>
 <td style="text-align: right;">8</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">1950s</td>
-<td style="text-align: left;">Pastoralists</td>
-<td style="text-align: right;">8</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Smallholders</td>
 <td style="text-align: left;">Smallholders</td>
 <td style="text-align: right;">80</td>
 </tr>
+<tr class="odd">
+<td style="text-align: right;">1950</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">8</td>
+</tr>
 <tr class="even">
-<td style="text-align: left;">1950s</td>
+<td style="text-align: right;">1950</td>
 <td style="text-align: left;">Landless households</td>
+<td style="text-align: left;">Landless</td>
 <td style="text-align: right;">64</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">2022</td>
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Vegetable growers_dairy farming</td>
+<td style="text-align: left;">Vegetable growers (dairy farming)</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Vegetable growers_no livestock</td>
+<td style="text-align: left;">Vegetable growers (no livestock)</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (sweet lime)</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (grape vines)</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (pomegranate)</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Small-scale fruit growers</td>
+<td style="text-align: left;">Small-scale fruit growers (banana)</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: left;">Rice growers</td>
+<td style="text-align: right;">23</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Large-scale fruit growers</td>
 <td style="text-align: left;">Large-scale fruit growers</td>
 <td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: left;">Pastoralists</td>
+<td style="text-align: right;">18</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_bulls</td>
+<td style="text-align: left;">Rainfed groundnut growers (bulls)</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Sheep fatteners</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (buffaloes)</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut growers_with other livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (cows)</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut or redgram growers_no livestock</td>
+<td style="text-align: left;">Rainfed groundnut growers (no livestock)</td>
+<td style="text-align: right;">128</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Rainfed groundnut or redgram growers_no livestock</td>
+<td style="text-align: left;">Rainfed redgram growers (no livestock)</td>
+<td style="text-align: right;">42</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Landless households</td>
+<td style="text-align: left;">Landless</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2022</td>
+<td style="text-align: left;">Unused land</td>
+<td style="text-align: left;">unused land</td>
+<td style="text-align: right;">1</td>
 </tr>
 </tbody>
 </table>

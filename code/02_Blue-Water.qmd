@@ -240,11 +240,11 @@ if (!dir.exists(here("figures/manuscript"))) {
 fig.2_journal <- plot_crop_coefficient_curves(kc.doy.crop.all)
 print(fig.2_journal)
 
-
+# Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.2_Kc_Curves_All_Crops.pdf"), plot = fig.2_journal, width = 10, height = 6)
   
 # Save PNG for Presentation
-ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Kc_Curves_All_Crops.png"), width = 180, height = 90, units = "mm", dpi = 300, bg = "white", device = ragg::agg_png)
+ggsave(plot = fig.2_journal, filename = here("figures/presentation/Fig.2_Kc_Curves_All_Crops.png"), width = 180, height = 120, units = "mm", dpi = 300, bg = "white", device = ragg::agg_png)
 ```
 
 ## Cropping Systems 
@@ -339,11 +339,11 @@ names(met.forcing.ls) <- soil.param$soil
 > **Parallel Processing**
 > Simulating multi-decadal daily water fluxes across dozens of crop rotations is computationally expensive. The code block below detects the number of available physical cores on your machine and parallelizes the tasks, drastically reducing execution time.
 
-When the calculator finishes running, all daily data outputs are saved as well as aggregated by year (and month) as well as summaries across years (and months) in a single Rdata file:
+When the calculator finishes running, all daily data outputs are saved as well as aggregated by year (and month) as well as summaries across years (and months) in a single Rdata file:<br>
+"output/01_processed_water_budgets.Rdata"
 
-output/01_processed_water_budgets.Rdata
-
-```{r budget-calculator, eval = CALCULATE_BUDGET}
+```{r budget-calculator}
+#| eval: !expr CALCULATE_BUDGET
 # Multi-Core Setup
 num_cores <- parallel::detectCores(logical = FALSE) 
 cl <- makeCluster(num_cores, type = "PSOCK")
@@ -360,7 +360,7 @@ save(budget, file = here("output/01_processed_water_budgets.Rdata"))
 
 ```
 
-```{r load-precalculated-budgets, include=FALSE}
+```{r load-precalculated-budgets}
 # Internal loading mechanism to bypass lengthy re-calculations during document knitting
 # (Ensure the Calculator block has been run at least once locally)
 load(file = here("output/01_processed_water_budgets.Rdata"))
@@ -374,8 +374,11 @@ load(file = here("output/01_processed_water_budgets.Rdata"))
 We transform the "output/01_processed_water_budgets.Rdata") file into CSVs of:<br>
 1. Daily outputs: "output/02_export_detailed_daily_water_budgets.csv",<br>
 2. Yearly outputs: "output/03_export_annual_water_budgets_long.csv", and<br>
-3. For an average year (with SD across years):
-"output/04_calculated_crop_system_blue_water_potential.csv.
+3. For an average year (with SD across years):<br>
+3.1. All water budget variables:<br>
+"output/04_crop_system_water_budget_outputs_for_an_avg_year_with_sd.csv"<br>
+3.2. Only Blue Water Potential:<br>
+"output/05_crop_system_blue_water_potential_for_an_avg_year_with_sd.csv"
 
 ```{r compile-outputs}
 # 1. Optimize Daily Processing
@@ -408,7 +411,7 @@ bwp <- summ.qs.cs %>%
   dplyr::select(-var, -var.plot)
 colnames(bwp)[-c(1,2)] <- paste0("BWP_", colnames(bwp)[-c(1,2)])
 
-readr::write_csv(bwp, file = here("output/05_calculated_crop_system_blue_water_potential.csv"))
+readr::write_csv(bwp, file = here("output/05_crop_system_blue_water_potential_for_an_avg_year_with_sd.csv"))
 ```
 
 ---
@@ -420,9 +423,9 @@ readr::write_csv(bwp, file = here("output/05_calculated_crop_system_blue_water_p
 The following chart displays the mean (with 95% quantiles) irrigation requirement of irrigated cropping systems and the gross groundwater recharge for all cropping systems.
 
 ```{r annual-wb, fig.align='center', echo=FALSE, fig.cap = paste0("Figure 4. Annual mean (\u00B1 SD; 1980-2018) of irrigation requirement of irrigated cropping systems and the gross groundwater recharge for all cropping systems (color coded by Irrigated or Rainfed).")}
-vars_sd <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)")
+vars_vec <- c("Irrigation Requirement (mm)", "Groundwater Recharge (mm)")
 
-fig.4_irrig_recharge <- plot_annual_summary(summ.qs.cs, vars_sd, "mean", "Mean Annual Fluxes (\u00B1 SD)")
+fig.4_irrig_recharge <- plot_annual_summary(summ.qs.cs, vars_vec, "mean", "Mean Annual Fluxes (\u00B1 SD)")
 print(fig.4_irrig_recharge)
 
 # Save PDF for Manuscript
@@ -469,11 +472,11 @@ ps_budget_summary  <- ps_results$ps_budget_summary
 ps_volumetric_summary <- ps_results$ps_volumetric_summary
 ps_bwp_volumetric <- ps_results$ps_bwp_volumetric
 
-write.csv(ps_bwp_volumetric, file = here("output/05_production_system_bwp_contributions.csv"), row.names = FALSE)
+write.csv(ps_bwp_volumetric, file = here("output/06_production_system_bwp_contributions.csv"), row.names = FALSE)
 ```
 
 ```{r ann-social, eval=HAS_PRODUCTION_SYSTEM, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Comparative annual Blue Water Potential ($BWP$) across Production Systems, or farm types, (1950s vs. 2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross.'}
-fig.6_social <- plot_socio_economic_bwp(ps_bwp_volumetric)
+fig.6_social <- plot_production_system_bwp(ps_bwp_volumetric)
 print(fig.6_social)
 
 # Save PDF for Manuscript
@@ -493,40 +496,41 @@ Finally, we aggregate the Blue Water Potential of all the production systems, or
 
 This figure highlights the role of often ignored social category such as Pastoralists who in 2022 are main Net Contributers of Blue Water in the archetype village. 
 
-```{r village-bwp, eval=HAS_AGRARIAN_SYSTEM, fig.width=17, fig.height=7, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+```{r village-bwp, eval=HAS_AGRARIAN_SYSTEM, fig.width=17, fig.height=8, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
 # Note to Users with their own data: Even with one Historical Period, the following figure function will work.
 
-village.bwp_collapsed <- ps_bwp_volumetric %>%
+village_bwp_fig_data <- ps_bwp_volumetric %>%
   mutate(bwp_thousand_m3 = round(total_vol_m3/10000)*10) %>%
   select(time_period, production_system, bwp_thousand_m3) %>%
   mutate(production_system = case_when(
-    production_system == "Landless pastoralists" ~ "Pastoralists",
-    production_system == "Sheep fatteners" ~ "Pastoralists",
-    production_system %in% c("Rainfed groundnut growers (with buffaloes)", "Rainfed groundnut growers (with bulls)", "Rainfed groundnut growers (with local cows)") ~ "Groundnut growers (with livestock)",
-    production_system %in% c("Rainfed groundnut growers (no livestock)", "Rainfed redgram growers (no livestock)") ~ "Groundnut growers (no livestock)",
-    production_system == "Rice growers" ~ "Rice growers", 
-    production_system %in% c("Small-scale fruit growers (banana)", "Small-scale fruit growers (grape vines)", "Small-scale fruit growers (pomegranate)", "Small-scale fruit growers (sweet lime)") ~ "Small-scale fruit growers (+ dairy)",
-    production_system %in% c("Vegetable growers (no livestock)", "Vegetable growers with dairy farming") ~ "Vegetable growers",
+    production_system %in% c("Rainfed groundnut growers_bulls", "Rainfed groundnut growers_with other livestock") ~ "Groundnut growers (with livestock)",
+    production_system %in% c("Rainfed groundnut or redgram growers_no livestock") ~ "Groundnut growers (no livestock)",
+    production_system %in% "Rice growers" ~ "Rice growers (no livestock)",
+    production_system == "Small-scale fruit growers" ~ "Small-scale fruit growers (+ dairy farming)",
+    production_system %in% c("Vegetable growers_dairy farming", "Vegetable growers_no livestock") ~ "Vegetable growers (with or without dairy farming)",
     TRUE ~ as.character(production_system)
   )) %>%
+  dplyr::mutate(
+    production_system = stringr::str_replace(production_system, "_(.*)$", " (\\1)")
+  ) %>%
   group_by(time_period, production_system) %>%
   summarise(bwp_thousand_m3 = sum(bwp_thousand_m3), .groups = "drop")
 
-colnames(village.bwp_collapsed) <- c("period", "label", "val")
+# Save the figure data if to be manually rendered
+write.csv(village_bwp_fig_data, file = here("output/07_village_bwp_fig_data.csv"), row.names = FALSE)
 
 cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
   
 # Build comprehensive system maps
 invisible(plot_village_bwp(
-  village_bwp_collapsed = village.bwp_collapsed,
-  # ps_typology = ps_typology,
+  village_bwp_data = village_bwp_fig_data,
   cfg = cfg, 
   output_dev = cairo_pdf, 
   filename = here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
   manuscript_style = TRUE
 ))
 invisible(plot_village_bwp(
-  village_bwp_collapsed = village.bwp_collapsed,
+  village_bwp_data = village_bwp_fig_data,
   cfg = cfg, 
   output_dev = png, 
   filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison_box.png"),
@@ -534,7 +538,7 @@ invisible(plot_village_bwp(
 ))
 
 invisible(plot_village_bwp(
-  village_bwp_collapsed = village.bwp_collapsed,
+  village_bwp_data = village_bwp_fig_data,
   cfg = cfg, 
   output_dev = png, 
   filename = here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
@@ -554,10 +558,18 @@ if (file.exists(img_path)) {
 
 ## Classical Representation of Water Balance
 
-Here we illustrate how water balance is commonly represented as aggregated Inflows minus Outflows by land-use. In contrast to the new framework (as illustrated in the last figure), here all land uses are represented as net water consumers. This representation ignores the complementarity between land-uses for the Blue Water Balance at the village/micro-regional scale and can lead to maladaptive management decisions (e.g., getting rid of pastoral systems, or relacement of rainfed crops by irrigated crops).
+Here we illustrate how water balance is commonly represented as aggregated Inflows minus Outflows by land-use. In contrast to the new framework (as illustrated in the last figure), here all land uses are represented as net water consumers. This representation ignores the complementarity between land-uses for the Blue Water Balance at the village/micro-regional scale and can lead to maladaptive management decisions (e.g., getting rid of pastoral systems, or replacement of rainfed crops by irrigated crops).
 
 
 ```{r village-budget, eval=HAS_AGRARIAN_SYSTEM, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village.", message = FALSE}
+
+# In the 50's the Grasslands are grazed
+# In the 2022 the Grasslands have become unused lands
+
+classical_budget_fig_data <- ps_volumetric_summary %>%
+  mutate(grazed = if_else(time_period == "1950", grazed + grasslands, grazed), 
+         grasslands = if_else(time_period == "1950", 0, grasslands)) %>%
+  rename(unused = grasslands)
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
 # Margins for the interactive HTML document
@@ -571,8 +583,8 @@ export_margin_right <- 50
 # ------------------------------------------
 
 # 1. Build the HTML version
-sankey_1950s_html <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
-sankey_2022_html  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
+sankey_1950_html <- get_d3_sankey(classical_budget_fig_data, "1950", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
+sankey_2022_html  <- get_d3_sankey(classical_budget_fig_data, "2022", font_size = 14, margin_left = html_margin_left, margin_right = html_margin_right)
 
 combined_panels_html <- htmltools::tagList(
   htmltools::tags$div(
@@ -580,7 +592,7 @@ combined_panels_html <- htmltools::tagList(
     htmltools::tags$div(
       style = "width: 48%;",
       htmltools::tags$h3("A. 1950s Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
-      sankey_1950s_html
+      sankey_1950_html
     ),
     htmltools::tags$div(
       style = "width: 48%;",
@@ -591,8 +603,8 @@ combined_panels_html <- htmltools::tagList(
 )
 
   # 2. Build a completely separate Export version with its own margins
-  sankey_1950s_export <- get_d3_sankey(ps_volumetric_summary, "1950s", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
-  sankey_2022_export  <- get_d3_sankey(ps_volumetric_summary, "2022", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
+  sankey_1950_export <- get_d3_sankey(classical_budget_fig_data, "1950", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
+  sankey_2022_export  <- get_d3_sankey(classical_budget_fig_data, "2022", font_size = 14, margin_left = export_margin_left, margin_right = export_margin_right)
   
   combined_panels_export <- htmltools::tagList(
     htmltools::tags$div(
@@ -600,7 +612,7 @@ combined_panels_html <- htmltools::tagList(
       htmltools::tags$div(
         style = "width: 48%;",
         htmltools::tags$h3("A. 1950s Archetype Village", style = "text-align: center; font-family: sans-serif; font-size: 16px;"),
-        sankey_1950s_export
+        sankey_1950_export
       ),
       htmltools::tags$div(
         style = "width: 48%;",
@@ -628,7 +640,7 @@ try({
       par(mar = c(0,0,0,0)) 
       plot.new()
       rasterImage(img, 0, 0, 1, 1)
-      dev.off()
+      Invisible(dev.off())
     }
   }, silent = TRUE)
   unlink(html_path)
@@ -640,14 +652,19 @@ combined_panels_html
 
 ## Impact of Social Category Demographics on Blue Water Potential of the Village
 
-This figure show how some social category (Production System) disproportionately affect the Blue Water Potential of the village/micro-region.
+This figure shows how some social category (Production System) disproportionately affect the Blue Water Potential of the village/micro-region.
 
 For the case study in Hemingway et al. 202X, a large number of rainfed farmers and a few pastoralists have a large positive impact, while a few numbers of Small- and Large-scale fruit growers are the main Blue Water Consumers.
 
 
 ```{r disparity-plot, eval=HAS_PRODUCTION_SYSTEM, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³).'}
 
-fig.9_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, crop.systems, ps_by_cs_area)
+demographic_fig_data <- ps_bwp_volumetric %>%
+  dplyr::mutate(
+    production_system_label = stringr::str_replace(production_system, "_(.*)$", " (\\1)"),
+    production_system_label = stringr::str_replace(production_system_label, "Rainfed g", "G"))
+
+fig.9_disparity <- plot_farm_bwp_disparity(demographic_fig_data, ps_by_cs_area)
 
 # Save PDF for Manuscript
 ggsave(here("figures/manuscript/Fig.9_Farm_BWP_Disparity.pdf"), fig.9_disparity, width = 11, height = 5.5, device = cairo_pdf)

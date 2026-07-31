@@ -1,44 +1,49 @@
-"time_period","production_system","crop.system","area_ha"
-"1950s","Large landholders","Finger Millet/Rice",1.21
-"1950s","Large landholders","Grasslands (Grazed Once)",14.2
-"1950s","Large landholders","Groundnut/Fallow",3.6
-"1950s","Large landholders","Millets/Fallow",1.8
-"1950s","Large landholders","Pulses/Fallow",2.13
-"1950s","Pastoralists","Grasslands (Grazed Once)",14.15
-"1950s","Smallholders","Finger Millet/Rice",0.4
-"1950s","Smallholders","Grasslands (Grazed Once)",5.76
-"1950s","Smallholders","Millets/Fallow",1.2
-"1950s","Smallholders","Pulses/Fallow",0.4
-"2022","Large-scale fruit growers","Grapes",2.02
-"2022","Large-scale fruit growers","Pomegranate",4.05
-"2022","Pastoralists","Grasslands (Grazed 3 Times)",13.17
-"2022","Pastoralists","Horsegram (Grazed)",2.02
-"2022","Rainfed groundnut growers (no livestock)","Groundnut/Fallow",2.02
-"2022","Rainfed groundnut growers (with buffaloes)","Grasslands (Grazed 3 Times)",0.73
-"2022","Rainfed groundnut growers (with buffaloes)","Groundnut/Fallow",2.02
-"2022","Rainfed groundnut growers (with bulls)","Grasslands (Grazed 3 Times)",0.29
-"2022","Rainfed groundnut growers (with bulls)","Groundnut/Fallow",2.02
-"2022","Rainfed groundnut growers (with bulls)","Rice/Fallow (Red Soils)",0.26
-"2022","Rainfed groundnut growers (with local cows)","Grasslands (Grazed 3 Times)",0.75
-"2022","Rainfed groundnut growers (with local cows)","Groundnut/Fallow",2.02
-"2022","Rainfed redgram growers (no livestock)","Pulses/Fallow",2.02
-"2022","Rice growers","Groundnut/Fallow",1.29
-"2022","Rice growers","Rice/Fallow",0.74
-"2022","Sheep fatteners","Grasslands (Grazed 3 Times)",0.16
-"2022","Sheep fatteners","Groundnut/Fallow",2.02
-"2022","Small-scale fruit growers (banana)","Groundnut/Fallow",1.16
-"2022","Small-scale fruit growers (banana)","Rice/Banana",0.79
-"2022","Small-scale fruit growers (banana)","Rice/Napier",0.08
-"2022","Small-scale fruit growers (grape vines)","Grapes",0.79
-"2022","Small-scale fruit growers (grape vines)","Groundnut/Fallow",1.16
-"2022","Small-scale fruit growers (grape vines)","Rice/Napier",0.08
-"2022","Small-scale fruit growers (pomegranate)","Groundnut/Fallow",1.16
-"2022","Small-scale fruit growers (pomegranate)","Pomegranate",0.79
-"2022","Small-scale fruit growers (pomegranate)","Rice/Napier",0.08
-"2022","Small-scale fruit growers (sweet lime)","Groundnut/Fallow",1.16
-"2022","Small-scale fruit growers (sweet lime)","Rice/Napier",0.08
-"2022","Small-scale fruit growers (sweet lime)","Sweet Lime",0.79
-"2022","Vegetable growers (no livestock)","Groundnut/Okra/Okra/Fallow",2.02
-"2022","Vegetable growers with dairy farming","Groundnut/Fallow",0.73
-"2022","Vegetable growers with dairy farming","Groundnut/Tomato/Tomato/Fallow",1.21
-"2022","Vegetable growers with dairy farming","Rice/Napier",0.08
+"time_period","production_system","sub_production_system","crop.system","Type_Land_Use","area_ha"
+1950,"Large landholders","Large landholders","Finger Millet/Rice","Irrigated",1.21
+1950,"Large landholders","Large landholders","Grasslands","Grasslands",0.67
+1950,"Large landholders","Large landholders","Grasslands (Grazed Once)","Grazed",14.2
+1950,"Large landholders","Large landholders","Groundnut/Fallow","Rainfed",3.6
+1950,"Large landholders","Large landholders","Millets/Fallow","Rainfed",1.8
+1950,"Large landholders","Large landholders","Pulses/Fallow","Rainfed",2.13
+1950,"Smallholders","Smallholders","Finger Millet/Rice","Irrigated",0.4
+1950,"Smallholders","Smallholders","Grasslands","Grasslands",0.27
+1950,"Smallholders","Smallholders","Grasslands (Grazed Once)","Grazed",5.76
+1950,"Smallholders","Smallholders","Millets/Fallow","Rainfed",1.2
+1950,"Smallholders","Smallholders","Pulses/Fallow","Rainfed",0.4
+1950,"Pastoralists","Pastoralists","Grasslands","Grasslands",0.67
+1950,"Pastoralists","Pastoralists","Grasslands (Grazed Once)","Grazed",14.15
+1950,"Landless households","Landless","Groundnut/Fallow","Rainfed",0
+2022,"Vegetable growers_dairy farming","Vegetable growers (dairy farming)","Groundnut/Tomato/Tomato/Fallow","Irrigated",1.95
+2022,"Vegetable growers_dairy farming","Vegetable growers (dairy farming)","Rice/Napier","Irrigated",0.08
+2022,"Vegetable growers_no livestock","Vegetable growers (no livestock)","Groundnut/Okra/Okra/Fallow","Irrigated",2.02
+2022,"Small-scale fruit growers","Small-scale fruit growers (sweet lime)","Groundnut/Fallow","Rainfed",1.16
+2022,"Small-scale fruit growers","Small-scale fruit growers (sweet lime)","Rice/Napier","Irrigated",0.08
+2022,"Small-scale fruit growers","Small-scale fruit growers (sweet lime)","Sweet Lime","Irrigated",0.79
+2022,"Small-scale fruit growers","Small-scale fruit growers (grape vines)","Grapes","Irrigated",0.79
+2022,"Small-scale fruit growers","Small-scale fruit growers (grape vines)","Groundnut/Fallow","Rainfed",1.16
+2022,"Small-scale fruit growers","Small-scale fruit growers (grape vines)","Rice/Napier","Irrigated",0.08
+2022,"Small-scale fruit growers","Small-scale fruit growers (pomegranate)","Groundnut/Fallow","Rainfed",1.16
+2022,"Small-scale fruit growers","Small-scale fruit growers (pomegranate)","Pomegranate","Irrigated",0.79
+2022,"Small-scale fruit growers","Small-scale fruit growers (pomegranate)","Rice/Napier","Irrigated",0.08
+2022,"Small-scale fruit growers","Small-scale fruit growers (banana)","Groundnut/Fallow","Rainfed",1.16
+2022,"Small-scale fruit growers","Small-scale fruit growers (banana)","Rice/Banana","Irrigated",0.79
+2022,"Small-scale fruit growers","Small-scale fruit growers (banana)","Rice/Napier","Irrigated",0.08
+2022,"Rice growers","Rice growers","Groundnut/Fallow","Rainfed",1.29
+2022,"Rice growers","Rice growers","Rice/Fallow","Irrigated",0.74
+2022,"Large-scale fruit growers","Large-scale fruit growers","Grapes","Irrigated",2.02
+2022,"Large-scale fruit growers","Large-scale fruit growers","Pomegranate","Irrigated",4.05
+2022,"Pastoralists","Pastoralists","Grasslands (Grazed 3 Times)","Grazed",13.17
+2022,"Pastoralists","Pastoralists","Horsegram (Grazed)","Rainfed",2.02
+2022,"Rainfed groundnut growers_bulls","Rainfed groundnut growers (bulls)","Grasslands (Grazed 3 Times)","Grazed",0.29
+2022,"Rainfed groundnut growers_bulls","Rainfed groundnut growers (bulls)","Groundnut/Fallow","Rainfed",2.02
+2022,"Rainfed groundnut growers_bulls","Rainfed groundnut growers (bulls)","Rice/Fallow (Red Soils)","Irrigated",0.26
+2022,"Rainfed groundnut growers_with other livestock","Sheep fatteners","Grasslands (Grazed 3 Times)","Grazed",0.16
+2022,"Rainfed groundnut growers_with other livestock","Sheep fatteners","Groundnut/Fallow","Rainfed",2.02
+2022,"Rainfed groundnut growers_with other livestock","Rainfed groundnut growers (buffaloes)","Grasslands (Grazed 3 Times)","Grazed",0.73
+2022,"Rainfed groundnut growers_with other livestock","Rainfed groundnut growers (buffaloes)","Groundnut/Fallow","Rainfed",2.02
+2022,"Rainfed groundnut growers_with other livestock","Rainfed groundnut growers (cows)","Grasslands (Grazed 3 Times)","Grazed",0.75
+2022,"Rainfed groundnut growers_with other livestock","Rainfed groundnut growers (cows)","Groundnut/Fallow","Rainfed",2.02
+2022,"Rainfed groundnut or redgram growers_no livestock","Rainfed groundnut growers (no livestock)","Groundnut/Fallow","Rainfed",2.02
+2022,"Rainfed groundnut or redgram growers_no livestock","Rainfed redgram growers (no livestock)","Pulses/Fallow","Rainfed",2.02
+2022,"Landless households","Landless","Groundnut/Fallow","Rainfed",0
+2022,"Unused land","unused land","Grasslands","Grasslands",7.62

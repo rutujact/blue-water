@@ -400,7 +400,7 @@ crop.systems <- data.table::fread(here("data/input/07_crop.systems.csv")) %>% as
 
 write.csv(crop.systems, file = here("data/processed/05_crop.systems.csv"), row.names = FALSE)
 
-knitr::kable(head(crop.systems), caption = "Preview: Cropping Systems")
+knitr::kable(crop.systems, caption = "Preview: Cropping Systems")
 
 # Generate the long-format rotation table
 crop.systems.l <- crop.systems %>%
@@ -441,23 +441,42 @@ write.csv(crop.systems.l.kc, file = here("data/processed/06_crop.systems.l.kc.cs
 
 # Production Systems
 
-Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025.
+Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025 and modified in Hemingway et al. 2026.
 
 ```{r load-production-system}
-ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system.csv")) %>% as_tibble()
+ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system_extended.csv")) %>% as_tibble()
+
 ps_by_cs_area <- ps_by_cs_area %>%
-  mutate(area_ha = round(area_ha, 2))
+  dplyr::select(-Broad_Category_No, -Sub_Category_No) %>%
+  dplyr::rename(
+    production_system = Broad_Category,
+    sub_production_system = Sub_Category,
+    crop.system = Crop_system,
+    area_ha = Area_ha
+  ) %>%
+  dplyr::mutate(production_system = case_when(
+    production_system == "unused land" ~ "Unused land", 
+    TRUE ~ as.character(production_system)),
+    sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"),
+    area_ha = round(area_ha, 2)
+  )
 ```
 
 ```{r display-area, echo=FALSE}
-preview_ps <- head(ps_by_cs_area, 5)
-colnames(preview_ps) <- c(
+preview_ps <- ps_by_cs_area
+
+preview_ps_disp <- preview_ps %>%
+  dplyr::select(time_period, production_system, sub_production_system, crop.system, Type_Land_Use, area_ha)
+
+colnames(preview_ps_disp) <- c(
   "time_period<br><small style='color:gray; font-weight:normal;'>Historical grouping</small>",
-  "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
+  "production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Group</small>",
+  "sub-production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Sub-Group</small>",
   "crop.system<br><small style='color:gray; font-weight:normal;'>Implemented rotation</small>",
+  "Type_Land_Use<br><small style='color:gray; font-weight:normal;'>Land Use Type</small>",
   "area_ha<br><small style='color:gray; font-weight:normal;'>Cultivated area</small>"
 )
-knitr::kable(preview_ps, escape = FALSE, caption = "Preview: Crop Area under each Production System")
+knitr::kable(preview_ps_disp, escape = FALSE, caption = "Preview: Crop Area under each Production System")
 
 write.csv(ps_by_cs_area, file = here("data/processed/07_crop_system_area_by_production_system.csv"), row.names = FALSE)
 ```
@@ -467,20 +486,40 @@ write.csv(ps_by_cs_area, file = here("data/processed/07_crop_system_area_by_prod
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
 
 ```{r load-agrirarian}
-farms_count_df <- data.table::fread(here("data/input/09_no_of_farmers_by_production_system.csv")) %>% as_tibble()
+farms_count_df <- data.table::fread(here("data/input/09_no_of_farmers_by_production_system_extended.csv")) %>% as_tibble()
+
+farms_count_df <- farms_count_df %>%
+dplyr::select(-Broad_Category_No, -Sub_Category_No) %>%
+  dplyr::rename(
+    production_system = Broad_Category,
+    sub_production_system = Sub_Category,
+    number_of_farms = Number_of_farms
+  ) %>%
+  dplyr::mutate(production_system = case_when(
+    production_system == "unused land" ~ "Unused land", 
+    TRUE ~ as.character(production_system)
+  ),
+    sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)")
+  )
 ```
 
 ```{r display-counts, echo=FALSE}
-preview_counts <- head(farms_count_df, 5)
-colnames(preview_counts) <- c(
+preview_counts <- farms_count_df
+
+preview_counts_disp <- preview_counts %>%
+  dplyr::select(time_period, production_system, sub_production_system, number_of_farms)
+
+colnames(preview_counts_disp) <- c(
   "time_period<br><small style='color:gray; font-weight:normal;'>Era</small>",
-  "production_system<br><small style='color:gray; font-weight:normal;'>Farm archetype</small>",
+  "production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Group</small>",
+  "sub_production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Sub-Group</small>",
   "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
 )
-knitr::kable(preview_counts, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
+knitr::kable(preview_counts_disp, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
 
 write.csv(farms_count_df, file = here("data/processed/08_no_of_farmers_by_production_system.csv"), row.names = FALSE)
 ```
+
 
 # References
 

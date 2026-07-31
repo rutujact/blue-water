@@ -1,0 +1,22 @@
+time_period;Broad_Category;Broad_Category_No;Sub_Category;Sub_Category_No;Number_of_farms
+1950;Large landholders;1;Large landholders;1;8
+1950;Smallholders;2;Smallholders;2;80
+1950;Pastoralists;3;Pastoralists;3;8
+1950;Landless households;4;Landless;4;64
+2022;Vegetable growers_dairy farming;1;Vegetable growers_dairy farming;1;21
+2022;Vegetable growers_no livestock;2;Vegetable growers_no livestock;2;20
+2022;Small-scale fruit growers;3;Small-scale fruit growers_sweet lime;31;21
+2022;Small-scale fruit growers;3;Small-scale fruit growers_grape vines;32;7
+2022;Small-scale fruit growers;3;Small-scale fruit growers_pomegranate;33;7
+2022;Small-scale fruit growers;3;Small-scale fruit growers_banana;34;7
+2022;Rice growers;4;Rice growers;4;23
+2022;Large-scale fruit growers;5;Large-scale fruit growers;5;2
+2022;Pastoralists;6;Pastoralists;6;18
+2022;Rainfed groundnut growers_bulls;7;Rainfed groundnut growers_bulls;7;4
+2022;Rainfed groundnut growers_with other livestock;8;Sheep fatteners;81;11
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_buffaloes;82;11
+2022;Rainfed groundnut growers_with other livestock;8;Rainfed groundnut growers_cows;83;12
+2022;Rainfed groundnut or redgram growers_no livestock;9;Rainfed groundnut growers_no livestock;91;128
+2022;Rainfed groundnut or redgram growers_no livestock;9;Rainfed redgram growers_no livestock;92;42
+2022;Landless households;10;Landless;10;6
+2022;unused land;11;unused land;11;1
