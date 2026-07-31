@@ -186,7 +186,7 @@ colnames(preview_soil) <- c(
   "whc.mmpercm<br><small style='color:gray; font-weight:normal;'>WHC (mm water / cm soil)</small>",
   "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold</small>"
 )
-knitr::kable(preview_soil, escape = FALSE, caption = "Preview: Soil Parameter Table")
+knitr::kable(preview_soil, escape = FALSE, caption = "Soil Parameter Table")
 write.csv(soil.param, file = here("data/processed/03_soil.parameters.csv"), row.names = FALSE)
 ```
 
@@ -207,7 +207,7 @@ colnames(preview_crop) <- c(
   "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
   "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
 )
-knitr::kable(preview_crop, escape = FALSE, caption = "Preview: Crop Rooting Depth and Crop Irrigated/Rainfed Table")
+knitr::kable(preview_crop, escape = FALSE, caption = "Crop Rooting Depth and Crop Irrigated/Rainfed Table")
 
 write.csv(crop.param, file = here("data/processed/04_crop.parameters.csv"), row.names = FALSE)
 ```
@@ -224,14 +224,14 @@ fruit_kc_raw   <- data.table::fread(here("data/input/06_fruit_kc_curve_parameter
 #### FAO Segmented Parameters
 
 ```{r fao-params-display, echo=FALSE}
-knitr::kable(head(fao_kc_raw, 5), caption = "Preview: FAO Segmented Parameters")
+knitr::kable(head(fao_kc_raw, 5), caption = "FAO Segmented Parameters")
 
 ```
 
 #### Fruit Tree Parameters
 
 ```{r fruit-params-display, echo=FALSE}
-knitr::kable(fruit_kc_raw, caption = "Preview: Fruit Tree Parameters")
+knitr::kable(fruit_kc_raw, caption = "Fruit Tree Parameters")
 
 ```
 
@@ -400,7 +400,7 @@ crop.systems <- data.table::fread(here("data/input/07_crop.systems.csv")) %>% as
 
 write.csv(crop.systems, file = here("data/processed/05_crop.systems.csv"), row.names = FALSE)
 
-knitr::kable(crop.systems, caption = "Preview: Cropping Systems")
+knitr::kable(crop.systems, caption = "Cropping Systems")
 
 # Generate the long-format rotation table
 crop.systems.l <- crop.systems %>%
@@ -476,7 +476,7 @@ colnames(preview_ps_disp) <- c(
   "Type_Land_Use<br><small style='color:gray; font-weight:normal;'>Land Use Type</small>",
   "area_ha<br><small style='color:gray; font-weight:normal;'>Cultivated area</small>"
 )
-knitr::kable(preview_ps_disp, escape = FALSE, caption = "Preview: Crop Area under each Production System")
+knitr::kable(preview_ps_disp, escape = FALSE, caption = "Crop Area under each Production System")
 
 write.csv(ps_by_cs_area, file = here("data/processed/07_crop_system_area_by_production_system.csv"), row.names = FALSE)
 ```
@@ -515,7 +515,7 @@ colnames(preview_counts_disp) <- c(
   "sub_production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Sub-Group</small>",
   "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
 )
-knitr::kable(preview_counts_disp, escape = FALSE, caption = "Preview: Farm Counts Per Production System")
+knitr::kable(preview_counts_disp, escape = FALSE, caption = "Farm Counts Per Production System")
 
 write.csv(farms_count_df, file = here("data/processed/08_no_of_farmers_by_production_system.csv"), row.names = FALSE)
 ```
