@@ -62,8 +62,8 @@ project_root/
 │   │   ├── 02_et0.csv
 │   │   ├── 03_soil.parameters.csv
 │   │   ├── 04_crop.parameters.csv
-│   │   ├── 05_crop_kc_curve_parameters_table.csv
-│   │   ├── 06_fruit_kc_curve_parameters_table.csv (optional)
+│   │   ├── 05_fao_kc_curve_parameters_table.csv
+│   │   ├── 06_step_kc_curve_parameters_table.csv (optional)
 │   │   ├── 07_crop.systems.csv
 │   │   ├── 08_crop_system_area_by_production_system.csv
 │   │   └── 09_no_of_production_system_in_the_agrarian_system.csv
@@ -217,8 +217,8 @@ write.csv(crop.param, file = here("data/processed/04_crop.parameters.csv"), row.
 Our framework dynamically generates daily Kc curves over a calendar year from the input parameters. As described in the manuscript, daily Kc values are computed based on the FAO method for most crops, monthly step functions for some fruit trees, or polynomial equations for groundnut, or linear regrowth rules for grasslands. Some crops such as banana can span multiple years, in which case we define a crop coefficient curve of each year independently.
 
 ```{r load-kc-params}
-fao_kc_raw       <- data.table::fread(here("data/input/05_crop_kc_curve_parameters_table.csv")) %>% as_tibble()
-fruit_kc_raw   <- data.table::fread(here("data/input/06_fruit_kc_curve_parameters_table.csv")) %>% as_tibble()
+fao_kc_raw       <- data.table::fread(here("data/input/05_fao_kc_curve_parameters_table.csv")) %>% as_tibble()
+fruit_kc_raw   <- data.table::fread(here("data/input/06_step_kc_curve_parameters_table.csv")) %>% as_tibble()
 ```
 
 #### FAO Segmented Parameters
@@ -444,22 +444,7 @@ write.csv(crop.systems.l.kc, file = here("data/processed/06_crop.systems.l.kc.cs
 Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025 and modified in Hemingway et al. 2026.
 
 ```{r load-production-system}
-ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system_extended.csv")) %>% as_tibble()
-
-ps_by_cs_area <- ps_by_cs_area %>%
-  dplyr::select(-Broad_Category_No, -Sub_Category_No) %>%
-  dplyr::rename(
-    production_system = Broad_Category,
-    sub_production_system = Sub_Category,
-    crop.system = Crop_system,
-    area_ha = Area_ha
-  ) %>%
-  dplyr::mutate(production_system = case_when(
-    production_system == "unused land" ~ "Unused land", 
-    TRUE ~ as.character(production_system)),
-    sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"),
-    area_ha = round(area_ha, 2)
-  )
+ps_by_cs_area  <- data.table::fread(here("data/input/08_crop_system_area_by_production_system.csv")) %>% as_tibble()
 ```
 
 ```{r display-area, echo=FALSE}
@@ -486,21 +471,7 @@ write.csv(ps_by_cs_area, file = here("data/processed/07_crop_system_area_by_prod
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
 
 ```{r load-agrirarian}
-farms_count_df <- data.table::fread(here("data/input/09_no_of_farmers_by_production_system_extended.csv")) %>% as_tibble()
-
-farms_count_df <- farms_count_df %>%
-dplyr::select(-Broad_Category_No, -Sub_Category_No) %>%
-  dplyr::rename(
-    production_system = Broad_Category,
-    sub_production_system = Sub_Category,
-    number_of_farms = Number_of_farms
-  ) %>%
-  dplyr::mutate(production_system = case_when(
-    production_system == "unused land" ~ "Unused land", 
-    TRUE ~ as.character(production_system)
-  ),
-    sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)")
-  )
+farms_count_df <- data.table::fread(here("data/input/09_no_of_farmers_by_production_system.csv")) %>% as_tibble()
 ```
 
 ```{r display-counts, echo=FALSE}
