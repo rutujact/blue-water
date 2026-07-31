@@ -30,15 +30,15 @@ data_upload_ui <- function(id) {
       fileInput(ns("custom_et0"), "2. Reference ET0 (02_et0)", accept = ".csv"),
       fileInput(ns("custom_soil"), "3. Soil Params (03_soil)", accept = ".csv"),
       fileInput(ns("custom_crop"), "4. Crop Params (04_crop)", accept = ".csv"),
-      fileInput(ns("custom_kc"), "5. Crop Kc Params (05_kc)", accept = ".csv"),
-      fileInput(ns("custom_fruit"), "6. Fruit Kc Params (06_fruit) [Optional]", accept = ".csv"),
+      fileInput(ns("custom_kc"), "5. FAO Kc Params (05_fao_kc)", accept = ".csv"),
+      fileInput(ns("custom_fruit"), "6. Monthly Step Kc Params (06_monthly_kc) [Optional]", accept = ".csv"),
       fileInput(ns("custom_systems"), "7. Crop Systems (07_systems)", accept = ".csv"),
       
       hr(),
       checkboxInput(ns("enable_track2"), "Include Socio-Demographic Data (Track 2)", value = TRUE),
       conditionalPanel(
         condition = sprintf("input['%s'] == true", ns("enable_track2")),
-        fileInput(ns("custom_area"), "8. Area by System (08_area)", accept = ".csv"),
+        fileInput(ns("custom_area"), "8. Area by Crop System (08_area)", accept = ".csv"),
         fileInput(ns("custom_farms"), "9. Farm Counts (09_farms)", accept = ".csv")
       ),
       

@@ -13,6 +13,22 @@ data_ingestion_server <- function(id) {
       ps_by_cs_area = NULL, farms_count = NULL, is_loaded = FALSE,
       has_track2 = FALSE
     )
+    harmonize_extended_data <- function(df, type = "area") {
+      if ("Broad_Category" %in% colnames(df)) {
+        if (type == "area") {
+          df <- df %>%
+            dplyr::select(-any_of(c("Broad_Category_No", "Sub_Category_No"))) %>%
+            dplyr::rename(production_system = Broad_Category, sub_production_system = Sub_Category, crop.system = Crop_system, area_ha = Area_ha) %>%
+            dplyr::mutate(sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"), area_ha = round(area_ha, 2))
+        } else if (type == "farms") {
+          df <- df %>%
+            dplyr::select(-any_of(c("Broad_Category_No", "Sub_Category_No"))) %>%
+            dplyr::rename(production_system = Broad_Category, sub_production_system = Sub_Category, number_of_farms = Number_of_farms) %>%
+            dplyr::mutate(sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"))
+        }
+      }
+      return(df)
+    }
     
     validate_schemas <- function(precip, et0, crop_systems, ps_by_cs_area = NULL, has_track2 = TRUE) {
       if (any(sapply(list(precip, et0, crop_systems), is.null))) {
@@ -46,8 +62,8 @@ data_ingestion_server <- function(id) {
         d_et0          <- read_csv(file.path(data_dir, "02_et0.csv"), show_col_types = FALSE)
         d_soil_param   <- read_csv(file.path(data_dir, "03_soil.parameters.csv"), show_col_types = FALSE)
         d_crop_param   <- read_csv(file.path(data_dir, "04_crop.parameters.csv"), show_col_types = FALSE)
-        d_kc_raw       <- read_csv(file.path(data_dir, "05_crop_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-        d_raw_params   <- read_csv(file.path(data_dir, "06_fruit_kc_curve_parameters_table.csv"), show_col_types = FALSE)
+        d_fao_kc       <- read_csv(file.path(data_dir, "05_fao_kc_curve_parameters_table.csv"), show_col_types = FALSE)
+        d_step_kc      <- read_csv(file.path(data_dir, "06_step_kc_curve_parameters_table.csv"), show_col_types = FALSE)
         d_crop_systems <- read_csv(file.path(data_dir, "07_crop.systems.csv"), show_col_types = FALSE)
         d_ps_by_cs_area<- read_csv(file.path(data_dir, "08_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
         d_farms_count  <- read_csv(file.path(data_dir, "09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
@@ -55,7 +71,7 @@ data_ingestion_server <- function(id) {
         validate_schemas(d_precip, d_et0, d_crop_systems, d_ps_by_cs_area, has_track2 = TRUE)
         
         app_data$precip <- d_precip; app_data$et0 <- d_et0; app_data$soil_param <- d_soil_param
-        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_kc_raw; app_data$raw_params <- d_raw_params
+        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
         app_data$crop_systems <- d_crop_systems; app_data$ps_by_cs_area <- d_ps_by_cs_area
         app_data$farms_count <- d_farms_count
         app_data$has_track2 <- TRUE
@@ -79,13 +95,13 @@ data_ingestion_server <- function(id) {
         d_et0          <- read_csv(input$custom_et0$datapath, show_col_types = FALSE)
         d_soil_param   <- read_csv(input$custom_soil$datapath, show_col_types = FALSE)
         d_crop_param   <- read_csv(input$custom_crop$datapath, show_col_types = FALSE)
-        d_kc_raw       <- read_csv(input$custom_kc$datapath, show_col_types = FALSE)
+        d_fao_kc       <- read_csv(input$custom_kc$datapath, show_col_types = FALSE)
         d_crop_systems <- read_csv(input$custom_systems$datapath, show_col_types = FALSE)
         
         if (!is.null(input$custom_fruit)) {
-          d_raw_params <- read_csv(input$custom_fruit$datapath, show_col_types = FALSE)
+          d_step_kc <- read_csv(input$custom_fruit$datapath, show_col_types = FALSE)
         } else {
-          d_raw_params <- NULL
+          d_step_kc <- NULL
         }
         
         has_t2 <- input$enable_track2
@@ -101,7 +117,7 @@ data_ingestion_server <- function(id) {
         validate_schemas(d_precip, d_et0, d_crop_systems, d_ps_by_cs_area, has_track2 = has_t2)
         
         app_data$precip <- d_precip; app_data$et0 <- d_et0; app_data$soil_param <- d_soil_param
-        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_kc_raw; app_data$raw_params <- d_raw_params
+        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
         app_data$crop_systems <- d_crop_systems; app_data$ps_by_cs_area <- d_ps_by_cs_area
         app_data$farms_count <- d_farms_count
         app_data$has_track2 <- has_t2

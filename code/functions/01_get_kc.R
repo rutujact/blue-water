@@ -35,7 +35,7 @@
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 1. STANDARD FAO-56 CURVES
+# 1. STANDARD FAO-56 CURVES ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Generate Standard FAO-56 Segmented Curve
@@ -110,7 +110,7 @@ build_fao_curve <- function(row, base_val = 0) {
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 2. FRUIT TREE CURVES
+# 2. FRUIT TREE CURVES ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Generate Fruit Tree Kc Curve (Monthly Step Function)
@@ -154,7 +154,7 @@ generate_fruit_step <- function(crop_name, raw_params) {
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 3. POLYNOMIAL CURVES
+# 3. POLYNOMIAL CURVES ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Generate Polynomial Curve Parameters
@@ -187,7 +187,7 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 4. GRAZED PASTURE CURVES
+# 4. GRAZED PASTURE CURVES ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Generate Grazed Pasture Curve (Legacy Match)
 #'
@@ -244,7 +244,7 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
 }
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 5. NAPIER GRASS CURVES
+# 5. NAPIER GRASS CURVES ----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 #' Generate Napier Grass Harvesting Cycles
@@ -256,10 +256,9 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
 #' @param start_doy Numeric representation of the initial calendar day harvesting begins.
 #' @param decline_rate_1 Numeric slope parameter for Phase 1 biomass or senescence decay.
 #' @param decline_rate_2 Numeric slope parameter for subsequent recurring harvesting cycles.
-#' @param base_val Numeric baseline value for the off-season (default 0.01 for dry season).
 #' @return A tibble containing columns 'doy', 'crop', and the computed timeline 'kc'.
 #' @export
-generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2, base_val = 0.01) {
+generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2) {
   
   if (!is.numeric(c(start_doy, decline_rate_1, decline_rate_2))) {
     stop("Parameters 'start_doy', 'decline_rate_1', and 'decline_rate_2' must be purely numeric.")
@@ -268,7 +267,7 @@ generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2
   out_df <- dplyr::tibble(doy = 1:366, crop = crop_name) %>%
     dplyr::mutate(
       kc = dplyr::case_when(
-        doy < start_doy ~ base_val, # Apply the baseline correction here
+        doy < start_doy ~ 0, # Apply the baseline correction here
         start_doy == 1 & doy <= 50 ~ dplyr::case_when(
           doy <= 11 ~ 0.5,
           doy <= 45 ~ 0.9,

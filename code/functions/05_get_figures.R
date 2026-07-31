@@ -228,54 +228,83 @@ plot_climate_profile <- function(climate_summary, scale_factor = 7.5, show_tempe
 #' @description Visualizes the physiological crop coefficient (Kc) curves across DOY.
 #' Implements contiguous growth phase detection to handle gaps and fallow periods smoothly.
 #' @param kc_doy_crop_all Dataframe of crop coefficients mapped by day of year (doy).
+#' @param KC_FALLOW List defining fallow evaporation constants.
 #' @return A `ggplot2` facet-wrapped visualization of Kc curves.
 #' @export
-plot_crop_coefficient_curves <- function(kc_doy_crop_all) {
+plot_crop_coefficient_curves <- function(
+    kc_doy_crop_all, 
+    KC_FALLOW = list(dry_season = 0.005, kharip = 0.2, doy_switch = 120)
+) {
   
   # _________________________________________________________________________
   # STEP 1: Gap Detection & Data Prep
   # _________________________________________________________________________
+  kc_doy_crop_all <- kc_doy_crop_all %>%
+    # Harmonize all grassland grazing variations to a single "Grass" crop name
+    # so they all share the exact same color in the ggplot legend/fill mapping.
+    dplyr::mutate(crop_col = dplyr::case_when(
+      grepl("Grazed|Grasslands", crop) ~ "Grass",
+      grepl("Banana", crop) ~ "Banana",
+      grepl("Napier", crop) ~ "Napier",
+      grepl("Groundnut", crop) ~ "Groundnut",
+      grepl("Okra", crop) ~ "Okra",
+      grepl("Tomato", crop) ~ "Tomato",
+      grepl("Rice", crop) ~ "Rice",
+      TRUE ~ crop
+    ))
+  
+  # _________________________________________________________________________
+  # STEP 2a: FALLOW DATA (Baseline Soil Evaporation)
+  # _________________________________________________________________________
+  # Isolate days where Kc drops to 0 to apply standard fallow shading
+  fallow_data <- kc_doy_crop_all %>%
+    dplyr::filter(kc == 0 | crop == "No Crop") %>%
+    dplyr::mutate(
+      kc = dplyr::if_else(doy < KC_FALLOW$doy_switch, KC_FALLOW$dry_season, KC_FALLOW$kharip)
+    ) %>%
+    dplyr::arrange(crop, doy) %>%
+    dplyr::group_by(crop) %>%
+    dplyr::mutate(
+      is_gap = doy - dplyr::lag(doy, default = dplyr::first(doy)) > 1,
+      plot_group = paste(crop, "fallow", cumsum(is_gap), sep = "_")
+    ) %>%
+    dplyr::ungroup()
+  
+  # _________________________________________________________________________
+  # STEP 2b: CROP DATA (Isolated Growth Phases)
+  # _________________________________________________________________________
   # Define contiguous growth phases to physically break lines and ribbons across fallow periods
-  plot_data <- kc_doy_crop_all %>%
+  crop_data <- kc_doy_crop_all %>%
     dplyr::filter(crop != "No Crop" & kc > 0) %>%
     dplyr::arrange(crop, doy) %>%
     dplyr::group_by(crop) %>%
     dplyr::mutate(
-      # Check if the jump between this day and the previous day is more than 1
-      # (Meaning a fallow gap occurred)
       is_gap = doy - dplyr::lag(doy, default = dplyr::first(doy)) > 1,
-      # Cumulative sum creates a new ID (0, 1, 2...) every time it hits a gap
       growth_phase = cumsum(is_gap)
     ) %>%
     dplyr::ungroup() %>%
-    # Combine crop name and phase to create a unique grouping ID for ggplot
-    dplyr::mutate(plot_group = paste(crop, growth_phase, sep = "_")) %>%
-    # Harmonize all grassland grazing variations to a single "Grass" crop name
-    # so they all share the exact same color in the ggplot legend/fill mapping.
-    # and name
-    dplyr::mutate(crop_col = dplyr::if_else(
-      grepl("Grazed|Grasslands", crop),
-      "Grass", dplyr::if_else(grepl("Banana", crop), "Banana",
-                              dplyr::if_else(grepl("Napier", crop), "Napier",
-                                             dplyr::if_else(grepl("Groundnut", crop), "Groundnut",
-                                                            dplyr::if_else(grepl("Okra", crop), "Okra",
-                                                                           dplyr::if_else(grepl("Tomato", crop), "Tomato",
-                                                                                          dplyr::if_else(grepl("Rice", crop), "Rice",
-                                                                                                         crop))))))))
-    
+    dplyr::mutate(plot_group = paste(crop, "crop", growth_phase, sep = "_"))
   
   # _________________________________________________________________________
-  # STEP 2: Rendering
+  # STEP 3: Rendering
   # _________________________________________________________________________
-  ggplot2::ggplot(plot_data, ggplot2::aes(x = doy, y = kc, color = crop_col)) +
+  ggplot2::ggplot() +
     
-    # Use the new plot_group to bound the ribbon strictly to the active growth phase.
-    # color = NA prevents it from inheriting the global color and drawing the y=0 bottom line.
-    ggplot2::geom_ribbon(ggplot2::aes(ymin = 0, ymax = kc, fill = crop_col, group = plot_group), 
+    # --- LAYER 1: FALLOW PERIODS ---
+    ggplot2::geom_ribbon(data = fallow_data, 
+                         ggplot2::aes(x = doy, ymin = 0, ymax = kc, group = plot_group), 
+                         fill = "#e6e1d8", alpha = 0.5, color = NA) +
+    ggplot2::geom_line(data = fallow_data, 
+                       ggplot2::aes(x = doy, y = kc, group = plot_group), 
+                       color = "#c4b7a6", linewidth = 0.5) +
+    
+    # --- LAYER 2: CROP PERIODS ---
+    ggplot2::geom_ribbon(data = crop_data, 
+                         ggplot2::aes(x = doy, ymin = 0, ymax = kc, fill = crop_col, group = plot_group), 
                          alpha = 0.15, show.legend = FALSE, color = NA) +
-    
-    # Use the exact same plot_group for the line
-    ggplot2::geom_line(ggplot2::aes(group = plot_group), linewidth = 1, show.legend = FALSE) +
+    ggplot2::geom_line(data = crop_data, 
+                       ggplot2::aes(x = doy, y = kc, color = crop_col, group = plot_group), 
+                       linewidth = 1, show.legend = FALSE) +
     
     ggplot2::facet_wrap(~ crop) +
     
@@ -291,7 +320,6 @@ plot_crop_coefficient_curves <- function(kc_doy_crop_all) {
     
     ggplot2::theme(legend.position = "none")
 }
-
 #' Plot Crop System Coefficient (Kc) Trajectories
 #' 
 #' @description Maps the annual and multi-annual cropping systems, incorporating

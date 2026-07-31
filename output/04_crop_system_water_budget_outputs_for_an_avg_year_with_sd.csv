@@ -227,18 +227,18 @@ Rice/Napier,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Rice/Napier,Irrigated,Peff,Precipitation - Runoff (mm),426.42948335247405,127.95991170598224
 Rice/Napier,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Rice/Napier,Irrigated,Q,Runoff (mm),0,0
-Rice/Napier,Irrigated,aet,AET (mm),1539.1272409656965,55.593730138418884
-Rice/Napier,Irrigated,aet.crop,Crop ET (mm),1539.1272409656965,55.593730138418884
-Rice/Napier,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.019278444111992,1.5504050939894527
-Rice/Napier,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9999630778319303,2.245887804717907e-4
-Rice/Napier,Irrigated,balance,Blue Water Potential (mm),-994.2975112359668,230.40883770951183
+Rice/Napier,Irrigated,aet,AET (mm),1544.0109472978515,55.66453212704447
+Rice/Napier,Irrigated,aet.crop,Crop ET (mm),1533.10501843254,55.373999397614014
+Rice/Napier,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.031928910745828,1.5545905888658251
+Rice/Napier,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.999910126923548,2.558194304625827e-4
+Rice/Napier,Irrigated,balance,Blue Water Potential (mm),-999.1812175681218,230.5219088798966
 Rice/Napier,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Rice/Napier,Irrigated,etc,Potential Crop ET (mm),1539.140332114345,55.60677839527722
-Rice/Napier,Irrigated,etc.crop,etc.crop (mm),1539.140332114345,55.60677839527722
-Rice/Napier,Irrigated,irrigation,Irrigation Requirement (mm),1542.775889614345,62.79415719738883
-Rice/Napier,Irrigated,recharge,Groundwater Recharge (mm),548.4783783783784,203.26864289945505
+Rice/Napier,Irrigated,etc,Potential Crop ET (mm),1544.287803871102,55.75736000405233
+Rice/Napier,Irrigated,etc.crop,etc.crop (mm),1533.1993945467775,55.42471640471574
+Rice/Napier,Irrigated,irrigation,Irrigation Requirement (mm),1540.8376008401651,63.286755444688296
+Rice/Napier,Irrigated,recharge,Groundwater Recharge (mm),541.6563832720434,202.26189732145082
 Rice/Napier,Irrigated,runoff.percent,% Runoff,0,0
-Rice/Napier,Irrigated,sm.percent,% Soil Moisture,100,0
+Rice/Napier,Irrigated,sm.percent,% Soil Moisture,99.86377781665738,0.3590440128673076
 Sweet Lime,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Sweet Lime,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Sweet Lime,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
