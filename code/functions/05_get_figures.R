@@ -11,7 +11,7 @@
 # GNU Lesser General Public License for more details.
 # 
 # You should have received a copy of the GNU Lesser General Public License
-# along with this program. If not, see <https://gnu.org>.
+# along with this program. If not, see [https://gnu.org](https://gnu.org).
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Title:        Water Budgeting & Visualization Utility Functions
@@ -320,6 +320,7 @@ plot_crop_coefficient_curves <- function(
     
     ggplot2::theme(legend.position = "none")
 }
+
 #' Plot Crop System Coefficient (Kc) Trajectories
 #' 
 #' @description Maps the annual and multi-annual cropping systems, incorporating
@@ -330,8 +331,15 @@ plot_crop_coefficient_curves <- function(
 #' @export
 plot_crop_system_coefficient_curves <- function(
     crop_systems_l_kc, 
-    KC_FALLOW = list(dry_season = 0.005, kharip = 0.2, doy_switch = 120)
+    KC_FALLOW = NULL
 ) {
+  
+  # Safety check: if the user forgets to pass the parameters from the CSV, 
+  # provide a safe fallback so the plot doesn't crash.
+  if (is.null(KC_FALLOW)) {
+    warning("KC_FALLOW not provided. Using generic fallback values.")
+    KC_FALLOW <- list(dry_season = 0.01, kharip = 0.15, doy_switch = 120)
+  }
   
   # _________________________________________________________________________
   # STEP 0: Disambiguate Overlapping Systems & Format Variables
@@ -355,15 +363,15 @@ plot_crop_system_coefficient_curves <- function(
       # and name
       # we should have had a column for the crop name devoid of when/how long it's planted ets
       crop = dplyr::if_else(
-       grepl("Grasslands", crop.system) & grepl("Grazed|Grasslands", crop), "Grass",
+        grepl("Grasslands", crop.system) & grepl("Grazed|Grasslands", crop), "Grass",
         dplyr::if_else(grepl("Banana", crop), "Banana",
-                                dplyr::if_else(grepl("Napier", crop), "Napier",
-                                               dplyr::if_else(grepl("Groundnut", crop), "Groundnut",
-                                                              dplyr::if_else(grepl("Okra", crop), "Okra",
-                                                                             dplyr::if_else(grepl("Tomato", crop), "Tomato",
-                                                                                            dplyr::if_else(grepl("Rice", crop), "Rice",
-                                                                                                           crop
-      ))))))),
+                       dplyr::if_else(grepl("Napier", crop), "Napier",
+                                      dplyr::if_else(grepl("Groundnut", crop), "Groundnut",
+                                                     dplyr::if_else(grepl("Okra", crop), "Okra",
+                                                                    dplyr::if_else(grepl("Tomato", crop), "Tomato",
+                                                                                   dplyr::if_else(grepl("Rice", crop), "Rice",
+                                                                                                  crop
+                                                                                   ))))))),
       # and so that Grasslands they also share the same name
       rotation = dplyr::if_else(
         grepl("Grasslands", crop.system) & grepl("Grazed|Grasslands", rotation),
@@ -728,7 +736,7 @@ plot_monthly_bwp <- function(clim_crop_cs, years_range_text) {
 #' and `ps_bwp_volumetric` (filtered volumetric footprint targeting the BWP term).
 #' @export
 get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_count_df = NULL) {
-
+  
   # Removing productions systems with no area
   ps_by_cs_area <- ps_by_cs_area %>% filter(area_ha > 0)
   # _________________________________________________________________________
@@ -739,9 +747,9 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
     dplyr::select(rotation, crop.system, Irrigation, year, var, value) %>%
     dplyr::left_join(ps_by_cs_area, by = "crop.system", relationship = "many-to-many") %>%
     dplyr::filter(!is.na(sub_production_system)) %>%
-    # Directly map land_type from the new Type_Land_Use column (converted to lowercase to match internal plotting logic)
-    dplyr::mutate(land_type = tolower(Type_Land_Use))
-
+    # Directly map land_type from the new land_use_type column (converted to lowercase to match internal plotting logic)
+    dplyr::mutate(land_type = tolower(land_use_type))
+  
   # _________________________________________________________________________
   # STEP 2: Calculate Area-Weighted Depths (mm)
   # _________________________________________________________________________
@@ -755,7 +763,7 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
         sum(area_ha / rotations_count, na.rm = TRUE),
       .groups = "drop"
     )
-
+  
   # _________________________________________________________________________
   # STEP 3: Calculate Climate Risk Quantiles
   # _________________________________________________________________________
@@ -780,14 +788,14 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
                                                  "% Runoff" = "runoff.percent", "% Soil Moisture" = "sm.percent")) %>%
     dplyr::relocate(var.plot, .after = var)  %>%
     dplyr::arrange(time_period, production_system, sub_production_system)
-
+  
   # _________________________________________________________________________
   # STEP 4: Volumetric Conversion Matrix (mm to m3)
   # _________________________________________________________________________
   ps_total_areas <- ps_by_cs_area %>%
     dplyr::group_by(production_system, sub_production_system, time_period) %>%
     dplyr::summarise(total_system_area = sum(area_ha, na.rm = TRUE), .groups = "drop")
-
+  
   ps_volumetric_summary <- ps_annual_data %>%
     dplyr::group_by(production_system, sub_production_system, time_period, var, land_type, year, crop.system) %>%
     dplyr::mutate(rotations_count = dplyr::n_distinct(rotation)) %>%
@@ -812,7 +820,7 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
     dplyr::mutate(
       mean_m3 = mean_mm * total_system_area * 10
     )
-
+  
   # _________________________________________________________________________
   # STEP 5: Scale to Regional Demographics
   # _________________________________________________________________________
@@ -835,12 +843,12 @@ get_production_system_budgets <- function(budget_yr_l, ps_by_cs_area, farms_coun
       dplyr::select(time_period, production_system, sub_production_system, var, mean_mm,
                     dplyr::any_of(unique(ps_annual_data$land_type)), mean_m3)
   }
-
+  
   ps_volumetric_summary <- ps_volumetric_summary %>% 
     dplyr::arrange(time_period, production_system, sub_production_system, var)
   ps_bwp_volumetric <- ps_volumetric_summary %>% 
     dplyr::filter(var == "balance")
-
+  
   return(list(ps_budget_summary = ps_budget_summary,
               ps_volumetric_summary = ps_volumetric_summary,
               ps_bwp_volumetric = ps_bwp_volumetric))
@@ -919,27 +927,49 @@ plot_production_system_bwp <- function(ps_bwp_volumetric) {
 #' Main Dispatcher for Village Water Balance Sankey Diagrams
 #' 
 #' @description Checks the incoming time dimensions to decide whether to dispatch
-#' the single-panel chart engine or the double-panel comparison engine.
-#' @param village_bwp_data Structured dataframe describing macroscopic fluxes.
+#' the single-panel chart engine or the double-panel comparison engine. Includes
+#' smart grouping detection and optional data export.
+#' @param ps_bwp_volumetric Dataframe containing BWP estimates.
+#' @param ps_by_cs_area Dataframe with production system acreage and metadata.
 #' @param cfg Configuration list dictating base visual bounds.
 #' @param output_dev Target R graphics device (default `grDevices::cairo_pdf`).
 #' @param filename File path output target.
 #' @param manuscript_style Logical flag to enforce high-contrast journal formatting.
-#' @return Executes a graphical device call (does not return an object to console).
+#' @param save_csv_path Optional file path to save the aggregated figure data.
+#' @return Executes a graphical device call.
 #' @export
-plot_village_bwp <- function(village_bwp_data, cfg, output_dev = grDevices::cairo_pdf, filename = "figures/manuscript/Fig.6.pdf", manuscript_style = FALSE) {
-  # Use shorter column names
+plot_village_bwp <- function(ps_bwp_volumetric, ps_by_cs_area, cfg, output_dev = grDevices::cairo_pdf, filename = "figures/manuscript/Fig.7.pdf", manuscript_style = FALSE, save_csv_path = NULL) {
+  
+  # 1. Extract mapping safely with timeline bounds
+  mapping <- ps_by_cs_area %>%
+    dplyr::select(time_period, production_system, dplyr::any_of("report_group_name")) %>%
+    dplyr::distinct()
+  
+  village_bwp_data <- ps_bwp_volumetric %>%
+    dplyr::left_join(mapping, by = c("time_period", "production_system"))
+  
+  # 2. Graceful Fallback: Detect if custom report groupings exist
+  group_col <- if ("report_group_name" %in% names(village_bwp_data)) "report_group_name" else "production_system"
+  
+  # 3. Internal Aggregation & Unit Conversion
   village_bwp_data <- village_bwp_data %>%
-    dplyr::rename("period" = "time_period",
-                  "label" = "production_system",
-                  "val" = "bwp_thousand_m3")
+    dplyr::mutate(val_converted = round(total_vol_m3 / 10000) * 10) %>%
+    dplyr::group_by(time_period, label = .data[[group_col]]) %>%
+    dplyr::summarise(val = sum(val_converted, na.rm = TRUE), .groups = "drop") %>%
+    dplyr::rename(period = time_period)
+  
+  # 4. Optional CSV Export
+  if (!is.null(save_csv_path)) {
+    # Ensure directory exists before writing
+    dir.create(dirname(save_csv_path), recursive = TRUE, showWarnings = FALSE)
+    write.csv(village_bwp_data, file = save_csv_path, row.names = FALSE)
+  }
   
   unique_periods <- unique(village_bwp_data$period)
   num_periods <- length(unique_periods)
   
-  # Simple logic gate: Routes data to single or double-panel canvas builder
+  # 5. Route to drawing engine
   if (num_periods == 1) {
-    # THE FIX: Added manuscript_style to the single plot dispatcher call
     get_single_village_plot(village_bwp_data, cfg, output_dev, filename, manuscript_style = manuscript_style)
   } else if (num_periods == 2) {
     get_village_comparison_plot(village_bwp_data, cfg, output_dev, filename, manuscript_style = manuscript_style)
@@ -1408,39 +1438,38 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
 #' @description Maps farm count vs. volumetric water consumption footprints using a dual 
 #' `patchwork` alignment layout to explore resource inequities across typologies.
 #' @param ps_bwp_volumetric Dataframe containing land-use partitioned BWP and farm scaling data.
-#' @param ps_by_cs_area Dataframe denoting acreage distributions and pre-calculated `Type_Land_Use`.
+#' @param ps_by_cs_area Dataframe denoting acreage distributions and pre-calculated `land_use_type`.
 #' @param target_period String specifying the timeline to evaluate (default: "2022").
 #' @return A composite `patchwork` visualization.
 #' @export
 plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_by_cs_area, target_period = "2022") {
   
-  # _________________________________________________________________________
-  # STEP 1: Extract Pre-Calculated Typologies
-  # _________________________________________________________________________
-  # Bypass manual calculations and pull Type_Land_Use directly from the new dataset structure
-  ps_typology <- ps_by_cs_area %>%
+  # 1. Extract Typology & Mapping
+  mapping <- ps_by_cs_area %>%
     dplyr::filter(time_period == as.character(target_period)) %>%
-    dplyr::select(production_system, Type_Land_Use) %>%
+    dplyr::select(production_system, land_use_type, dplyr::any_of("report_group_name")) %>%
     dplyr::distinct() %>%
-    # In the rare event a production system has multiple land uses, default to the primary one
     dplyr::group_by(production_system) %>%
     dplyr::slice(1) %>%
     dplyr::ungroup()
   
-  # _________________________________________________________________________
-  # STEP 2: Aggregate & Apply Custom Labels
-  # _________________________________________________________________________
   clean_data <- ps_bwp_volumetric %>%
     dplyr::filter(time_period == as.character(target_period)) %>%
-    dplyr::left_join(ps_typology, by = "production_system") %>%
+    dplyr::left_join(mapping, by = "production_system")
+  
+  # 2. Graceful Fallback
+  group_col <- if ("report_group_name" %in% names(clean_data)) "report_group_name" else "production_system"
+  
+  # 3. Apply Groupings and Text Formatting
+  clean_data <- clean_data %>%
     dplyr::mutate(
-      # Safely use the user's custom label if provided, otherwise fallback to base name
-      label_base = if ("production_system_label" %in% names(.)) production_system_label else production_system,
-      typology_tag = stringr::str_remove(Type_Land_Use, "-Driven"),
+      label_base = .data[[group_col]],
+      # 'label_base' is already perfectly clean from the upstream ETL script!
+      typology_tag = stringr::str_remove(land_use_type, "-Driven"),
       display_label = paste0(label_base, " [", typology_tag, "]")
     )
   
-  # Safe Aggregation: Avoids 'max(-Inf)' errors if demographics are missing
+  # 4. Safe Aggregation
   agg_data <- clean_data %>%
     dplyr::group_by(display_label) %>%
     dplyr::summarise(
@@ -1454,9 +1483,7 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_by_cs_area, target_per
     dplyr::arrange(total) %>%
     dplyr::mutate(production_system_fct = factor(display_label, levels = unique(display_label)))
   
-  # _________________________________________________________________________
-  # STEP 3: Patchwork Component Build
-  # _________________________________________________________________________
+  # 5. Patchwork Component Build
   p_count <- ggplot2::ggplot(agg_data, ggplot2::aes(x = production_system_fct, y = farms, fill = bwp_status)) +
     ggplot2::geom_col(width = 0.6, show.legend = FALSE) + 
     ggplot2::coord_flip() +
@@ -1484,4 +1511,3 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_by_cs_area, target_per
   p_combined <- p_count + p_bwp + patchwork::plot_layout(widths = c(1.4, 1))
   return(p_combined)
 }
-

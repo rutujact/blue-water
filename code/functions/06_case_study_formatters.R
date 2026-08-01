@@ -1,0 +1,21 @@
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# 06_case_study_formatters.R
+# Purpose: Case-study-specific data manipulations for Hemingway et al. (202X).
+# Keeps the core toolkit generic by isolating localized assumptions.
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#' Format Classical Sankey Budget for Agrarian Scale
+#' 
+#' @description Reallocates excess farm-level grasslands to grazed areas exclusively 
+#' for the 1950s village-level Sankey representation, while leaving 2022 grasslands 
+#' as "unused". # These "Grassland" areas are areas that are not grazed in a given year n (but could be in the year n+1). The biomass requirement for the animals has already been calculated and matches the area under "Grazed area". The "Grasslands" area represents the grassland in excess, which we reallocate to the production system at village level, but not at farm level. So these were not included as "Grasslands" area at the farm level, as it is not needed to meet the dry matter/biomass requirements of the livestock. The adjustment/reallocation is only made at village level so that, in the figure at village level, all grassland areas appear as grazed and no "unused" land appear. This differs from the 2022 figure, where some grassland areas were never grazed and therefore appeared as unused land. 
+#' @param ps_volumetric_summary The generic volumetric output table.
+#' @return A dataframe formatted for the generic get_d3_sankey() function.
+format_agrarian_sankey_data <- function(ps_volumetric_summary) {
+  ps_volumetric_summary %>%
+    dplyr::mutate(
+      grazed = dplyr::if_else(time_period == "1950", grazed + grasslands, grazed), 
+      grasslands = dplyr::if_else(time_period == "1950", 0, grasslands)
+    ) %>%
+    dplyr::rename(unused = grasslands)
+}

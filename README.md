@@ -23,17 +23,17 @@ either net consumers or net producers of blue water in a given climate.
 
 ## 📂 Repository Structure
 
-The codebase is modular, separating data preparation, core mathematical
-functions, and reproducible reporting.
+The codebase uses a strict, automated pipeline to separate user-provided
+data from model-generated data.
 
 ``` text
 project_root/
 ├── data/
-│   ├── input/               <- Raw data for 01_Prepare_Model_Inputs.qmd
-│   └── processed/           <- Standardized CSV outputs to run the Blue Water Calculations in 02_Blue-Water.qmd 
+│   ├── input/               <- REQUIRED: Place your 9 standardized static CSVs here
+│   └── processed/           <- AUTOMATED: Derived model requirements (e.g., Kc curves) land here
 ├── code/
-│   ├── 01_Prepare_Model_Inputs.qmd  <- Data preparation cookbook (Markdown)
-│   ├── 02_Blue-Water.qmd            <- Main execution and reporting (Markdown)
+│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Phenology Engine)
+│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Analytical Engine)
 │   └── functions/                   <- Core Calculation and figure functions
 ├── shiny_app/               <- The interactive Web Application UI
 ├── output/                  <- Generated water budget CSV summaries
@@ -49,10 +49,13 @@ project_root/
 
 To use this toolkit, you will need to run it locally on your machine.
 
-1.  **Install R and RStudio:** Ensure you have the latest versions of
-    [R](https://cran.r-project.org/) and
-    [RStudio](https://posit.co/download/rstudio-desktop/) installed on
-    your computer.
+1.  **Install R and RStudio:** Ensure you have
+    [RStudio](https://posit.co/download/rstudio-desktop/) installed.
+    This toolkit was developed and tested using **R version 4.2.2**. To
+    guarantee full compatibility with the `renv` package library, we
+    strongly recommend installing [R
+    4.2.2](https://cran.r-project.org/src/base/R-4/), though newer
+    versions may still work.
 
 2.  **Install Required Packages:** Open RStudio, copy the following
     command, and paste it into your Console to manually install all
@@ -123,24 +126,30 @@ If applying this toolkit to a new region, you will need the following
 localized datasets. Refer to the data preview tables in the Shiny App or
 the Quarto HTML reports for strict formatting rules.
 
+**Scale 0: Hydrological & Phenological Parameters**
+
+1.  **Model Parameters (`10_model_parameters.csv`)**: The master
+    configuration file. This contains essential hydrological assumptions
+    (e.g., runoff Curve Number, bare-soil evaporation).
+
 **Scale 1: Blue Water Potential for Cropping Systems.**
 
-1.  **Climatic Forcings**: Multi-year Daily Precipitation and Reference
+2.  **Climatic Forcings**: Multi-year Daily Precipitation and Reference
     Evapotranspiration (ET0).
-2.  **Soil Properties**: Water Holding Capacity (WHC) and Readily
+3.  **Soil Properties**: Water Holding Capacity (WHC) and Readily
     Available Water (RAW).
-3.  **Crop Parameters**: Rooting depths and whether the crop is
+4.  **Crop Parameters**: Rooting depths and whether the crop is
     irrigated or rainfed.
-4.  **Crop Cycle**: Sowing date, Crop phenological phase duration and
+5.  **Crop Cycle**: Sowing date, Crop phenological phase duration and
     respective crop coefficients (Kc) according to FAO56 method (Allen
     et al., 1998).
-5.  **Cropping Systems**: Crop rotation at the plot scale.
+6.  **Cropping Systems**: Crop rotation at the plot scale.
 
-**Scale 2: Blue Water Potential for Production Systems.** 6. **Farm
-production systems**: Agregation of grazed and cropped area (ha) for
+**Scale 2: Blue Water Potential for Production Systems.** 7. **Farm
+production systems**: Aggregation of grazed and cropped area (ha) for
 each farming system.
 
-**Scale 3: Blue Water Potential for Agrirarian Systems.** 7. **Agrarian
+**Scale 3: Blue Water Potential for Agrarian Systems.** 8. **Agrarian
 system**: Area (ha) of each farm production system (ha) in a given
 village/micro-region.
 
@@ -210,11 +219,13 @@ If you use this toolkit, its underlying logic, or adapt the framework
 for another watershed study, please cite both the software repository
 and the primary manuscript:
 
-- **Software:** Chitra-Tarak, R. et al. (2026). *The Blue Water
-  Potential Toolkit: a socio-hydrological framework to scale water
-  budgets from plot to agrarian system.* (Version 1.0.0). Zenodo.
+- **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G.,
+  Vigne, M., Muddu, S., & Ruiz, L. (2026). *The Blue Water Potential
+  Toolkit: a socio-hydrological framework to scale water budgets from
+  plot to agrarian system (Version 1.0.0)*. Zenodo.
   <https://doi.org/10.5281/zenodo.20665272>
 
-- **Manuscript:** Hemingway, C. et al. (2026). *Accounting the
+- **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet,
+  G., Vigne, M., Muddu, S., & Ruiz, L. (202X). *Accounting the
   unaccounted: a new framework for incorporating farm social diversity
   in micro-regional water budgets*. \[Journal Name\]. \[DOI\]

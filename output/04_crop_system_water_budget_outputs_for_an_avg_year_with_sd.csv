@@ -3,31 +3,31 @@ Finger Millet/Rice,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289
 Finger Millet/Rice,Irrigated,Peff,Precipitation - Runoff (mm),426.42948335247405,127.95991170598224
 Finger Millet/Rice,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Finger Millet/Rice,Irrigated,Q,Runoff (mm),0,0
-Finger Millet/Rice,Irrigated,aet,AET (mm),1307.6875714988325,53.54965681762962
-Finger Millet/Rice,Irrigated,aet.crop,Crop ET (mm),1290.359740044703,52.66496766337639
-Finger Millet/Rice,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.4220169537643277,1.3443708698346233
-Finger Millet/Rice,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9997766272716171,3.1586611491028765e-4
-Finger Millet/Rice,Irrigated,balance,Blue Water Potential (mm),-761.3983823096434,233.08926776352916
-Finger Millet/Rice,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Finger Millet/Rice,Irrigated,etc,Potential Crop ET (mm),1308.2477589594594,53.742646875828534
-Finger Millet/Rice,Irrigated,etc.crop,etc.crop (mm),1290.6454016621622,52.78221590081762
-Finger Millet/Rice,Irrigated,irrigation,Irrigation Requirement (mm),1300.7590017973737,58.503771427786475
-Finger Millet/Rice,Irrigated,recharge,Groundwater Recharge (mm),539.3606194877303,201.9733440251802
+Finger Millet/Rice,Irrigated,aet,AET (mm),1307.6876140879588,53.549140645838236
+Finger Millet/Rice,Irrigated,aet.crop,Crop ET (mm),1290.3597858587752,52.664415381673145
+Finger Millet/Rice,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.422014981124384,1.344361557767498
+Finger Millet/Rice,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.999776626926138,3.1586686586700986e-4
+Finger Millet/Rice,Irrigated,balance,Blue Water Potential (mm),-761.3984248987696,233.08760564189896
+Finger Millet/Rice,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Finger Millet/Rice,Irrigated,etc,Potential Crop ET (mm),1308.2478157833036,53.742141272757195
+Finger Millet/Rice,Irrigated,etc.crop,etc.crop (mm),1290.6454595750633,52.78167175695402
+Finger Millet/Rice,Irrigated,irrigation,Irrigation Requirement (mm),1300.759063682984,58.5031159962233
+Finger Millet/Rice,Irrigated,recharge,Groundwater Recharge (mm),539.3606387842145,201.97334382127053
 Finger Millet/Rice,Irrigated,runoff.percent,% Runoff,0,0
-Finger Millet/Rice,Irrigated,sm.percent,% Soil Moisture,99.77217796816298,0.08592425270816015
+Finger Millet/Rice,Irrigated,sm.percent,% Soil Moisture,99.77217740265749,0.08592505048815235
 Grapes,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Grapes,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Grapes,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Grapes,Irrigated,Q,Runoff (mm),0,0
-Grapes,Irrigated,aet,AET (mm),1545.983527108108,57.459024557865604
-Grapes,Irrigated,aet.crop,Crop ET (mm),1545.983527108108,57.459024557865604
-Grapes,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.8369457842282024,1.525127292233806
+Grapes,Irrigated,aet,AET (mm),1545.9835892345493,57.459426145765136
+Grapes,Irrigated,aet.crop,Crop ET (mm),1545.9835892345493,57.459426145765136
+Grapes,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.836944403400268,1.5251206071053256
 Grapes,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9999630778319303,2.245887804717907e-4
-Grapes,Irrigated,balance,Blue Water Potential (mm),-1000.9510946756756,235.4956299979559
-Grapes,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Grapes,Irrigated,etc,Potential Crop ET (mm),1546.032298054054,57.51372257110845
-Grapes,Irrigated,etc.crop,etc.crop (mm),1546.032298054054,57.51372257110845
-Grapes,Irrigated,irrigation,Irrigation Requirement (mm),1549.429473054054,64.64532162809935
+Grapes,Irrigated,balance,Blue Water Potential (mm),-1000.951156802117,235.49450546852748
+Grapes,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Grapes,Irrigated,etc,Potential Crop ET (mm),1546.0323661614382,57.51412931097234
+Grapes,Irrigated,etc.crop,etc.crop (mm),1546.0323661614382,57.51412931097234
+Grapes,Irrigated,irrigation,Irrigation Requirement (mm),1549.4295351804953,64.64559909480138
 Grapes,Irrigated,recharge,Groundwater Recharge (mm),548.4783783783784,203.26864289945505
 Grapes,Irrigated,runoff.percent,% Runoff,0,0
 Grapes,Irrigated,sm.percent,% Soil Moisture,100,0
@@ -35,143 +35,143 @@ Grasslands,Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Grasslands,Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Grasslands,Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Grasslands,Rainfed,Q,Runoff (mm),0,0
-Grasslands,Rainfed,aet,AET (mm),298.9950435225227,43.029188015922976
-Grasslands,Rainfed,aet.crop,Crop ET (mm),298.9950435225227,43.029188015922976
-Grasslands,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.7069266427696058,0.1629044026582638
-Grasslands,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.4695678490030443,0.08700828154700375
-Grasslands,Rainfed,balance,Blue Water Potential (mm),250.15024236719515,175.47428701472285
-Grasslands,Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Grasslands,Rainfed,etc,Potential Crop ET (mm),547.0909212387387,30.68758067208689
-Grasslands,Rainfed,etc.crop,etc.crop (mm),547.0909212387387,30.68758067208689
+Grasslands,Rainfed,aet,AET (mm),298.99503115015665,43.02939682665572
+Grasslands,Rainfed,aet.crop,Crop ET (mm),298.99503115015665,43.02939682665572
+Grasslands,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.7069265225345082,0.16290418723288347
+Grasslands,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.46956762597669344,0.0870085246746321
+Grasslands,Rainfed,balance,Blue Water Potential (mm),250.15025396351683,175.47429559515064
+Grasslands,Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Grasslands,Rainfed,etc,Potential Crop ET (mm),547.0906338221129,30.686976522368145
+Grasslands,Rainfed,etc.crop,etc.crop (mm),547.0906338221129,30.686976522368145
 Grasslands,Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Grasslands,Rainfed,recharge,Groundwater Recharge (mm),250.15024236719515,175.47428701472285
+Grasslands,Rainfed,recharge,Groundwater Recharge (mm),250.15025396351683,175.47429559515064
 Grasslands,Rainfed,runoff.percent,% Runoff,0,0
-Grasslands,Rainfed,sm.percent,% Soil Moisture,45.351643846538394,8.562797250431233
+Grasslands,Rainfed,sm.percent,% Soil Moisture,45.35162161129064,8.562821801888692
 Grasslands (Grazed 3 Times),Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Grasslands (Grazed 3 Times),Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Grasslands (Grazed 3 Times),Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Grasslands (Grazed 3 Times),Rainfed,Q,Runoff (mm),0,0
-Grasslands (Grazed 3 Times),Rainfed,aet,AET (mm),203.84050784111344,17.822005032954127
-Grasslands (Grazed 3 Times),Rainfed,aet.crop,Crop ET (mm),203.84050784111344,17.822005032954127
-Grasslands (Grazed 3 Times),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.49478473612431845,0.16031918038954907
-Grasslands (Grazed 3 Times),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.6722407050167933,0.0801893474972566
-Grasslands (Grazed 3 Times),Rainfed,balance,Blue Water Potential (mm),345.0875124975485,194.44490663011098
-Grasslands (Grazed 3 Times),Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Grasslands (Grazed 3 Times),Rainfed,etc,Potential Crop ET (mm),278.4507872635135,14.766452595357254
-Grasslands (Grazed 3 Times),Rainfed,etc.crop,etc.crop (mm),278.4507872635135,14.766452595357254
+Grasslands (Grazed 3 Times),Rainfed,aet,AET (mm),203.8404638299411,17.822084153485815
+Grasslands (Grazed 3 Times),Rainfed,aet.crop,Crop ET (mm),203.8404638299411,17.822084153485815
+Grasslands (Grazed 3 Times),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.49478447537643505,0.16031854995620273
+Grasslands (Grazed 3 Times),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.6722405978954825,0.08018976816781796
+Grasslands (Grazed 3 Times),Rainfed,balance,Blue Water Potential (mm),345.087552308302,194.4447896207495
+Grasslands (Grazed 3 Times),Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Grasslands (Grazed 3 Times),Rainfed,etc,Potential Crop ET (mm),278.4506428961899,14.766267705046088
+Grasslands (Grazed 3 Times),Rainfed,etc.crop,etc.crop (mm),278.4506428961899,14.766267705046088
 Grasslands (Grazed 3 Times),Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Grasslands (Grazed 3 Times),Rainfed,recharge,Groundwater Recharge (mm),345.0875124975485,194.44490663011098
+Grasslands (Grazed 3 Times),Rainfed,recharge,Groundwater Recharge (mm),345.087552308302,194.4447896207495
 Grasslands (Grazed 3 Times),Rainfed,runoff.percent,% Runoff,0,0
-Grasslands (Grazed 3 Times),Rainfed,sm.percent,% Soil Moisture,66.12978342795601,7.9481708523907715
+Grasslands (Grazed 3 Times),Rainfed,sm.percent,% Soil Moisture,66.12977295306062,7.948212625061524
 Grasslands (Grazed Once),Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Grasslands (Grazed Once),Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Grasslands (Grazed Once),Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Grasslands (Grazed Once),Rainfed,Q,Runoff (mm),0,0
-Grasslands (Grazed Once),Rainfed,aet,AET (mm),259.7207144809423,32.40400497414304
-Grasslands (Grazed Once),Rainfed,aet.crop,Crop ET (mm),259.7207144809423,32.40400497414304
-Grasslands (Grazed Once),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.6200232735460323,0.1665349290170562
-Grasslands (Grazed Once),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.5445566296912911,0.08352595011091078
-Grasslands (Grazed Once),Rainfed,balance,Blue Water Potential (mm),289.36759300988547,182.4636226337881
-Grasslands (Grazed Once),Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Grasslands (Grazed Once),Rainfed,etc,Potential Crop ET (mm),432.42273388795047,24.228740899189773
-Grasslands (Grazed Once),Rainfed,etc.crop,etc.crop (mm),432.42273388795047,24.228740899189773
+Grasslands (Grazed Once),Rainfed,aet,AET (mm),259.72068311844714,32.404182184461476
+Grasslands (Grazed Once),Rainfed,aet.crop,Crop ET (mm),259.72068311844714,32.404182184461476
+Grasslands (Grazed Once),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.6200231117089641,0.16653470476085167
+Grasslands (Grazed Once),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.5445565069085722,0.08352631263209903
+Grasslands (Grazed Once),Rainfed,balance,Blue Water Potential (mm),289.3676221959514,182.46361175714048
+Grasslands (Grazed Once),Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Grasslands (Grazed Once),Rainfed,etc,Potential Crop ET (mm),432.4224490949108,24.22842663257284
+Grasslands (Grazed Once),Rainfed,etc.crop,etc.crop (mm),432.4224490949108,24.22842663257284
 Grasslands (Grazed Once),Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Grasslands (Grazed Once),Rainfed,recharge,Groundwater Recharge (mm),289.36759300988547,182.4636226337881
+Grasslands (Grazed Once),Rainfed,recharge,Groundwater Recharge (mm),289.3676221959514,182.46361175714048
 Grasslands (Grazed Once),Rainfed,runoff.percent,% Runoff,0,0
-Grasslands (Grazed Once),Rainfed,sm.percent,% Soil Moisture,53.06138763511098,8.233867000270136
+Grasslands (Grazed Once),Rainfed,sm.percent,% Soil Moisture,53.061375526295805,8.233903125647677
 Groundnut/Fallow,Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Groundnut/Fallow,Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Groundnut/Fallow,Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Groundnut/Fallow,Rainfed,Q,Runoff (mm),0,0
-Groundnut/Fallow,Rainfed,aet,AET (mm),291.53754643255695,32.457448300182286
-Groundnut/Fallow,Rainfed,aet.crop,Crop ET (mm),197.76482159330448,27.508110012061397
-Groundnut/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.6970746692479557,0.18581218366797334
-Groundnut/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.7533231377941716,0.11655625026546182
-Groundnut/Fallow,Rainfed,balance,Blue Water Potential (mm),256.7848574161327,180.25851343323458
-Groundnut/Fallow,Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Groundnut/Fallow,Rainfed,etc,Potential Crop ET (mm),389.0345237190768,24.75875136367551
-Groundnut/Fallow,Rainfed,etc.crop,etc.crop (mm),279.9384826379957,21.685408292175143
+Groundnut/Fallow,Rainfed,aet,AET (mm),291.537528844334,32.45754114989841
+Groundnut/Fallow,Rainfed,aet.crop,Crop ET (mm),197.76482805697563,27.50809156476234
+Groundnut/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.697074538699895,0.18581176628713342
+Groundnut/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.7533239115625261,0.11655582006087034
+Groundnut/Fallow,Rainfed,balance,Blue Water Potential (mm),256.7848632162314,180.25857671188407
+Groundnut/Fallow,Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Groundnut/Fallow,Rainfed,etc,Potential Crop ET (mm),389.03406828791293,24.758519350882917
+Groundnut/Fallow,Rainfed,etc.crop,etc.crop (mm),279.9380576026795,21.685241224111586
 Groundnut/Fallow,Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Groundnut/Fallow,Rainfed,recharge,Groundwater Recharge (mm),256.7848574161327,180.25851343323458
+Groundnut/Fallow,Rainfed,recharge,Groundwater Recharge (mm),256.7848632162314,180.25857671188407
 Groundnut/Fallow,Rainfed,runoff.percent,% Runoff,0,0
-Groundnut/Fallow,Rainfed,sm.percent,% Soil Moisture,80.71514643815927,7.590288449308188
+Groundnut/Fallow,Rainfed,sm.percent,% Soil Moisture,80.71514830661877,7.590288702009115
 Groundnut/Okra/Okra/Fallow,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Groundnut/Okra/Okra/Fallow,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Groundnut/Okra/Okra/Fallow,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Groundnut/Okra/Okra/Fallow,Irrigated,Q,Runoff (mm),0,0
-Groundnut/Okra/Okra/Fallow,Irrigated,aet,AET (mm),537.4501364318294,29.95806623482118
-Groundnut/Okra/Okra/Fallow,Irrigated,aet.crop,Crop ET (mm),437.98603938061217,27.069584138194166
-Groundnut/Okra/Okra/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,1.3182453376138763,0.4652375741046706
-Groundnut/Okra/Okra/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9328064254588041,0.03073621057767868
-Groundnut/Okra/Okra/Fallow,Irrigated,balance,Blue Water Potential (mm),10.729950295120943,196.60785748704683
-Groundnut/Okra/Okra/Fallow,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Groundnut/Okra/Okra/Fallow,Irrigated,etc,Potential Crop ET (mm),588.7595582740981,25.9761938314519
-Groundnut/Okra/Okra/Fallow,Irrigated,etc.crop,etc.crop (mm),478.61281449031435,22.377223754447765
-Groundnut/Okra/Okra/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),357.50297603203717,26.03852495245733
-Groundnut/Okra/Okra/Fallow,Irrigated,recharge,Groundwater Recharge (mm),368.2329263271581,190.76267524748263
+Groundnut/Okra/Okra/Fallow,Irrigated,aet,AET (mm),537.4500215012109,29.95791951990568
+Groundnut/Okra/Okra/Fallow,Irrigated,aet.crop,Crop ET (mm),437.9859027518195,27.06934184278587
+Groundnut/Okra/Okra/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,1.3182449367103364,0.4652370809216303
+Groundnut/Okra/Okra/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.932806642394343,0.03073607552062981
+Groundnut/Okra/Okra/Fallow,Irrigated,balance,Blue Water Potential (mm),10.730053949294657,196.60780790469124
+Groundnut/Okra/Okra/Fallow,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Groundnut/Okra/Okra/Fallow,Irrigated,etc,Potential Crop ET (mm),588.7592168294925,25.976109094968344
+Groundnut/Okra/Okra/Fallow,Irrigated,etc.crop,etc.crop (mm),478.6124597303035,22.377094311545942
+Groundnut/Okra/Okra/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),357.5028674848417,26.038453033086974
+Groundnut/Okra/Okra/Fallow,Irrigated,recharge,Groundwater Recharge (mm),368.2329214341364,190.76265750604773
 Groundnut/Okra/Okra/Fallow,Irrigated,runoff.percent,% Runoff,0,0
-Groundnut/Okra/Okra/Fallow,Irrigated,sm.percent,% Soil Moisture,89.33817499176699,4.402697565615233
+Groundnut/Okra/Okra/Fallow,Irrigated,sm.percent,% Soil Moisture,89.33818078746233,4.402693186896325
 Groundnut/Tomato/Tomato/Fallow,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Groundnut/Tomato/Tomato/Fallow,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Groundnut/Tomato/Tomato/Fallow,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Groundnut/Tomato/Tomato/Fallow,Irrigated,Q,Runoff (mm),0,0
-Groundnut/Tomato/Tomato/Fallow,Irrigated,aet,AET (mm),815.3071862607977,40.648790390501176
-Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.crop,Crop ET (mm),735.9891335575342,39.68639706687823
-Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,2.009951745368243,0.7464527871865936
-Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.947212775845184,0.0238322214879771
-Groundnut/Tomato/Tomato/Fallow,Irrigated,balance,Blue Water Potential (mm),-267.4179224062387,202.4975374554878
-Groundnut/Tomato/Tomato/Fallow,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Groundnut/Tomato/Tomato/Fallow,Irrigated,etc,Potential Crop ET (mm),865.0603553865653,37.541315905074455
-Groundnut/Tomato/Tomato/Fallow,Irrigated,etc.crop,etc.crop (mm),776.5280814676464,35.33429683209171
-Groundnut/Tomato/Tomato/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),655.8804357281001,37.865654988091656
-Groundnut/Tomato/Tomato/Fallow,Irrigated,recharge,Groundwater Recharge (mm),388.46251332186154,189.30441573231502
+Groundnut/Tomato/Tomato/Fallow,Irrigated,aet,AET (mm),815.3073970994722,40.64872983763083
+Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.crop,Crop ET (mm),735.9893751278474,39.68624930045965
+Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,2.009951879704717,0.7464513667789126
+Groundnut/Tomato/Tomato/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9472129515237908,0.02383211484638954
+Groundnut/Tomato/Tomato/Fallow,Irrigated,balance,Blue Water Potential (mm),-267.41814284809175,202.49724871222458
+Groundnut/Tomato/Tomato/Fallow,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Groundnut/Tomato/Tomato/Fallow,Irrigated,etc,Potential Crop ET (mm),865.0603435294233,37.54155899218403
+Groundnut/Tomato/Tomato/Fallow,Irrigated,etc.crop,etc.crop (mm),776.5281071491085,35.334468067134765
+Groundnut/Tomato/Tomato/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),655.8806722771232,37.86544445346493
+Groundnut/Tomato/Tomato/Fallow,Irrigated,recharge,Groundwater Recharge (mm),388.4625294290314,189.304407529165
 Groundnut/Tomato/Tomato/Fallow,Irrigated,runoff.percent,% Runoff,0,0
-Groundnut/Tomato/Tomato/Fallow,Irrigated,sm.percent,% Soil Moisture,90.41335816489402,4.253086573511501
+Groundnut/Tomato/Tomato/Fallow,Irrigated,sm.percent,% Soil Moisture,90.4133602723737,4.253081282946706
 Horsegram (Grazed),Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Horsegram (Grazed),Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Horsegram (Grazed),Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Horsegram (Grazed),Rainfed,Q,Runoff (mm),0,0
-Horsegram (Grazed),Rainfed,aet,AET (mm),232.6216172342591,24.959283383247687
-Horsegram (Grazed),Rainfed,aet.crop,Crop ET (mm),134.83875512777863,18.106389162142374
-Horsegram (Grazed),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.5676127583088422,0.19435020416707388
-Horsegram (Grazed),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.5004713750285475,0.061471366912093116
-Horsegram (Grazed),Rainfed,balance,Blue Water Potential (mm),317.0740534839226,198.15904679489205
-Horsegram (Grazed),Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Horsegram (Grazed),Rainfed,etc,Potential Crop ET (mm),448.76677270270267,23.98576426871302
-Horsegram (Grazed),Rainfed,etc.crop,etc.crop (mm),310.8377259459459,19.40782863817051
+Horsegram (Grazed),Rainfed,aet,AET (mm),232.62157169468313,24.95941144920685
+Horsegram (Grazed),Rainfed,aet.crop,Crop ET (mm),134.8388423497668,18.106529629460322
+Horsegram (Grazed),Rainfed,aet.to.Peff,ET:Effective Rainfall,0.5676124939248636,0.194349638907215
+Horsegram (Grazed),Rainfed,aet.to.etc.crop,ET Supply:Demand,0.500471273146053,0.06147115116196183
+Horsegram (Grazed),Rainfed,balance,Blue Water Potential (mm),317.07409213416446,198.15889889463412
+Horsegram (Grazed),Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Horsegram (Grazed),Rainfed,etc,Potential Crop ET (mm),448.7671242161318,23.98594144922217
+Horsegram (Grazed),Rainfed,etc.crop,etc.crop (mm),310.8382225090847,19.408143313575138
 Horsegram (Grazed),Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Horsegram (Grazed),Rainfed,recharge,Groundwater Recharge (mm),317.0740534839226,198.15904679489205
+Horsegram (Grazed),Rainfed,recharge,Groundwater Recharge (mm),317.07409213416446,198.15889889463412
 Horsegram (Grazed),Rainfed,runoff.percent,% Runoff,0,0
-Horsegram (Grazed),Rainfed,sm.percent,% Soil Moisture,52.754030876354484,6.921353566380594
+Horsegram (Grazed),Rainfed,sm.percent,% Soil Moisture,52.75401319902,6.921378325047656
 Millets/Fallow,Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Millets/Fallow,Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Millets/Fallow,Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Millets/Fallow,Rainfed,Q,Runoff (mm),0,0
-Millets/Fallow,Rainfed,aet,AET (mm),340.07166298914314,39.82725192196889
-Millets/Fallow,Rainfed,aet.crop,Crop ET (mm),249.49670053786642,33.349629644981526
-Millets/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.8113101907864448,0.20633460323202407
-Millets/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.7588751059077546,0.11266855821141218
-Millets/Fallow,Rainfed,balance,Blue Water Potential (mm),208.98268919965204,174.23840093861233
-Millets/Fallow,Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Millets/Fallow,Rainfed,etc,Potential Crop ET (mm),456.9737917297297,29.204022459512288
-Millets/Fallow,Rainfed,etc.crop,etc.crop (mm),345.866352,26.663867712669724
+Millets/Fallow,Rainfed,aet,AET (mm),340.0717605939163,39.82754857080662
+Millets/Fallow,Rainfed,aet.crop,Crop ET (mm),249.49683194480897,33.349822650912635
+Millets/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.8113101323121015,0.20633348068979473
+Millets/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.7588754937871471,0.11266811766440886
+Millets/Fallow,Rainfed,balance,Blue Water Potential (mm),208.98257659011975,174.23840908980625
+Millets/Fallow,Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Millets/Fallow,Rainfed,etc,Potential Crop ET (mm),456.9735604289913,29.20353234519286
+Millets/Fallow,Rainfed,etc.crop,etc.crop (mm),345.8661678494903,26.663409996326227
 Millets/Fallow,Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Millets/Fallow,Rainfed,recharge,Groundwater Recharge (mm),208.98268919965204,174.23840093861233
+Millets/Fallow,Rainfed,recharge,Groundwater Recharge (mm),208.98257659011975,174.23840908980625
 Millets/Fallow,Rainfed,runoff.percent,% Runoff,0,0
-Millets/Fallow,Rainfed,sm.percent,% Soil Moisture,77.33370140258324,9.201296969841053
+Millets/Fallow,Rainfed,sm.percent,% Soil Moisture,77.33369964366744,9.201309988001885
 Pomegranate,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Pomegranate,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Pomegranate,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Pomegranate,Irrigated,Q,Runoff (mm),0,0
-Pomegranate,Irrigated,aet,AET (mm),1511.419728108108,51.742228717719954
-Pomegranate,Irrigated,aet.crop,Crop ET (mm),1511.419728108108,51.742228717719954
-Pomegranate,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.7411505542006043,1.4533851997294114
+Pomegranate,Irrigated,aet,AET (mm),1511.4203418671477,51.74365724452491
+Pomegranate,Irrigated,aet.crop,Crop ET (mm),1511.4203418671477,51.74365724452491
+Pomegranate,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.741150655922755,1.4533792414447115
 Pomegranate,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9999630778319303,2.245887804717907e-4
-Pomegranate,Irrigated,balance,Blue Water Potential (mm),-966.3872956756757,222.05810538228414
-Pomegranate,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Pomegranate,Irrigated,etc,Potential Crop ET (mm),1511.4803067567568,51.78164484581653
-Pomegranate,Irrigated,etc.crop,etc.crop (mm),1511.4803067567568,51.78164484581653
-Pomegranate,Irrigated,irrigation,Irrigation Requirement (mm),1514.8656740540541,57.80145016940192
+Pomegranate,Irrigated,balance,Blue Water Potential (mm),-966.3879094347153,222.0572852452502
+Pomegranate,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Pomegranate,Irrigated,etc,Potential Crop ET (mm),1511.4809279447568,51.78307212551436
+Pomegranate,Irrigated,etc.crop,etc.crop (mm),1511.4809279447568,51.78307212551436
+Pomegranate,Irrigated,irrigation,Irrigation Requirement (mm),1514.8662878130938,57.80246642080822
 Pomegranate,Irrigated,recharge,Groundwater Recharge (mm),548.4783783783784,203.26864289945505
 Pomegranate,Irrigated,runoff.percent,% Runoff,0,0
 Pomegranate,Irrigated,sm.percent,% Soil Moisture,100,0
@@ -179,79 +179,79 @@ Pulses/Fallow,Rainfed,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Pulses/Fallow,Rainfed,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Pulses/Fallow,Rainfed,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Pulses/Fallow,Rainfed,Q,Runoff (mm),0,0
-Pulses/Fallow,Rainfed,aet,AET (mm),328.02807776247903,46.35277718867793
-Pulses/Fallow,Rainfed,aet.crop,Crop ET (mm),233.21962956874486,40.920555644430465
-Pulses/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.7762794701034736,0.1813012552946861
-Pulses/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.6869452933327981,0.1264238936530786
-Pulses/Fallow,Rainfed,balance,Blue Water Potential (mm),221.09078216144673,168.09200801667117
-Pulses/Fallow,Rainfed,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Pulses/Fallow,Rainfed,etc,Potential Crop ET (mm),484.15914513513513,31.937329213323185
-Pulses/Fallow,Rainfed,etc.crop,etc.crop (mm),367.14623378378377,29.104887143143763
+Pulses/Fallow,Rainfed,aet,AET (mm),328.02813925742157,46.35302357197839
+Pulses/Fallow,Rainfed,aet.crop,Crop ET (mm),233.21976270792123,40.92070208483839
+Pulses/Fallow,Rainfed,aet.to.Peff,ET:Effective Rainfall,0.7762793884470267,0.1813003945924815
+Pulses/Fallow,Rainfed,aet.to.etc.crop,ET Supply:Demand,0.6869457587950374,0.12642328936690506
+Pulses/Fallow,Rainfed,balance,Blue Water Potential (mm),221.09070846906832,168.0920348989063
+Pulses/Fallow,Rainfed,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Pulses/Fallow,Rainfed,etc,Potential Crop ET (mm),484.1587961208193,31.93688671980884
+Pulses/Fallow,Rainfed,etc.crop,etc.crop (mm),367.14593131707693,29.104478813166427
 Pulses/Fallow,Rainfed,irrigation,Irrigation Requirement (mm),0,0
-Pulses/Fallow,Rainfed,recharge,Groundwater Recharge (mm),221.09078216144673,168.09200801667117
+Pulses/Fallow,Rainfed,recharge,Groundwater Recharge (mm),221.09070846906832,168.0920348989063
 Pulses/Fallow,Rainfed,runoff.percent,% Runoff,0,0
-Pulses/Fallow,Rainfed,sm.percent,% Soil Moisture,74.97834346613631,8.57671847597661
+Pulses/Fallow,Rainfed,sm.percent,% Soil Moisture,74.97830820846036,8.576717184600081
 Rice/Banana,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Rice/Banana,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Rice/Banana,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Rice/Banana,Irrigated,Q,Runoff (mm),0,0
-Rice/Banana,Irrigated,aet,AET (mm),1780.4306633256817,64.88458875694687
-Rice/Banana,Irrigated,aet.crop,Crop ET (mm),1747.5852424928646,64.4387564129463
-Rice/Banana,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.412076144985927,1.7332029134472666
-Rice/Banana,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9997066130918841,3.570808846931017e-4
-Rice/Banana,Irrigated,balance,Blue Water Potential (mm),-1233.4455281905466,228.03156980331372
-Rice/Banana,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Rice/Banana,Irrigated,etc,Potential Crop ET (mm),1782.4576593093093,64.94419490856058
-Rice/Banana,Irrigated,etc.crop,etc.crop (mm),1747.8146148048047,64.47961553728909
-Rice/Banana,Irrigated,irrigation,Irrigation Requirement (mm),1753.8470731038365,66.24978756926228
-Rice/Banana,Irrigated,recharge,Groundwater Recharge (mm),520.4015449132899,204.49031557869625
+Rice/Banana,Irrigated,aet,AET (mm),1780.4308525620106,64.8858396088556
+Rice/Banana,Irrigated,aet.crop,Crop ET (mm),1747.585450122768,64.43999366385293
+Rice/Banana,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.4120751148898965,1.7331966513298467
+Rice/Banana,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9997066132737321,3.5708035571630766e-4
+Rice/Banana,Irrigated,balance,Blue Water Potential (mm),-1233.4457174268755,228.03067348525823
+Rice/Banana,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Rice/Banana,Irrigated,etc,Potential Crop ET (mm),1782.4578410149886,64.94544559380282
+Rice/Banana,Irrigated,etc.crop,etc.crop (mm),1747.814825096291,64.48085251808752
+Rice/Banana,Irrigated,irrigation,Irrigation Requirement (mm),1753.8472771844627,66.2509583381729
+Rice/Banana,Irrigated,recharge,Groundwater Recharge (mm),520.401559757587,204.49029044268156
 Rice/Banana,Irrigated,runoff.percent,% Runoff,0,0
-Rice/Banana,Irrigated,sm.percent,% Soil Moisture,99.1552949246944,0.37094376147463554
+Rice/Banana,Irrigated,sm.percent,% Soil Moisture,99.15529739510102,0.3709421298935737
 Rice/Fallow,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Rice/Fallow,Irrigated,Peff,Precipitation - Runoff (mm),426.42948335247405,127.95991170598224
 Rice/Fallow,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Rice/Fallow,Irrigated,Q,Runoff (mm),0,0
-Rice/Fallow,Irrigated,aet,AET (mm),808.439864440058,46.91756136637047
-Rice/Fallow,Irrigated,aet.crop,Crop ET (mm),732.1804985019173,48.07055422802779
-Rice/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,2.126050761189926,0.8668767820690977
-Rice/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9992852976361857,7.456956161774459e-4
-Rice/Fallow,Irrigated,balance,Blue Water Potential (mm),-260.9333788465428,233.0058350365666
-Rice/Fallow,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Rice/Fallow,Irrigated,etc,Potential Crop ET (mm),819.0436141441442,49.823589096209886
-Rice/Fallow,Irrigated,etc.crop,etc.crop (mm),732.8208095495495,48.115330225745325
-Rice/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),741.8933036261535,50.122489829601015
-Rice/Fallow,Irrigated,recharge,Groundwater Recharge (mm),480.9599247796107,198.34066867030327
+Rice/Fallow,Irrigated,aet,AET (mm),808.4392202186166,46.91664296083121
+Rice/Fallow,Irrigated,aet.crop,Crop ET (mm),732.1798867947123,48.069754174237666
+Rice/Fallow,Irrigated,aet.to.Peff,ET:Effective Rainfall,2.1260479623112944,0.8668705251914413
+Rice/Fallow,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9992853005755654,7.456947718069599e-4
+Rice/Fallow,Irrigated,balance,Blue Water Potential (mm),-260.93273301096843,233.00490691909914
+Rice/Fallow,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Rice/Fallow,Irrigated,etc,Potential Crop ET (mm),819.0429703123939,49.82266344046929
+Rice/Fallow,Irrigated,etc.crop,etc.crop (mm),732.8202105281059,48.114536406604245
+Rice/Fallow,Irrigated,irrigation,Irrigation Requirement (mm),741.8926519727784,50.12185636557166
+Rice/Fallow,Irrigated,recharge,Groundwater Recharge (mm),480.95991896181,198.34063035765897
 Rice/Fallow,Irrigated,runoff.percent,% Runoff,0,0
-Rice/Fallow,Irrigated,sm.percent,% Soil Moisture,93.28576309754934,3.457000239179642
+Rice/Fallow,Irrigated,sm.percent,% Soil Moisture,93.28575950285962,3.456996436264653
 Rice/Napier,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Rice/Napier,Irrigated,Peff,Precipitation - Runoff (mm),426.42948335247405,127.95991170598224
 Rice/Napier,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Rice/Napier,Irrigated,Q,Runoff (mm),0,0
-Rice/Napier,Irrigated,aet,AET (mm),1544.0109472978515,55.66453212704447
-Rice/Napier,Irrigated,aet.crop,Crop ET (mm),1533.10501843254,55.373999397614014
-Rice/Napier,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.031928910745828,1.5545905888658251
-Rice/Napier,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.999910126923548,2.558194304625827e-4
-Rice/Napier,Irrigated,balance,Blue Water Potential (mm),-999.1812175681218,230.5219088798966
-Rice/Napier,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Rice/Napier,Irrigated,etc,Potential Crop ET (mm),1544.287803871102,55.75736000405233
-Rice/Napier,Irrigated,etc.crop,etc.crop (mm),1533.1993945467775,55.42471640471574
-Rice/Napier,Irrigated,irrigation,Irrigation Requirement (mm),1540.8376008401651,63.286755444688296
-Rice/Napier,Irrigated,recharge,Groundwater Recharge (mm),541.6563832720434,202.26189732145082
+Rice/Napier,Irrigated,aet,AET (mm),1544.0112712887221,55.665493154519595
+Rice/Napier,Irrigated,aet.crop,Crop ET (mm),1533.105368372242,55.3749646638275
+Rice/Napier,Irrigated,aet.to.Peff,ET:Effective Rainfall,4.031928332582834,1.5545843511249866
+Rice/Napier,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9999101273164488,2.5581941948679227e-4
+Rice/Napier,Irrigated,balance,Blue Water Potential (mm),-999.1815415589923,230.52100027412487
+Rice/Napier,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Rice/Napier,Irrigated,etc,Potential Crop ET (mm),1544.2881265790688,55.758319778223395
+Rice/Napier,Irrigated,etc.crop,etc.crop (mm),1533.199744537928,55.425678902083575
+Rice/Napier,Irrigated,irrigation,Irrigation Requirement (mm),1540.8379183268878,63.28744951652839
+Rice/Napier,Irrigated,recharge,Groundwater Recharge (mm),541.6563767678956,202.2619059378892
 Rice/Napier,Irrigated,runoff.percent,% Runoff,0,0
-Rice/Napier,Irrigated,sm.percent,% Soil Moisture,99.86377781665738,0.3590440128673076
+Rice/Napier,Irrigated,sm.percent,% Soil Moisture,99.86377799275203,0.35904391354663917
 Sweet Lime,Irrigated,P,Precipitation (mm),548.4783783783784,203.26864289945507
 Sweet Lime,Irrigated,Peff,Precipitation - Runoff (mm),450.9366490068667,137.55324441369814
 Sweet Lime,Irrigated,Peff.used,Effective Precip Used,548.4783783783784,203.26864289945507
 Sweet Lime,Irrigated,Q,Runoff (mm),0,0
-Sweet Lime,Irrigated,aet,AET (mm),1598.7499104054054,53.992379877275596
-Sweet Lime,Irrigated,aet.crop,Crop ET (mm),1598.7499104054054,53.992379877275596
-Sweet Lime,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.9602946155991257,1.5474394791417687
+Sweet Lime,Irrigated,aet,AET (mm),1598.7503891383744,53.993840710379395
+Sweet Lime,Irrigated,aet.crop,Crop ET (mm),1598.7503891383744,53.993840710379395
+Sweet Lime,Irrigated,aet.to.Peff,ET:Effective Rainfall,3.9602946118035662,1.5474346340212917
 Sweet Lime,Irrigated,aet.to.etc.crop,ET Supply:Demand,0.9999630778319303,2.245887804717907e-4
-Sweet Lime,Irrigated,balance,Blue Water Potential (mm),-1053.4877482432432,226.2339079335027
-Sweet Lime,Irrigated,et0,Potential ET (mm),1831.675891891892,65.58837464858802
-Sweet Lime,Irrigated,etc,Potential Crop ET (mm),1598.8038151351352,54.03615547045643
-Sweet Lime,Irrigated,etc.crop,etc.crop (mm),1598.8038151351352,54.03615547045643
-Sweet Lime,Irrigated,irrigation,Irrigation Requirement (mm),1601.9661266216217,59.77999576154619
+Sweet Lime,Irrigated,balance,Blue Water Potential (mm),-1053.4882269762122,226.23327455940546
+Sweet Lime,Irrigated,et0,Potential ET (mm),1831.6760171413257,65.58955824655807
+Sweet Lime,Irrigated,etc,Potential Crop ET (mm),1598.8043004786198,54.03761877848318
+Sweet Lime,Irrigated,etc.crop,etc.crop (mm),1598.8043004786198,54.03761877848318
+Sweet Lime,Irrigated,irrigation,Irrigation Requirement (mm),1601.9666053545907,59.78121649911577
 Sweet Lime,Irrigated,recharge,Groundwater Recharge (mm),548.4783783783784,203.26864289945507
 Sweet Lime,Irrigated,runoff.percent,% Runoff,0,0
 Sweet Lime,Irrigated,sm.percent,% Soil Moisture,100,0

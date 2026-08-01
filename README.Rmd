@@ -15,16 +15,16 @@ simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Req
 
 ## 📂 Repository Structure
 
-The codebase is modular, separating data preparation, core mathematical functions, and reproducible reporting.
+The codebase uses a strict, automated pipeline to separate user-provided data from model-generated data.
 
 ```text
 project_root/
 ├── data/
-│   ├── input/               <- Standardized CSVs for 01_Prepare_Model_Inputs.qmd
-│   └── processed/           <- Standardized CSV outputs to run the Blue Water Calculations in 02_Blue-Water.qmd 
+│   ├── input/               <- REQUIRED: Place your 9 standardized static CSVs here
+│   └── processed/           <- AUTOMATED: Derived model requirements (e.g., Kc curves) land here
 ├── code/
-│   ├── 01_Prepare_Model_Inputs.qmd  <- Data preparation cookbook (Markdown)
-│   ├── 02_Blue-Water.qmd            <- Main execution and reporting (Markdown)
+│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Phenology Engine)
+│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Analytical Engine)
 │   └── functions/                   <- Core Calculation and figure functions
 ├── shiny_app/               <- The interactive Web Application UI
 ├── output/                  <- Generated water budget CSV summaries
@@ -32,7 +32,6 @@ project_root/
 ├── CONTRIBUTING.md          <- Guidelines for contributing to the codebase
 ├── LICENSE                  <- Main GNU GPLv3 License text
 └── COPYING.LESSER           <- Additional GNU LGPL-3.0 License terms
-
 ```
 
 ---
@@ -98,19 +97,23 @@ For researchers, or users who want to deeply interrogate the underlying code, th
 
 If applying this toolkit to a new region, you will need the following localized datasets. Refer to the data preview tables in the Shiny App or the Quarto HTML reports for strict formatting rules.
 
+**Scale 0: Hydrological & Phenological Parameters**
+
+1. **Model Parameters (`10_model_parameters.csv`)**: The master configuration file. This contains essential hydrological assumptions (e.g., runoff Curve Number, bare-soil evaporation).
+
 **Scale 1: Blue Water Potential for Cropping Systems.**
 
-1. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
-2. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
-3. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
-4. **Crop Cycle**: Sowing date, Crop phenological phase duration and respective crop coefficients (Kc) according to FAO56 method (Allen et al., 1998).
-5. **Cropping Systems**: Crop rotation at the plot scale.
+2. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
+3. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
+4. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
+5. **Crop Cycle**: Sowing date, Crop phenological phase duration and respective crop coefficients (Kc) according to FAO56 method (Allen et al., 1998).
+6. **Cropping Systems**: Crop rotation at the plot scale.
 
 **Scale 2: Blue Water Potential for Production Systems.**
-6. **Farm production systems**: Agregation of grazed and cropped area (ha) for each farming system.
+7. **Farm production systems**: Aggregation of grazed and cropped area (ha) for each farming system.
 
-**Scale 3: Blue Water Potential for Agrirarian Systems.**
-7. **Agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
+**Scale 3: Blue Water Potential for Agrarian Systems.**
+8. **Agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
 
 ---
 
