@@ -32,10 +32,9 @@
 #      precip        = data.frame(date=Date, p=numeric),       # Rainfall time series (mm)
 #      et0           = data.frame(date=Date, et0=numeric),     # Reference ET series (mm)
 #      et0.timestep  = "daily",                                # Temporal format: "daily" or "weekly"
-#      CN            = 85,                                     # Target curve number value
 #      soil.input    = "P",                                    # "P" (raw precipitation) or "Peff" (effective rainfall)
 #      sm.init       = 0.5,                                    # Initial fractional soil moisture [0-1]
-#      soil.param    = data.frame(soil, soil.type, whc.mmpercm, raw),
+#      soil.param    = data.frame(soil, soil.type, whc.mmpercm, raw, CN, lambda),
 #      crop.param    = data.frame(crop.ID, crop, irrigation, rooting_depth_cm),
 #      kc_no_crop    = list(dry_season = 0.005, kharip = 0.2) # Fallow baseline ET coefficients
 #    )
@@ -43,49 +42,7 @@
 # cs: Crop system rotation structural data frame mapping:
 #     doy, kc, crop, ncrop, irrigation, rooting_depth_cm, crop.system, rotation, soil
 #
-# ts: Forcing list object generated via get_peff_et0().
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 2. Utility Helper Function: Merge Environmental Forcing Filters ----
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#' Merge Environmental Forcing Filters
-#'
-#' @description Combines precipitation (effective rainfall) and reference evapotranspiration (ET0) 
-#' into a single continuous daily forcing data frame for a given soil type.
-#'
-#' @param p A list containing parameter specifications and forcing time series (`precip`, `et0`, `et0.timestep`, `CN`).
-#' @param soil A character string or numeric value specifying the soil identifier.
-#'
-#' @return A data frame containing structured daily environmental forcing columns (`date`, `P`, `Q`, `Peff`, and `et0`).
-#' @export
-get_peff_et0 <- function(p = p.list, soil = soil) {
-  # Defensive checking boundaries
-  if (!is.list(p)) stop("Argument 'p' must be a valid structured parameter list.")
-  if (is.null(soil)) stop("Soil identifier argument cannot be null.")
-  if (!all(c("precip", "et0", "et0.timestep", "CN") %in% names(p))) {
-    stop("Parameter object 'p' is missing essential components: 'precip', 'et0', 'et0.timestep', or 'CN'.")
-  }
-  
-  ts <- get_Peff(precip = p$precip, CN = p$CN, soil = soil)
-  
-  if (p$et0.timestep == "weekly") {
-    et0 <- get_et0(p$et0)
-  } else if (p$et0.timestep == "daily") {
-    et0 <- p$et0
-  } else {
-    stop("Invalid 'et0.timestep' specified in parameters. Must be either 'daily' or 'weekly'.")
-  }
-  
-  colnames(et0) <- tolower(colnames(et0))
-  if (!all(c("date", "et0") %in% colnames(et0))) {
-    stop("Reference evapotranspiration (et0) mapping structure lacks required 'date' or 'et0' columns.")
-  }
-  
-  et0$date <- as.Date(et0$date)
-  ts <- dplyr::left_join(ts, et0[, c("date", "et0")], by = "date")
-  return(ts)
-}
+# ts: Forcing list object generated via get_peff_et0()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 3. Primary Estimation Model: get_budget ----
@@ -110,19 +67,19 @@ get_peff_et0 <- function(p = p.list, soil = soil) {
 get_budget <- function(cs, p, ts) {
   
   # Structural Input Boundary Validation Checks
-  if (!is.data.frame(cs)) stop("Argument 'cs' must be a valid structured data frame.")
-  if (!is.list(p)) stop("Argument 'p' must be a valid parameters list object.")
-  if (!is.list(ts)) stop("Argument 'ts' must be a valid environmental forcing list object.")
+  if (!base::is.data.frame(cs)) base::stop("Argument 'cs' must be a valid structured data frame.")
+  if (!base::is.list(p)) base::stop("Argument 'p' must be a valid parameters list object.")
+  if (!base::is.list(ts)) base::stop("Argument 'ts' must be a valid environmental forcing list object.")
   
   required_cs_cols <- c("soil", "doy", "kc", "crop", "ncrop", "irrigation", "rooting_depth_cm", "crop.system", "rotation")
-  if (!all(required_cs_cols %in% colnames(cs))) {
-    stop(paste("The crop system table 'cs' lacks required parameters:", 
-               paste(setdiff(required_cs_cols, colnames(cs)), collapse = ", ")))
+  if (!base::all(required_cs_cols %in% base::colnames(cs))) {
+    base::stop(base::paste("The crop system table 'cs' lacks required parameters:", 
+                           base::paste(base::setdiff(required_cs_cols, base::colnames(cs)), collapse = ", ")))
   }
   
   # 3.1. Isolate the target meteorological forcing matched to current soil type ----
   soil <- cs$soil[1]
-  if (!soil %in% names(ts)) stop(paste("Specified soil identifier", soil, "is absent from environmental list 'ts'."))
+  if (!soil %in% base::names(ts)) base::stop(base::paste("Specified soil identifier", soil, "is absent from environmental list 'ts'."))
   ts <- ts[[soil]]
   
   # 3.2. Flag active crop phases dependent on irrigation triggers ----
@@ -133,8 +90,8 @@ get_budget <- function(cs, p, ts) {
   # 3.3. Sum active daily crop evapotranspiration coefficients (kcr) ----
   cs.kcr.irri <- cs.ncrop %>%
     dplyr::group_by(doy) %>%         
-    dplyr::summarise(irri.needed = any(kc.irri),
-                     kcr = sum(kc), .groups = "drop") %>%
+    dplyr::summarise(irri.needed = base::any(kc.irri),
+                     kcr = base::sum(kc), .groups = "drop") %>%
     dplyr::ungroup()
   
   # 3.4. Fill fallow periods with baseline land evaporative loss coefficients ----
@@ -146,7 +103,7 @@ get_budget <- function(cs, p, ts) {
   cs.kcr.irri$kcr[cs.kcr.irri$kcr == 0 & cs.kcr.irri$doy >= 120] <- kharip.kc
   
   # 3.5. Join temporal coefficients onto continuous simulation timeline via DOY ----
-  ts$doy <- as.numeric(format(strptime(ts$date, format = "%Y-%m-%d"), format = "%j"))
+  ts$doy <- base::as.numeric(base::format(base::strptime(ts$date, format = "%Y-%m-%d"), format = "%j"))
   ts <- dplyr::left_join(ts, cs.kcr.irri, by = "doy", relationship = "many-to-many")
   
   # 3.6. Calculate daily Potential Crop Evapotranspiration (ETc in mm) ----
@@ -154,10 +111,10 @@ get_budget <- function(cs, p, ts) {
   
   # 3.7. Extract specific soil physical limits to calculate Water Holding Capacity (WHC) ----
   soil.param <- p$soil.param
-  psoil <- split(soil.param, soil.param$soil)
-  if (!soil %in% names(psoil)) stop(paste("Soil key", soil, "is absent from parameters list context 'p$soil.param'."))
+  psoil <- base::split(soil.param, soil.param$soil)
+  if (!soil %in% base::names(psoil)) base::stop(base::paste("Soil key", soil, "is absent from parameters list context 'p$soil.param'."))
   
-  max.rooting.depth <- max(cs$rooting_depth_cm, na.rm = TRUE)
+  max.rooting.depth <- base::max(cs$rooting_depth_cm, na.rm = TRUE)
   whc <- psoil[[soil]]$whc.mmpercm * max.rooting.depth
   raw <- psoil[[soil]]$raw 
   
@@ -181,7 +138,7 @@ get_budget <- function(cs, p, ts) {
   ts$irrigation <- NA
   
   # 3.10. Execute Daily Forward Dynamic Water Budget Simulation ---- 
-  for(i in 1:nrow(ts)) {
+  for(i in 1:base::nrow(ts)) {
     
     # 3.10.1 Compute temporary soil water content after current day's precipitation ----
     if (i == 1) {
@@ -217,13 +174,13 @@ get_budget <- function(cs, p, ts) {
     if(ts$irri.needed[i]) {
       irri.need.test <- (ts$sm.mid[i] - ts$aet[i]) < (whc * raw)
       
-      if((!is.na(irri.need.test) || !is.null(irri.need.test)) & irri.need.test) {
+      if((!base::is.na(irri.need.test) || !base::is.null(irri.need.test)) & irri.need.test) {
         ts$sm.end[i] <- whc 
       } else {
-        ts$sm.end[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+        ts$sm.end[i] <- base::max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
       }
     } else {
-      ts$sm.end[i] <- max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
+      ts$sm.end[i] <- base::max(ts$sm.mid[i] - ts$aet[i], 0, na.rm = TRUE) 
     }
   }
   
@@ -236,13 +193,13 @@ get_budget <- function(cs, p, ts) {
   ts$aet.crop <- ts$aet
   ts$aet.to.etc.crop <- NA
   
-  rows.crop.kc.zero <- which(ts$sum.kc == 0)
-  if (length(rows.crop.kc.zero) != 0) {
+  rows.crop.kc.zero <- base::which(ts$sum.kc == 0)
+  if (base::length(rows.crop.kc.zero) != 0) {
     ts$etc.crop[rows.crop.kc.zero] <- 0
     ts$aet.crop[rows.crop.kc.zero] <- 0
   }
   
-  valid.rows <- ts$etc.crop != 0 & !is.na(ts$etc.crop)
+  valid.rows <- ts$etc.crop != 0 & !base::is.na(ts$etc.crop)
   ts$aet.to.etc.crop[valid.rows] <- ts$aet.crop[valid.rows] / ts$etc.crop[valid.rows]
   
   # 3.11.2 Calculate supplementary agricultural balance indexes ----
@@ -253,8 +210,8 @@ get_budget <- function(cs, p, ts) {
   ts$runoff.percent[ts$P == 0] <- NA
   
   ts$balance <- ts$recharge - ts$irrigation 
-  ts$year <- as.numeric(format(ts$date, format = "%Y"))
-  ts$month <- as.numeric(format(ts$date, format = "%m"))
+  ts$year <- base::as.numeric(base::format(ts$date, format = "%Y"))
+  ts$month <- base::as.numeric(base::format(ts$date, format = "%m"))
   
   ts <- ts %>% 
     dplyr::select(date, year, month, doy, P, Q, Peff, Peff.used,
@@ -265,37 +222,37 @@ get_budget <- function(cs, p, ts) {
   # 3.12.1 Annual/Yearly Summary ----
   sum.yr <- ts %>% 
     dplyr::group_by(year) %>%
-    dplyr::summarise(dplyr::across(P:balance, \(x) sum(x, na.rm = TRUE)), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(P:balance, \(x) base::sum(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::mutate(aet.to.Peff = aet / Peff, runoff.percent = Q / P * 100)
   
   mean.yr <- ts %>% 
     dplyr::group_by(year) %>%
-    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) mean(x, na.rm = TRUE)), .groups = "drop")
+    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) base::mean(x, na.rm = TRUE)), .groups = "drop")
   sum.yr <- sum.yr %>% dplyr::left_join(mean.yr, by = "year")
   
   # 3.12.2 Long-Term Annual Summary Climatology ----
   quantile_df <- function(x, probs = c(0.025, 0.5, 0.975)) {
-    tibble::tibble(quantile = probs, value = quantile(x, probs, na.rm = TRUE))
+    tibble::tibble(quantile = probs, value = stats::quantile(x, probs, na.rm = TRUE))
   }
   
   summary.yr <- sum.yr %>%
     tidyr::pivot_longer(-year, names_to = "var", values_to = "value") %>%
     dplyr::group_by(var) %>%
-    dplyr::summarise(mean = mean(value, na.rm = TRUE), 
-                     sd = sd(value, na.rm = TRUE), .groups = "drop") %>% 
+    dplyr::summarise(mean = base::mean(value, na.rm = TRUE), 
+                     sd = stats::sd(value, na.rm = TRUE), .groups = "drop") %>% 
     dplyr::arrange(var)
   
   # 3.12.3 Monthly Summary ----
   sum.mo <- ts %>% 
     dplyr::group_by(year, month) %>%
-    dplyr::summarise(dplyr::across(P:balance, \(x) sum(x, na.rm = TRUE)), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(P:balance, \(x) base::sum(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::ungroup() %>%
     dplyr::mutate(aet.to.Peff = aet / Peff, runoff.percent = Q / P * 100)
   
   # 3.12.4 Long-Term Monthly Climatology Overviews ----
   mean.mo <- ts %>% 
     dplyr::group_by(year, month) %>%
-    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) mean(x, na.rm = TRUE)), .groups = "drop") %>%
+    dplyr::summarise(dplyr::across(c(sm.percent, aet.to.etc.crop), \(x) base::mean(x, na.rm = TRUE)), .groups = "drop") %>%
     dplyr::ungroup()
   
   clim.mo <- sum.mo %>%
@@ -303,12 +260,12 @@ get_budget <- function(cs, p, ts) {
     tidyr::pivot_longer(-month, names_to = "var", values_to = "value") %>%
     dplyr::group_by(var, month) %>%
     dplyr::reframe(quantile_df(value)) %>%
-    as.data.frame() %>%
+    base::as.data.frame() %>%
     tidyr::pivot_wider(names_from = "quantile", values_from = "value")
   
   # 3.13. Plot Visualization Components ----
-  crop.sys.title <- paste0("Crop System: ", cs$crop.system[1], " | Rotation: ", cs$rotation[1],
-                           " on ", toupper(soil.type), " soil")
+  crop.sys.title <- base::paste0("Crop System: ", cs$crop.system[1], " | Rotation: ", cs$rotation[1],
+                                 " on ", base::toupper(soil.type), " soil")
   
   # 3.13.1 Daily Diagnostic Panels (Default Evaluation Year: 2018) ----
   daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm.end", "aet", "recharge")
@@ -330,20 +287,20 @@ get_budget <- function(cs, p, ts) {
   p.daily_2 <- p.daily_1 %+% base::subset(ts.l.select, var %in% c("aet", "recharge"))
   p.daily_3 <- p.daily_1 %+% base::subset(ts.l.select, var %in% c("kcr", "aet.to.etc.crop")) +
     ggplot2::ylab("value") +
-    ggplot2::ggtitle(paste0(crop.sys.title, "\n", "Water Budget for ", paste(years.to.plot, collapse = "-")))
+    ggplot2::ggtitle(base::paste0(crop.sys.title, "\n", "Water Budget for ", base::paste(years.to.plot, collapse = "-")))
   
   p.daily.budget <- ggpubr::ggarrange(p.daily_3, p.daily_1, p.daily_2,
                                       nrow = 3, ncol = 1,
                                       labels = c("A", "B", "C"),
                                       legend = "top")
   
-  if (!dir.exists(here("figures/water_budgets/"))) dir.create(here("figures/water_budgets/"), recursive = TRUE)
+  if (!base::dir.exists(here::here("figures/water_budgets/"))) base::dir.create(here::here("figures/water_budgets/"), recursive = TRUE)
   
   ggplot2::ggsave(plot = p.daily.budget, file = 
-  here(paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
-  "_CROPS_", paste(cs.ncrop$crop[1:3], collapse = "_"), "_", 
-  paste(years.to.plot, collapse = "-"), "_daily.pdf")), width = 9, height = 9)
+                    here::here(base::paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
+                                            "_CROPS_", base::paste(cs.ncrop$crop[1:3], collapse = "_"), "_", 
+                                            base::paste(years.to.plot, collapse = "-"), "_daily.pdf")), width = 9, height = 9)
   
-  return(list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
-              sum.mo = sum.mo, clim.mo = clim.mo))
+  return(base::list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
+                    sum.mo = sum.mo, clim.mo = clim.mo))
 }

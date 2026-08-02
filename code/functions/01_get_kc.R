@@ -11,7 +11,7 @@
 # GNU Lesser General Public License for more details.
 # 
 # You should have received a copy of the GNU Lesser General Public License
-# along with this program. If not, see <https://gnu.org>.
+# along with this program. If not, see [https://gnu.org](https://gnu.org).
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,8 +20,7 @@
 # Description:  A comprehensive suite of functions to prepare, interpolate,
 #               and simulate dynamic daily Crop Coefficient (Kc) time series.
 #               Explicitly designed to match legacy agricultural model baselines.
-# Dependencies: dplyr, lubridate, stringr
-#               (Note: Required libraries are handled and sourced externally)
+# Dependencies: Base R only
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -41,71 +40,55 @@
 #' Generate Standard FAO-56 Segmented Curve
 #'
 #' @description Builds a continuous 366-day daily Kc curve from discrete FAO-56 
-#' growth stage parameters. Replicates cell-by-cell "Days Since Sowing" logic to 
-#' natively handle cross-year wrapping, leap years, and perennial crops exactly 
-#' as standard spreadsheet models do.
+#' growth stage parameters using hyper-fast vectorized calculations.
 #'
-#' @param row A one-row data frame or named list containing crop parameters: 
-#' `crop`, `Sow`, `E_ini`, `E_dev`, `E_mid`, `Harv`, `K_ini`, `K_mid`, `K_end`.
+#' @param row A one-row data frame or named list containing crop parameters.
 #' @param base_val Numeric baseline value for the off-season (default 0).
-#' @return A tibble containing columns 'crop', 'doy', and the computed 'kc'.
+#' @return A data frame containing columns 'crop', 'doy', and the computed 'kc'.
 #' @export
 build_fao_curve <- function(row, base_val = 0) {
   crop_name <- row$crop
   Sow <- row$Sow
   
-  # Scientific correction: Grasslands drop to 0.01 in the dry season
-  if (crop_name == "Grasslands") {
-    base_val <- 0.01
-  }
+  if (crop_name == "Grasslands") base_val <- 0.01
   
-  # Calculate absolute durations from the sowing day to mimic Excel formulas
+  # Calculate absolute durations
   dur_ini  <- if(row$E_ini < Sow) row$E_ini + 365 - Sow else row$E_ini - Sow
   dur_dev  <- if(row$E_dev < Sow) row$E_dev + 365 - Sow else row$E_dev - Sow
   dur_mid  <- if(row$E_mid < Sow) row$E_mid + 365 - Sow else row$E_mid - Sow
   dur_harv <- if(row$Harv < Sow) row$Harv + 365 - Sow else row$Harv - Sow
-  
-  # Perennial override: if Sow == Harv, duration is a full 365-day cycle
   if (Sow == row$Harv) dur_harv <- 365
   
-  # Explicitly define the crops that span across Jan 1 and need to wrap
   wrap_crops <- c("Grapes", "Banana 2", "Horsegram", "Rice Long")
   is_wrapping <- crop_name %in% wrap_crops
   
-  out_kc <- numeric(366)
-  
-  for (doy in 1:365) {
-    # Calculate the "Effective Day" (Days since sowing)
-    if (is_wrapping) {
-      d_eff <- if(doy >= Sow) doy - Sow else doy + 365 - Sow
-    } else {
-      d_eff <- doy - Sow
-    }
-    
-    # Mathematical IF/AND Simulation for Segmented Growth
-    if (d_eff < 0 || d_eff > dur_harv) {
-      out_kc[doy] <- base_val # Apply the baseline here
-    } else if (d_eff <= dur_ini) {
-      out_kc[doy] <- row$K_ini
-    } else if (d_eff <= dur_dev) {
-      frac <- (d_eff - dur_ini) / (dur_dev - dur_ini)
-      out_kc[doy] <- row$K_ini + frac * (row$K_mid - row$K_ini)
-    } else if (d_eff <= dur_mid) {
-      out_kc[doy] <- row$K_mid
-    } else if (d_eff <= dur_harv) {
-      if (dur_harv == dur_mid) {
-        out_kc[doy] <- row$K_mid
-      } else {
-        frac <- (d_eff - dur_mid) / (dur_harv - dur_mid)
-        out_kc[doy] <- row$K_mid + frac * (row$K_end - row$K_mid)
-      }
-    }
+  # 1. Generate the entire DOY vector instantly
+  doy <- 1:365
+  d_eff <- if(is_wrapping) {
+    ifelse(doy >= Sow, doy - Sow, doy + 365 - Sow)
+  } else {
+    doy - Sow
   }
   
-  # Match standard legacy leap year drag-down
-  out_kc[366] <- out_kc[365]
+  # 2. Vectorized segment generation (no loops!)
+  out_kc <- rep(base_val, 365)
   
-  return(dplyr::tibble(crop = crop_name, doy = 1:366, kc = out_kc))
+  cond_ini      <- d_eff >= 0 & d_eff <= dur_ini
+  cond_dev      <- d_eff > dur_ini & d_eff <= dur_dev
+  cond_mid      <- d_eff > dur_dev & d_eff <= dur_mid
+  cond_harv_eq  <- d_eff > dur_mid & d_eff <= dur_harv & dur_harv == dur_mid
+  cond_harv_neq <- d_eff > dur_mid & d_eff <= dur_harv & dur_harv != dur_mid
+  
+  out_kc[cond_ini] <- row$K_ini
+  out_kc[cond_dev] <- row$K_ini + ((d_eff[cond_dev] - dur_ini) / (dur_dev - dur_ini)) * (row$K_mid - row$K_ini)
+  out_kc[cond_mid] <- row$K_mid
+  out_kc[cond_harv_eq] <- row$K_mid
+  out_kc[cond_harv_neq] <- row$K_mid + ((d_eff[cond_harv_neq] - dur_mid) / (dur_harv - dur_mid)) * (row$K_end - row$K_mid)
+  
+  # Leap Year Drag-Down
+  out_kc <- c(out_kc, out_kc[365])
+  
+  return(data.frame(crop = crop_name, doy = 1:366, kc = out_kc, stringsAsFactors = FALSE))
 }
 
 
@@ -137,17 +120,24 @@ generate_fruit_step <- function(crop_name, raw_params) {
     stop(sprintf("Target crop column '%s' not found within 'raw_params'.", crop_name))
   }
   
-  doy_df <- data.frame(doy = 1:366) %>%
-    dplyr::mutate(
-      date = as.Date(doy - 1, origin = "2023-01-01"),
-      Month = lubridate::month(date)
-    )
+  # Generate chronological month assignments for 366 days
+  date_seq <- as.Date(0:365, origin = "2023-01-01")
+  months <- as.numeric(format(date_seq, "%m"))
   
-  out_df <- doy_df %>%
-    dplyr::left_join(raw_params %>% dplyr::select(Month, !!dplyr::sym(crop_name)), by = "Month") %>%
-    dplyr::rename(kc = !!dplyr::sym(crop_name)) %>%
-    dplyr::mutate(crop = stringr::str_to_title(crop_name)) %>%
-    dplyr::select(crop, doy, kc)
+  doy_df <- data.frame(doy = 1:366, Month = months, stringsAsFactors = FALSE)
+  merged_df <- merge(doy_df, raw_params[, c("Month", crop_name)], by = "Month", all.x = TRUE)
+  merged_df <- merged_df[order(merged_df$doy), ]
+  
+  # Convert crop name to Title Case
+  s <- strsplit(crop_name, " ")[[1]]
+  crop_title <- paste(toupper(substring(s, 1, 1)), substring(s, 2), sep = "", collapse = " ")
+  
+  out_df <- data.frame(
+    crop = crop_title,
+    doy = merged_df$doy,
+    kc = merged_df[[crop_name]],
+    stringsAsFactors = FALSE
+  )
   
   return(out_df)
 }
@@ -176,11 +166,15 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
     stop("All polynomial curve coefficients and the baseline intercept must be numeric.")
   }
   
-  out_df <- data.frame(doy = 1:366) %>%
-    dplyr::mutate(
-      crop = crop_name,
-      kc = c4*(doy^4) + c3*(doy^3) + c2*(doy^2) + c1*doy + intercept
-    )
+  doy <- 1:366
+  kc <- c4*(doy^4) + c3*(doy^3) + c2*(doy^2) + c1*doy + intercept
+  
+  out_df <- data.frame(
+    doy = doy,
+    crop = crop_name,
+    kc = kc,
+    stringsAsFactors = FALSE
+  )
   
   return(out_df)
 }
@@ -191,9 +185,7 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #' Generate Grazed Pasture Curve (Legacy Match)
 #'
-#' @description Generates a grazed grassland curve that explicitly mimics the discrete 
-#' monthly step, linear regrowth logic, and New Year boundaries used in historical 
-#' spreadsheet baselines.
+#' @description Generates a grazed grassland curve utilizing an optimized sequential loop.
 #'
 #' @param crop_name Character string name tag for the grass category.
 #' @param graze_doys Numeric vector of Days of Year when grazing events occur.
@@ -203,31 +195,29 @@ generate_polynomial_kc <- function(crop_name, c4, c3, c2, c1, intercept) {
 #' @param m_bound Numeric maximum upper bound for regrowth (default 0.75).
 #' @param sow_doy Numeric Day of Year representing the start of the season (default 122).
 #' @param base_val Numeric baseline value for the off-season (default 0.01 for dry season).
-#' @return A tibble containing columns 'crop', 'doy', and the computed 'kc'.
+#' @return A data frame containing columns 'crop', 'doy', and the computed 'kc'.
 #' @export
 generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_drop = 0.20, m_bound = 0.75, sow_doy = 122, base_val = 0.01) {
   kc_array <- numeric(366)
   
+  # Initialize a tracker so we don't have to search arrays inside the loop
+  last_graze <- -999 
+  
   for (i in 1:365) {
     if (i < sow_doy) {
-      # Phase 1: STRICT lock to baseline before sowing
       kc_array[i] <- base_val
     } else {
-      # Find grazing history
-      past_grazes <- graze_doys[graze_doys <= i]
       
-      if (length(past_grazes) == 0) {
-        # Phase 2: Track biological base exactly before the first cut
+      # Did a grazing event happen today?
+      if (i %in% graze_doys) last_graze <- i
+      
+      if (last_graze == -999) {
         kc_array[i] <- base_kc[i]
       } else {
-        last_graze <- max(past_grazes)
-        
-        # Phase 3: Static 30-day block representing manual monthly scale
         if ((i - last_graze) < 30) {
           kc_array[i] <- g_drop
         } else {
-          # Phase 4: Daily linear regrowth capped at max bound
-          if (kc_array[i-1] == base_val) { # Update to check against baseline
+          if (kc_array[i-1] == base_val) { 
             kc_array[i] <- base_kc[i]
           } else {
             kc_array[i] <- min(m_bound, kc_array[i-1] + g_rate)
@@ -237,11 +227,11 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
     }
   }
   
-  # Phase 5: Leap Year Drag-Down 
   kc_array[366] <- kc_array[365]
   
-  return(dplyr::tibble(doy = 1:366, crop = crop_name, kc = kc_array))
+  return(data.frame(doy = 1:366, crop = crop_name, kc = kc_array, stringsAsFactors = FALSE))
 }
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # 5. NAPIER GRASS CURVES ----
@@ -256,7 +246,7 @@ generate_grazed_legacy <- function(crop_name, graze_doys, base_kc, g_rate, g_dro
 #' @param start_doy Numeric representation of the initial calendar day harvesting begins.
 #' @param decline_rate_1 Numeric slope parameter for Phase 1 biomass or senescence decay.
 #' @param decline_rate_2 Numeric slope parameter for subsequent recurring harvesting cycles.
-#' @return A tibble containing columns 'doy', 'crop', and the computed timeline 'kc'.
+#' @return A data frame containing columns 'doy', 'crop', and the computed timeline 'kc'.
 #' @export
 generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2) {
   
@@ -264,26 +254,35 @@ generate_napier <- function(crop_name, start_doy, decline_rate_1, decline_rate_2
     stop("Parameters 'start_doy', 'decline_rate_1', and 'decline_rate_2' must be purely numeric.")
   }
   
-  out_df <- dplyr::tibble(doy = 1:366, crop = crop_name) %>%
-    dplyr::mutate(
-      kc = dplyr::case_when(
-        doy < start_doy ~ 0, # Apply the baseline correction here
-        start_doy == 1 & doy <= 50 ~ dplyr::case_when(
-          doy <= 11 ~ 0.5,
-          doy <= 45 ~ 0.9,
-          TRUE ~ 0.9 - decline_rate_1 * (doy - 45)
-        ),
-        TRUE ~ {
-          cycle_start <- dplyr::if_else(start_doy == 1, 51, start_doy)
-          c_day = (doy - cycle_start) %% 50
-          dplyr::case_when(
-            c_day < 11 ~ 0.4,
-            c_day < 45 ~ 0.95,
-            TRUE ~ 0.95 - decline_rate_2 * (c_day - 44)
-          )
-        }
-      )
-    )
+  doy <- 1:366
+  kc <- numeric(366)
+  
+  # Baseline correction before start
+  kc[doy < start_doy] <- 0
+  
+  # Phase 1 sequence conditions
+  cond1 <- (start_doy == 1) & (doy <= 50) & (doy >= start_doy)
+  if (any(cond1)) {
+    d_cond1 <- doy[cond1]
+    kc[cond1] <- ifelse(d_cond1 <= 11, 0.5,
+                        ifelse(d_cond1 <= 45, 0.9, 0.9 - decline_rate_1 * (d_cond1 - 45)))
+  }
+  
+  # Subsequent cyclical sequences
+  cond2 <- doy >= start_doy & !cond1
+  if (any(cond2)) {
+    cycle_start <- ifelse(start_doy == 1, 51, start_doy)
+    c_day <- (doy[cond2] - cycle_start) %% 50
+    kc[cond2] <- ifelse(c_day < 11, 0.4,
+                        ifelse(c_day < 45, 0.95, 0.95 - decline_rate_2 * (c_day - 44)))
+  }
+  
+  out_df <- data.frame(
+    doy = doy,
+    crop = crop_name,
+    kc = kc,
+    stringsAsFactors = FALSE
+  )
   
   return(out_df)
 }

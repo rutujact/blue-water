@@ -1,5 +1,5 @@
 ---
-title: "Input Data Verification & Phenology Engine" 
+title: "Input Data Verification & Phenology Module" 
 subtitle: "Verifying Data Inputs and Generating Continuous Daily Crop Coefficient (Kc) Curves for the Blue Water Potential Toolkit"
 author: 
   - "Rutuja Chitra-Tarak (Code)"
@@ -44,7 +44,7 @@ This script processes, visualizes, and expands seven distinct categories of inpu
 5. **Cropping Systems**: Crop rotation at the plot scale.
 6. **Farm Production Systems**: Aggregation of grazed and cropped area (ha) for each farming system.
 7. **Agrarian System**: Area (ha) of each farm production system in a given village/micro-region.
-8. **Model Parameters**: The master configuration file. This contains essential hydrological assumptions (e.g., runoff Curve Number, bare-soil evaporation).
+8. **Model Parameters**: The master configuration file. This defines global baseline assumptions, including seasonal bare-soil evaporation coefficients (kc_dry_season, kc_kharip), the calendar day to switch between them (doy_switch), the starting soil moisture fraction (sm_init), and the soil_input routing switch—which dictates whether the model should use raw Precipitation (P) or calculate surface runoff to use Effective Precipitation (Peff).
 
 *In Hemingway et al. (202X), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.*
 
@@ -57,7 +57,7 @@ The Blue Water Potential Toolkit uses a strict, automated pipeline to separate u
 **1. `data/input/` (The User Interface)**
 This folder is the starting point of the toolkit. It holds all the static, standardized CSV files listed above. **If you are adapting this toolkit for your own study site, this is the only folder you need to populate.**
 
-**2. `data/processed/` (The Phenology Engine)**
+**2. `data/processed/` (The Phenology Module)**
 This folder is fully automated. When you render this script (`01_Prepare_Model_Input.qmd`), it reads the static parameters from `data/input/`, executes the mathematical rule-sets (FAO-56 segments, polynomial equations, grazing regrowth), and outputs the continuous daily Crop Coefficient ($K_c$) tables here. *Users do not need to manually edit files in this folder.*
 
 ---
@@ -92,33 +92,7 @@ project_root/
 └── Blue-Water.Rproj                 <- Required: RStudio Project file to render this script
 ```
 
-```{r setup, include=FALSE}
-base::rm(list = base::ls(all.names = TRUE)); base::gc()
-knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
-
-if (!base::require("pacman")) utils::install.packages("pacman")
-pacman::p_load(tidyverse, here, knitr, rmarkdown)
-
-# Ensure output directories exist
-new.dirs <- base::list(here::here("data/processed"), here::here("data/processed/supplementary"))
-base::lapply(new.dirs, function(x) if (!base::dir.exists(x)) base::dir.create(x, recursive = TRUE, showWarnings = FALSE))
-
-# Source core biophysical dependencies globally
-base::source(here::here("code/functions/01_get_kc.R"))
-base::source(here::here("code/functions/03_expand_kc.R"))
-
-# Load Master Parameters
-sys_params <- data.table::fread(here::here("data/input/10_model_parameters.csv")) %>% dplyr::as_tibble()
-
-# Helper function to easily fetch parameters
-get_param <- function(param_name, is_numeric = TRUE) {
-  val <- sys_params$value[sys_params$parameter == param_name]
-  if(is_numeric) return(base::as.numeric(val)) else return(base::as.character(val))
-}
-
-# ===========================================================
-# GRASSLAND GROWTH CYCLE PARAMETERS (Dynamically Loaded)
-# ===========================================================
+```{r}
 #| label: setup
 #| include: false
 
@@ -132,26 +106,41 @@ pacman::p_load(tidyverse, here, knitr, rmarkdown)
 new.dirs <- base::list(here::here("data/processed"), here::here("data/processed/supplementary"))
 base::lapply(new.dirs, function(x) if (!base::dir.exists(x)) base::dir.create(x, recursive = TRUE, showWarnings = FALSE))
 
-# Source core biophysical dependencies globally
+# Source functions
 base::source(here::here("code/functions/01_get_kc.R"))
-base::source(here::here("code/functions/03_expand_kc.R"))
 
+theme_baseR <- ggplot2::theme_bw() + 
+  ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(), 
+      panel.background = ggplot2::element_rect(fill = "white", colour = "black"), 
+      strip.background = ggplot2::element_blank(),
+      legend.position = "none",
+      plot.title = ggplot2::element_text(size = 18, face = "bold"),
+      axis.title = ggplot2::element_text(size = 14, face = "bold"),
+      axis.text = ggplot2::element_text(size = 12),
+      strip.text = ggplot2::element_text(size = 12, face = "bold"))
+```
+
+# Model Configuration Parameters
+
+Read the master configuration file.
+
+```{r model-params-display, echo=FALSE}
 # Load Master Parameters
 sys_params <- data.table::fread(here::here("data/input/10_model_parameters.csv")) %>% dplyr::as_tibble()
 
-# Helper function to easily fetch parameters
-get_param <- function(param_name, is_numeric = TRUE) {
-  val <- sys_params$value[sys_params$parameter == param_name]
-  if(is_numeric) return(base::as.numeric(val)) else return(base::as.character(val))
-}
+# Append expected data types for the end-user display
+sys_params_display <- sys_params %>%
+  dplyr::mutate(
+    description = dplyr::case_when(
+      parameter == "soil_input" ~ base::paste0(description, "<br><small style='color:gray; font-weight:normal;'>Expected: Character string ('P' or 'Peff')</small>"),
+      TRUE ~ base::paste0(description, "<br><small style='color:gray; font-weight:normal;'>Expected: Numeric</small>")
+    )
+  )
 
-theme_baseR <- ggplot2::theme_bw() + ggplot2::theme(
-  panel.grid.major = ggplot2::element_blank(), 
-  panel.grid.minor = ggplot2::element_blank(), 
-  panel.background = ggplot2::element_rect(fill = "white", colour = "black"), 
-  strip.background = ggplot2::element_blank()
-)
+base::colnames(sys_params_display) <- base::c("Parameter", "Value", "Category", "Description")
 
+knitr::kable(sys_params_display, escape = FALSE, caption = "Hydrological Parameters")
 ```
 
 # Climatic Data (Forcing Variables)
@@ -177,8 +166,8 @@ climate_summary <- data.table::fread(here::here("data/input/supplementary/01_mon
 ```{r precip-display, echo=FALSE}
 preview_precip <- utils::head(precip, 5)
 base::colnames(preview_precip) <- c(
-  "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
-  "p<br><small style='color:gray; font-weight:normal;'>Daily Precipitation (mm &ge; 0)</small>"
+  "date<br><small style='color:gray; font-weight:normal;'>Sequential dates<br><b>Expected:</b> Date (YYYY-MM-DD)</small>",
+  "p<br><small style='color:gray; font-weight:normal;'>Daily Precipitation (mm &ge; 0)<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_precip, escape = FALSE, caption = "Preview: Precipitation Data Sample")
 ```
@@ -188,8 +177,8 @@ knitr::kable(preview_precip, escape = FALSE, caption = "Preview: Precipitation D
 ```{r et0-display, echo=FALSE}
 preview_et0 <- utils::head(et0.daily, 5)
 base::colnames(preview_et0) <- c(
-  "date<br><small style='color:gray; font-weight:normal;'>Sequential dates (YYYY-MM-DD)</small>",
-  "ET0<br><small style='color:gray; font-weight:normal;'>Daily Reference Evapotranspiration (mm &ge; 0)</small>"
+  "date<br><small style='color:gray; font-weight:normal;'>Sequential dates<br><b>Expected:</b> Date (YYYY-MM-DD)</small>",
+  "ET0<br><small style='color:gray; font-weight:normal;'>Daily Reference Evapotranspiration (mm &ge; 0)<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_et0, escape = FALSE, caption = "Preview: ET0 Data Sample")
 ```
@@ -197,7 +186,7 @@ knitr::kable(preview_et0, escape = FALSE, caption = "Preview: ET0 Data Sample")
 #### Monthly Climatology (Only for plotting figure)
 
 ```{r clim-display, echo=FALSE}
-knitr::kable(climate_summary, escape = FALSE, caption = "Study Site Climatology")
+knitr::kable(apply(climate_summary, 2, round, digits = 1), escape = FALSE, caption = "Study Site Climatology")
 ```
 
 # Soil Parameters
@@ -209,14 +198,15 @@ soil.param <- data.table::fread(here::here("data/input/03_soil.parameters.csv"))
 ```
 
 #### Soil Parameters Table
-
 ```{r soil-display, echo=FALSE}
 preview_soil <- soil.param
 base::colnames(preview_soil) <- c(
-  "soil<br><small style='color:gray; font-weight:normal;'>Identifier code</small>",
-  "soil.type<br><small style='color:gray; font-weight:normal;'>Descriptive classification</small>",
-  "whc.mmpercm<br><small style='color:gray; font-weight:normal;'>WHC (mm water / cm soil)</small>",
-  "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold</small>"
+  "soil<br><small style='color:gray; font-weight:normal;'>Identifier code<br><b>Expected:</b> Numeric or Character</small>",
+  "soil.type<br><small style='color:gray; font-weight:normal;'>Descriptive classification<br><b>Expected:</b> Character</small>",
+  "whc.mmpercm<br><small style='color:gray; font-weight:normal;'>WHC (mm water / cm soil)<br><b>Expected:</b> Numeric</small>",
+  "raw<br><small style='color:gray; font-weight:normal;'>Readily Available Water threshold<br><b>Expected:</b> Numeric</small>",
+  "CN<br><small style='color:gray; font-weight:normal;'>SCS Curve Number<br><b>Expected:</b> Numeric</small>",
+  "lambda<br><small style='color:gray; font-weight:normal;'>Initial Abstraction ratio<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_soil, escape = FALSE, caption = "Soil Parameter Table")
 ```
@@ -234,9 +224,9 @@ crop.param <- data.table::fread(here::here("data/input/04_crop.parameters.csv"))
 ```{r crop-display, echo=FALSE}
 preview_crop <- crop.param
 base::colnames(preview_crop) <- c(
-  "crop<br><small style='color:gray; font-weight:normal;'>Standardized name</small>",
-  "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'</small>",
-  "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth</small>"
+  "crop<br><small style='color:gray; font-weight:normal;'>Internal name for a Crop or Crop-Year (e.g., Banana 1)<br><b>Expected:</b> Character</small>",
+  "irrigation<br><small style='color:gray; font-weight:normal;'>'irrigated' or 'rainfed'<br><b>Expected:</b> Character (Strict match)</small>",
+  "rooting_depth_cm<br><small style='color:gray; font-weight:normal;'>Max effective root depth<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_crop, escape = FALSE, caption = "Crop Rooting Depth and Crop Irrigated/Rainfed Table")
 ```
@@ -253,7 +243,37 @@ fruit_kc_raw   <- data.table::fread(here::here("data/input/06_step_kc_curve_para
 #### FAO Segmented Parameters
 
 ```{r fao-params-display, echo=FALSE}
-knitr::kable(utils::head(fao_kc_raw, 5), caption = "FAO Segmented Parameters")
+# 1. Build the data dictionary for the variables
+fao_dict <- base::data.frame(
+  Variable = c("Sowing", "Kc_ini", "Ini_duration", "End of ini", 
+                     "Dev_duration", "End of Dev", "Kc_mid", "Mid_duration", 
+                     "End of Mid", "Kc_end", "End_duration", "Harvest"),
+  Description = c(
+    "Day of year (1-366) when the crop is sown or planted",
+    "Crop coefficient (Kc) during the initial growth stage",
+    "Duration of the initial growth stage in days",
+    "Day of year when the initial growth stage ends",
+    "Duration of the crop development stage in days",
+    "Day of year when the crop development stage ends",
+    "Crop coefficient (Kc) during the mid-season stage",
+    "Duration of the mid-season stage in days",
+    "Day of year when the mid-season stage ends",
+    "Crop coefficient (Kc) at the end of the late-season stage (harvest)",
+    "Duration of the late-season stage in days",
+    "Day of year when the crop is harvested"
+  ),
+  Expected_Type = c(
+    "Numeric (1-366)", "Numeric", "Numeric", "Numeric (1-366)",
+    "Numeric", "Numeric (1-366)", "Numeric", "Numeric",
+    "Numeric (1-366)", "Numeric", "Numeric", "Numeric (1-366)"
+  )
+)
+
+# 2. Display the dictionary
+knitr::kable(fao_dict, caption = "Dictionary of FAO-56 Curve Variables")
+
+# 3. Display the actual parameter table preview
+knitr::kable(utils::head(fao_kc_raw, 5), caption = "FAO Segmented Parameters Data Preview")
 ```
 
 #### Fruit Tree Parameters
@@ -270,7 +290,7 @@ We pass the input Kc parameters through mathematical functions. This includes st
 
 Generates the classic 4-stage linear growth curves for standard crops.
 
-```{r generate-fao-kc, warning=FALSE, fig.cap="Standard FAO-56 segmented curves based on major crop calendar events such as sowing and harvesting dates, and crop development duration."}
+```{r generate-fao-kc, warning=FALSE, fig.height = 7, fig.width = 10, fig.cap="Standard FAO-56 segmented curves based on major crop calendar events such as sowing and harvesting dates, and crop development duration."}
 fao_kc_raw.long <- fao_kc_raw %>% 
   tidyr::pivot_longer(cols = -1, names_to = "crop") %>% 
   dplyr::mutate(crop = stringr::str_to_title(base::gsub("_|\\.", " ", crop, perl = TRUE)))
@@ -315,12 +335,29 @@ kc_segmented <- dplyr::bind_rows(kc_segmented_ls) %>%
   dplyr::mutate(crop = stringr::str_to_title(base::gsub("_", " ", crop, perl = TRUE)))
 
 # Visual Check
-ggplot2::ggplot(kc_segmented %>% dplyr::mutate(plot_kc = dplyr::if_else(kc == 0, NA_real_, kc)), ggplot2::aes(x = doy, y = plot_kc, color = crop)) +
-  ggplot2::geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE) +
+ggplot2::ggplot(
+  kc_segmented %>% 
+    # 1. Remove the baseline fallow periods entirely
+    dplyr::filter(kc > 0) %>% 
+    dplyr::arrange(crop, doy) %>%
+    dplyr::group_by(crop) %>%
+    # 2. Flag contiguous growth phases whenever there is a jump in DOY
+    dplyr::mutate(
+      is_gap = doy - dplyr::lag(doy, default = dplyr::first(doy)) > 1,
+      plot_group = base::paste(crop, base::cumsum(is_gap), sep = "_")
+    ) %>%
+    dplyr::ungroup(), 
+  
+  # 3. Apply the dynamic group aesthetic!
+  ggplot2::aes(x = doy, y = kc, color = crop, group = plot_group)
+) +
+  ggplot2::geom_area(ggplot2::aes(fill = crop), alpha = 0.15, show.legend = FALSE, na.rm = TRUE) +
   ggplot2::geom_line(linewidth = 1, na.rm = TRUE) + 
   ggplot2::facet_wrap(~ crop) + 
   theme_baseR +
   ggplot2::labs(title = "Standard FAO-56 Curves", x = "Day of Year", y = "Kc") +
+  ggplot2::scale_x_continuous(breaks = base::seq(0, 366, 100), limits = c(0, 366)) +
+  ggplot2::scale_y_continuous(breaks = base::seq(0, 1.2, 0.3), limits = c(0, 1.2)) +
   ggplot2::theme(legend.position = "none")
 ```
 
@@ -356,14 +393,7 @@ if(base::nrow(kc_polynomial) > 0) {
     ggplot2::geom_line(linewidth = 1, na.rm = TRUE) + 
     ggplot2::facet_wrap(. ~ crop, ncol = 1) + 
     theme_baseR +
-    ggplot2::labs(x = "Day of Year", y = "Kc") +
-    ggplot2::theme(
-      legend.position = "none",
-      plot.title = ggplot2::element_text(size = 18, face = "bold"),
-      axis.title = ggplot2::element_text(size = 14, face = "bold"),
-      axis.text = ggplot2::element_text(size = 12),
-      strip.text = ggplot2::element_text(size = 12, face = "bold")
-    )
+    ggplot2::labs(x = "Day of Year", y = "Kc")
   base::print(poly_fig)
 }
 ```
@@ -386,20 +416,15 @@ ggplot2::ggplot(kc_fruits %>% dplyr::mutate(plot_kc = dplyr::if_else(kc == 0, NA
   ggplot2::facet_wrap(. ~ crop, ncol = 1) + 
   theme_baseR +
   ggplot2::labs(x = "Day of Year", y = "Kc") +
-  ggplot2::theme(
-    legend.position = "none",
-    plot.title = ggplot2::element_text(size = 18, face = "bold"),
-    axis.title = ggplot2::element_text(size = 14, face = "bold"),
-    axis.text = ggplot2::element_text(size = 12),
-    strip.text = ggplot2::element_text(size = 12, face = "bold")
-  )
+  ggplot2::scale_x_continuous(breaks = seq(0, 366, 60), limits = c(0, 366)) +
+  ggplot2::scale_y_continuous(breaks = seq(0, 1.2, 0.3), limits = c(0, 1.2))
 ```
 
 ### Grasslands and Fodder Crops
 
 Applies calibrated drop-and-regrowth rates for grazed pastures and harvested Napier grass.
 
-```{r kc-complex, warning=FALSE, fig.cap="Complex harvesting and regrowth schedules illustrating calibrated drop-and-regrowth rates for grazed pastures and Napier grass."}
+```{r kc-complex, warning=FALSE, fig.width=10, fig.cap="Complex harvesting and regrowth schedules illustrating calibrated drop-and-regrowth rates for grazed pastures and Napier grass."}
 no_crop <- tibble::tibble(doy = 1:366, crop = "No Crop", kc = 0)
 
 # Safely extract grassland baseline if it exists in the user's crop list
@@ -457,7 +482,8 @@ if (base::nrow(complex_plot_data) > 0) {
     ggplot2::facet_wrap(~ crop) + 
     theme_baseR +
     ggplot2::labs(title = "Complex Harvesting & Regrowth Curves", x = "Day of Year", y = "Kc") +
-    ggplot2::theme(legend.position = "none")
+  ggplot2::scale_x_continuous(breaks = seq(0, 366, 60), limits = c(0, 366)) +
+  ggplot2::scale_y_continuous(breaks = seq(0, 1.2, 0.3), limits = c(0, 1.2))
   base::print(complex_fig)
 }
 ```
@@ -487,17 +513,44 @@ Read the file that describes the composition of each cropping system in terms of
 crop.systems <- data.table::fread(here::here("data/input/07_crop.systems.csv")) %>% dplyr::as_tibble()
 
 knitr::kable(crop.systems, caption = "Cropping Systems")
+```
 
-# Generate the long-format rotation table
-crop.systems.l <- crop.systems %>%
-  dplyr::select(-Irrigation) %>%
-  tidyr::pivot_longer(cols = dplyr::starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
-  dplyr::left_join(crop.param, by = "crop")
+```{r, display-cropping-systems}
+preview_cs <- crop.systems
+cs_cols <- base::colnames(preview_cs)
+
+# Dynamically format column names to handle varying numbers of crop_X columns
+new_cols <- base::sapply(cs_cols, function(col) {
+  if (col == "rotation") {
+    "rotation<br><small style='color:gray; font-weight:normal;'>Rotation ID/Code</small>"
+  } else if (col == "n.rotation") {
+    "n.rotation<br><small style='color:gray; font-weight:normal;'>Rotation Year (1, 2, etc.)</small>"
+  } else if (col == "crop.system") {
+    "crop.system<br><small style='color:gray; font-weight:normal;'>Descriptive system name</small>"
+  } else if (col == "Irrigation") {
+    "Irrigation<br><small style='color:gray; font-weight:normal;'>System-level irrigation status</small>"
+  } else if (col == "soil") {
+    "soil<br><small style='color:gray; font-weight:normal;'>Soil type code</small>"
+  } else if (base::grepl("^crop_", col)) {
+    base::paste0(col, "<br><small style='color:gray; font-weight:normal;'>Internal name for a crop or Crop-Year</small>")
+  } else {
+    col
+  }
+})
+
+base::colnames(preview_cs) <- new_cols
+knitr::kable(preview_cs, escape = FALSE, caption = "Preview: Cropping Systems")
 ```
 
 ## Build annual/multi-annual cropping systems/rotations by compiling individual Crop Kc Curves.
 
 ```{r map-kc-curves, results='hide'}
+# Generate the long-format rotation table
+crop.systems.l <- crop.systems %>%
+  dplyr::select(-Irrigation) %>%
+  tidyr::pivot_longer(cols = dplyr::starts_with("crop_"), names_prefix = "crop_", names_to = "ncrop", values_to = "crop") %>%
+  dplyr::left_join(crop.param, by = "crop")
+
 crop.systems.l.kc <- crop.systems.l %>%
   dplyr::select(rotation, n.rotation, crop.system, soil, ncrop, crop, irrigation, rooting_depth_cm) %>%
   dplyr::left_join(kc.doy.crop.all %>% dplyr::arrange(doy, crop), by = "crop", relationship = "many-to-many")
@@ -545,7 +598,7 @@ base::colnames(preview_ps_disp) <- c(
   "sub-production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Sub-Group</small>",
   "crop.system<br><small style='color:gray; font-weight:normal;'>Implemented rotation</small>",
   "land_use_type<br><small style='color:gray; font-weight:normal;'>Land Use Type</small>",
-  "area_ha<br><small style='color:gray; font-weight:normal;'>Cultivated area</small>"
+  "area_ha<br><small style='color:gray; font-weight:normal;'>Cultivated area<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_ps_disp, escape = FALSE, caption = "Crop Area under each Production System")
 ```
@@ -568,23 +621,11 @@ base::colnames(preview_counts_disp) <- c(
   "time_period<br><small style='color:gray; font-weight:normal;'>Historical grouping</small>",
   "production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Group</small>",
   "sub_production_system<br><small style='color:gray; font-weight:normal;'>Agrarian Sub-Group</small>",
-  "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count</small>"
+  "number_of_farms<br><small style='color:gray; font-weight:normal;'>Total farmer count<br><b>Expected:</b> Numeric</small>"
 )
 knitr::kable(preview_counts_disp, escape = FALSE, caption = "Farm Counts Per Production System")
 ```
 
-# Model Configuration Parameters
-
-The master configuration file (`10_model_parameters.csv`) dictates the essential core hydrological assumptions governing surface runoff and bare-soil evaporation thresholds. Because these parameters apply universally across the toolkit, they are kept intentionally separate from the physical datasets above.
-
-```{r essential-params-display, echo=FALSE}
-essential_params <- sys_params %>% 
-  dplyr::filter(stringr::str_detect(category, "ESSENTIAL")) %>%
-  dplyr::select(-category)
-  
-base::colnames(essential_params) <- c("Parameter", "Value", "Description")
-knitr::kable(essential_params, escape = FALSE, caption = "Essential Core Parameters")
-```
 
 # References
 

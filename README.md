@@ -5,11 +5,10 @@ The Blue Water Potential Toolkit
 agrarian
 system.**[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
-This repository contains the computational workflow and analytical
-engine for the manuscript: \> **Hemingway, C. et al. (202X).**
-*Accounting the unaccounted: a new framework for incorporating farm
-social diversity in micro-regional water budgets* \[Journal Name\].
-\[DOI\]
+This repository contains the computational workflow and analytical model
+for the manuscript: \> **Hemingway, C. et al. (202X).** *Accounting the
+unaccounted: a new framework for incorporating farm social diversity in
+micro-regional water budgets* \[Journal Name\]. \[DOI\]
 
 The **The Blue Water Potential Toolkit** provides a generalized R
 framework for simulating Blue Water Potential (Gross Groundwater
@@ -85,7 +84,7 @@ required to run the toolkit.
 
 ## 🚀 Two Ways to Interact with this Toolkit
 
-You can interact with the underlying analytical engine in two different
+You can interact with the underlying analytical model in two different
 ways, depending on your comfort level with R code.
 
 ### Method 1: The Interactive Shiny App (Recommended)
@@ -126,32 +125,47 @@ If applying this toolkit to a new region, you will need the following
 localized datasets. Refer to the data preview tables in the Shiny App or
 the Quarto HTML reports for strict formatting rules.
 
-**Scale 0: Hydrological & Phenological Parameters**
-
-1.  **Model Parameters (`10_model_parameters.csv`)**: The master
-    configuration file. This contains essential hydrological assumptions
-    (e.g., runoff Curve Number, bare-soil evaporation).
-
 **Scale 1: Blue Water Potential for Cropping Systems.**
+
+1.  **Model Parameters**: The master configuration file
+    (`10_model_parameters.csv`) defines basic hydrological assumptions,
+    including seasonal bare-soil evaporation coefficients
+    (kc_dry_season, kc_kharip), the calendar day to switch between them
+    (doy_switch), the starting soil moisture fraction (sm_init), and the
+    soil_input routing switch—which dictates whether the model should
+    use raw Precipitation (P) or calculate surface runoff to use
+    Effective Precipitation (Peff). This defines basic hydrological
+    assumptions, including seasonal bare-soil evaporation coefficients
+    (kc_dry_season, kc_kharip), the calendar day to switch between them
+    (doy_switch), the starting soil moisture fraction (sm_init), and the
+    soil_input routing switch—which dictates whether the model should
+    use raw Precipitation (P) or calculate surface runoff to use
+    Effective Precipitation (Peff).
 
 2.  **Climatic Forcings**: Multi-year Daily Precipitation and Reference
     Evapotranspiration (ET0).
+
 3.  **Soil Properties**: Water Holding Capacity (WHC) and Readily
     Available Water (RAW).
+
 4.  **Crop Parameters**: Rooting depths and whether the crop is
     irrigated or rainfed.
+
 5.  **Crop Cycle**: Sowing date, Crop phenological phase duration and
     respective crop coefficients (Kc) according to FAO56 method (Allen
     et al., 1998).
+
 6.  **Cropping Systems**: Crop rotation at the plot scale.
 
-**Scale 2: Blue Water Potential for Production Systems.** 7. **Farm
-production systems**: Aggregation of grazed and cropped area (ha) for
-each farming system.
+**Scale 2: Blue Water Potential for Production Systems.**
 
-**Scale 3: Blue Water Potential for Agrarian Systems.** 8. **Agrarian
-system**: Area (ha) of each farm production system (ha) in a given
-village/micro-region.
+7.  **Farm production systems**: Aggregation of grazed and cropped area
+    (ha) for each farming system.
+
+**Scale 3: Blue Water Potential for Agrarian Systems.**
+
+8.  **Agrarian system**: Area (ha) of each farm production system (ha)
+    in a given village/micro-region.
 
 ------------------------------------------------------------------------
 

@@ -163,7 +163,7 @@ HAS_PRODUCTION_SYSTEM <- TRUE # Set to FALSE to Stop at Cropping Systems (requir
 HAS_AGRARIAN_SYSTEM <- TRUE # Set to FALSE to Stop at Production Systems (requires ONLY processed/01 to 08 data files).
 
 # The main Water Budget Calculator function can be turned ON/OFF here. 
-CALCULATE_BUDGET <- TRUE # Toggle this to FALSE, for example, if you have already run the water budget calculations once (so budget outputs are saved), and are manipulating the output processing code.
+CALCULATE_BUDGET <- FALSE # Toggle this to FALSE, for example, if you have already run the water budget calculations once (so budget outputs are saved), and are manipulating the output processing code.
 ```
 
 ## Load Toolkit Dependencies
@@ -321,11 +321,10 @@ knitr::kable(head(farms_count_df), caption = "Preview: Number of Farms belonging
 We first transform precipitation series into site-specific effective inputs ($P_{eff}$), governed by the SCS Curve Number ($CN$) depending on soil type to account for surface runoff, before initializing the core water budget calculator.
 
 ```{r set_param_budget}
-p.list <- list(
+p.list <- base::list(
   precip = precip,
   et0 = et0,
   et0.timestep = et0.timestep, # Weekly or daily
-  CN = get_param("CN"), # If you want to get runoff, set CN corresponding to your soil type
   soil.input = get_param("soil_input", FALSE), # For the case study in Hemingway et al (202X), we assume effective precipitation (Peff) = precipitation. So, calculated Peff is not being used. Set soil.input <- "Peff", if you want to get runoff.
   soil.param = soil.param,
   sm.init = get_param("sm_init"), # Initial soil water content
@@ -335,13 +334,13 @@ p.list <- list(
 )
 
 # The Water Budget Calculator operates on individual rotations
-crop.rotation.kc.ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
+crop.rotation.kc.ls <- base::split(crop.systems.l.kc, crop.systems.l.kc$rotation)
 
 # Vectorized generation of effective precipitation models across targeted soil horizons
-met.forcing.ls <- lapply(as.list(soil.param$soil), function(x) {
-  get_peff_et0(p = p.list, soil = x)
+met.forcing.ls <- base::lapply(base::as.list(soil.param$soil), function(x) {
+  get_peff_et0(p = p.list, soil_id = x)
 })
-names(met.forcing.ls) <- soil.param$soil
+base::names(met.forcing.ls) <- soil.param$soil
 ```
 
 > **Parallel Processing**
@@ -365,7 +364,6 @@ parallel::stopCluster(cl)
 
 names(budget) <- names(crop.rotation.kc.ls)
 base::save(budget, file = here::here("output/01_processed_water_budgets.Rdata"))
-
 ```
 
 ```{r load-precalculated-budgets}
@@ -505,8 +503,9 @@ Finally, we aggregate the Blue Water Potential of all the production systems, or
 
 This figure highlights the role of often ignored social category such as Pastoralists who in 2022 are main Net Contributers of Blue Water in the archetype village. 
 
-```{r village-bwp, eval=HAS_AGRARIAN_SYSTEM, fig.width=17, fig.height=8, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
-# Note to Users with their own data: Even with one Historical Period, the following figure function will work.
+```{r village-bwp, fig.width=17, fig.height=8, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+#| eval: !expr HAS_AGRARIAN_SYSTEM
+#| # Note to Users with their own data: Even with one Historical Period, the following figure function will work.
 
 cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 3000)
   
@@ -554,8 +553,9 @@ if (file.exists(img_path)) {
 Here we illustrate how water balance is commonly represented as aggregated Inflows minus Outflows by land-use. In contrast to the new framework (as illustrated in the last figure), here all land uses are represented as net water consumers. This representation ignores the complementarity between land-uses for the Blue Water Balance at the village/micro-regional scale and can lead to maladaptive management decisions (e.g., getting rid of pastoral systems, or replacement of rainfed crops by irrigated crops).
 
 
-```{r village-budget, eval=HAS_AGRARIAN_SYSTEM, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village.", message = FALSE}
-
+```{r village-budget, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village.", message = FALSE}
+#| eval: !expr HAS_AGRARIAN_SYSTEM
+#| 
 classical_budget_fig_data <- format_agrarian_sankey_data(ps_volumetric_summary)
 
 # --- DEFINE YOUR PREFERRED MARGINS HERE ---
@@ -644,8 +644,9 @@ This figure shows how some social category (Production System) disproportionatel
 For the case study in Hemingway et al. 202X, a large number of rainfed farmers and a few pastoralists have a large positive impact, while a few numbers of Small- and Large-scale fruit growers are the main Blue Water Consumers.
 
 
-```{r disparity-plot, eval=HAS_PRODUCTION_SYSTEM, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³).'}
-
+```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³).'}
+#| eval: !expr HAS_AGRARIAN_SYSTEM
+#| 
 fig.9_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, ps_by_cs_area)
 
 # Save PDF for Manuscript
