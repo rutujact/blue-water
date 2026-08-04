@@ -20,11 +20,11 @@ The codebase uses a strict, automated pipeline to separate user-provided data fr
 ```text
 project_root/
 ├── data/
-│   ├── input/               <- REQUIRED: Place your 9 standardized static CSVs here
+│   ├── input/               <- REQUIRED: Place your 10 standardized CSVs here
 │   └── processed/           <- AUTOMATED: Derived model requirements (e.g., Kc curves) land here
 ├── code/
-│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Phenology Engine)
-│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Analytical Engine)
+│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Crop Phenology Module)
+│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Core Hydrological Model)
 │   └── functions/                   <- Core Calculation and figure functions
 ├── shiny_app/               <- The interactive Web Application UI
 ├── output/                  <- Generated water budget CSV summaries
@@ -66,7 +66,7 @@ This will automatically install the precise versions of the packages required to
 
 ## 🚀 Two Ways to Interact with this Toolkit
 
-You can interact with the underlying analytical model in two different ways, depending on your comfort level with R code.
+You can interact with the underlying core hydrological model in two different ways, depending on your comfort level with R code.
 
 ### Method 1: The Interactive Shiny App (Recommended)
 
