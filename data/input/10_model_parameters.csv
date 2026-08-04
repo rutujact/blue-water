@@ -1,6 +1,0 @@
-parameter,value,category,description
-kc_dry_season,0.01,ESSENTIAL_EVAPORATION,Bare soil evaporation Kc (Dry Season)
-kc_kharip,0.15,ESSENTIAL_EVAPORATION,Bare soil evaporation Kc (Kharif/Monsoon)
-doy_switch,120,ESSENTIAL_EVAPORATION,Day of year to switch between dry/kharif evaporation
-soil_input,P,ESSENTIAL_HYDROLOGY,Use Precipitation (P) or Effective Precip (Peff)
-sm_init,0.5,ESSENTIAL_HYDROLOGY,Initial soil water content fraction

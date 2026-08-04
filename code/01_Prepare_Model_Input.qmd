@@ -127,7 +127,7 @@ Read the master configuration file.
 
 ```{r model-params-display, echo=FALSE}
 # Load Master Parameters
-sys_params <- data.table::fread(here::here("data/input/10_model_parameters.csv")) %>% dplyr::as_tibble()
+sys_params <- data.table::fread(here::here("data/input/01_model_parameters.csv")) %>% dplyr::as_tibble()
 
 # Append expected data types for the end-user display
 sys_params_display <- sys_params %>%
@@ -148,8 +148,8 @@ knitr::kable(sys_params_display, escape = FALSE, caption = "Hydrological Paramet
 The water balance model requires continuous, daily forcing variables. Here, we read the required daily Precipitation (P) and Reference Evapotranspiration (ET0).
 
 ```{r clim-load}
-precip <- data.table::fread(here::here("data/input/01_precipitation.csv")) %>% dplyr::as_tibble()
-et0.daily <- data.table::fread(here::here("data/input/02_et0.csv")) %>% dplyr::as_tibble()
+precip <- data.table::fread(here::here("data/input/02_precipitation.csv")) %>% dplyr::as_tibble()
+et0.daily <- data.table::fread(here::here("data/input/03_et0.csv")) %>% dplyr::as_tibble()
 et0.daily <- et0.daily %>%
   dplyr::mutate(et0 = base::round(et0, 3))
 
@@ -194,7 +194,7 @@ knitr::kable(apply(climate_summary, 2, round, digits = 1), escape = FALSE, capti
 The hydrological model requires specific soil properties: Water Holding Capacity (WHC) and Readily Available Water (RAW).
 
 ```{r soil-load}
-soil.param <- data.table::fread(here::here("data/input/03_soil.parameters.csv")) %>% dplyr::as_tibble()
+soil.param <- data.table::fread(here::here("data/input/04_soil.parameters.csv")) %>% dplyr::as_tibble()
 ```
 
 #### Soil Parameters Table
@@ -216,7 +216,7 @@ knitr::kable(preview_soil, escape = FALSE, caption = "Soil Parameter Table")
 ## Rooting Depth and Irrigated/Rainfed
 
 ```{r crop-param-load}
-crop.param <- data.table::fread(here::here("data/input/04_crop.parameters.csv")) %>% dplyr::as_tibble()
+crop.param <- data.table::fread(here::here("data/input/05_crop.parameters.csv")) %>% dplyr::as_tibble()
 ```
 
 #### Crop Rooting Depth and Irrigated/Rainfed
@@ -236,8 +236,8 @@ knitr::kable(preview_crop, escape = FALSE, caption = "Crop Rooting Depth and Cro
 Our framework dynamically generates daily Kc curves over a calendar year from the input parameters. As described in the manuscript, daily Kc values are computed based on the FAO method for most crops, monthly step functions for some fruit trees, or polynomial equations for groundnut, or linear regrowth rules for grasslands. Some crops such as banana can span multiple years, in which case we define a crop coefficient curve of each year independently.
 
 ```{r load-kc-params}
-fao_kc_raw       <- data.table::fread(here::here("data/input/05_fao_kc_curve_parameters_table.csv")) %>% dplyr::as_tibble()
-fruit_kc_raw   <- data.table::fread(here::here("data/input/06_step_kc_curve_parameters_table.csv")) %>% dplyr::as_tibble()
+fao_kc_raw       <- data.table::fread(here::here("data/input/06_fao_kc_curve_parameters_table.csv")) %>% dplyr::as_tibble()
+fruit_kc_raw   <- data.table::fread(here::here("data/input/07_step_kc_curve_parameters_table.csv")) %>% dplyr::as_tibble()
 ```
 
 #### FAO Segmented Parameters
@@ -510,7 +510,7 @@ readr::write_csv(kc.doy.crop.all, file = here::here("data/processed/supplementar
 Read the file that describes the composition of each cropping system in terms of crop rotations at the plot scale.
 
 ```{r, load-cropping-systems}
-crop.systems <- data.table::fread(here::here("data/input/07_crop.systems.csv")) %>% dplyr::as_tibble()
+crop.systems <- data.table::fread(here::here("data/input/08_crop.systems.csv")) %>% dplyr::as_tibble()
 
 knitr::kable(crop.systems, caption = "Cropping Systems")
 ```
@@ -582,7 +582,7 @@ readr::write_csv(crop.systems.l.kc, file = here::here("data/processed/01_crop.sy
 Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025 and modified in Hemingway et al. 2026.
 
 ```{r load-production-system}
-ps_by_cs_area  <- data.table::fread(here::here("data/input/08_crop_system_area_by_production_system.csv")) %>% dplyr::as_tibble()
+ps_by_cs_area  <- data.table::fread(here::here("data/input/09_crop_system_area_by_production_system.csv")) %>% dplyr::as_tibble()
 ```
 
 ```{r display-area, echo=FALSE}
@@ -608,7 +608,7 @@ knitr::kable(preview_ps_disp, escape = FALSE, caption = "Crop Area under each Pr
 Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
 
 ```{r load-agrarian}
-farms_count_df <- data.table::fread(here::here("data/input/09_no_of_farmers_by_production_system.csv")) %>% dplyr::as_tibble()
+farms_count_df <- data.table::fread(here::here("data/input/10_no_of_farmers_by_production_system.csv")) %>% dplyr::as_tibble()
 ```
 
 ```{r display-counts, echo=FALSE}

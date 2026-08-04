@@ -95,13 +95,11 @@ For researchers, or users who want to deeply interrogate the underlying code, th
 
 ## 📊 Data Requirements
 
-If applying this toolkit to a new region, you will need the following localized datasets. Refer to the data preview tables in the Shiny App or the Quarto HTML reports for strict formatting rules.
+If applying this toolkit to a new region, you will need the following localized datasets. Refer to the data preview tables in the Shiny App or the Quarto HTML report (`01_Prepare_Model_Inputs.qmd`) for strict formatting rules.
 
 **Scale 1: Blue Water Potential for Cropping Systems.**
 
-1. **Model Parameters**: The master configuration file  (`10_model_parameters.csv`) defines basic hydrological assumptions, including seasonal bare-soil evaporation coefficients (kc_dry_season, kc_kharip), the calendar day to switch between them (doy_switch), the starting soil moisture fraction (sm_init), and the soil_input routing switch—which dictates whether the model should use raw Precipitation (P) or calculate surface runoff to use Effective Precipitation (Peff).
- This defines basic hydrological assumptions, including seasonal bare-soil evaporation coefficients (kc_dry_season, kc_kharip), the calendar day to switch between them (doy_switch), the starting soil moisture fraction (sm_init), and the soil_input routing switch—which dictates whether the model should use raw Precipitation (P) or calculate surface runoff to use Effective Precipitation (Peff).
-
+1. **Model Parameters**: The master configuration file defining baseline hydrological assumptions (e.g., bare-soil evaporation rules, initial soil moisture, and runoff routing). 
 2. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
 3. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
 4. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
@@ -114,7 +112,7 @@ If applying this toolkit to a new region, you will need the following localized 
 
 **Scale 3: Blue Water Potential for Agrarian Systems.**
 
-8. **Agrarian system**: Area (ha) of each farm production system (ha) in a given village/micro-region.
+8. **Agrarian system**: Total number of farmers belonging to each production system a given village/micro-region.
 
 ---
 

@@ -130,7 +130,7 @@ ggplot2::theme_set(
   )
 )
 
-sys_params <- data.table::fread(here::here("data/input/10_model_parameters.csv")) %>% dplyr::as_tibble()
+sys_params <- data.table::fread(here::here("data/input/01_model_parameters.csv")) %>% dplyr::as_tibble()
 
 get_param <- function(param_name, is_numeric = TRUE) {
   val <- sys_params$value[sys_params$parameter == param_name]
@@ -190,11 +190,11 @@ Below, we ingest the processed climate series and provide brief data previews.
 ```{r load-met}
 sitename <- "Anantapur"
 # Meteorological Forcing
-precip <- utils::read.csv(file = here::here("data/input/01_precipitation.csv"), header = TRUE) 
+precip <- utils::read.csv(file = here::here("data/input/02_precipitation.csv"), header = TRUE) 
 years.range <- range(as.numeric(format(strptime(precip$date, format = "%Y-%m-%d"), format = "%Y")))
 years.range.plot <- paste(years.range[1], ":", years.range[2])
 
-et0 <- utils::read.csv(file = here::here("data/input/02_et0.csv"), header = TRUE) 
+et0 <- utils::read.csv(file = here::here("data/input/03_et0.csv"), header = TRUE) 
 et0.timestep = "daily" 
 
 # Display Previews
@@ -225,11 +225,11 @@ ggplot2::ggsave(plot = fig.1_journal, filename = here::here("figures/presentatio
 
 ```{r load-soil-and-crop}
 # Soil Parameters
-soil.param <- utils::read.csv(file = here::here("data/input/03_soil.parameters.csv"), header = TRUE)
+soil.param <- utils::read.csv(file = here::here("data/input/04_soil.parameters.csv"), header = TRUE)
 knitr::kable(soil.param, caption = "Preview: Soil Parameter")
 
 # Crop Rooting Depth & Rainfed/Irrigated Crop
-crop.param <- utils::read.csv(file = here::here("data/input/04_crop.parameters.csv"), header = TRUE)
+crop.param <- utils::read.csv(file = here::here("data/input/05_crop.parameters.csv"), header = TRUE)
 knitr::kable(head(crop.param), caption = "Preview: Crop Rooting Depth and Rainfed/Irrigated Crop")
 
 ### Kc Curves for All Crops
@@ -262,7 +262,7 @@ ggplot2::ggsave(plot = fig.2_journal, filename = here::here("figures/presentatio
 
 ```{r, load-cropping-systems}
 # Cropping Systems
-crop.systems <- utils::read.csv(file = here::here("data/input/07_crop.systems.csv"), header = TRUE)
+crop.systems <- utils::read.csv(file = here::here("data/input/08_crop.systems.csv"), header = TRUE)
 
 knitr::kable(head(crop.systems), caption = "Preview: Cropping Systems")
 
@@ -295,7 +295,7 @@ These files map the cropping systems to Production Systems or farm types.
 #| eval: !expr HAS_PRODUCTION_SYSTEM
 # ⚠️ **Note to Users:** The following section executes **Scale 2** of this toolkit and requires data files: processed/01 to 08). If you have set `HAS_AGRARIAN_SYSTEM <- FALSE` in the setup chunk, then scale beyond Scale 2 in this document will be intentionally skipped during rendering.
 
-ps_by_cs_area <- utils::read.csv(file = here::here("data/input/08_crop_system_area_by_production_system.csv"), header = TRUE)
+ps_by_cs_area <- utils::read.csv(file = here::here("data/input/09_crop_system_area_by_production_system.csv"), header = TRUE)
 
 knitr::kable(head(ps_by_cs_area), caption = "Preview: Cropping Systems and their Areas within each Production System")
 ```
@@ -308,7 +308,7 @@ Number of farms belonging to each of the Production Systems in the Agrarian Syst
 
 # ⚠️ **Note to Users:** The following section executes **Scale 3** of this toolkit and requires all data files: processed/01 to 09). By default, that is when all `HAS_AGRARIAN_SYSTEM <- TRUE` in the setup chunk, the script will run till the end. "Preview: Number of farms belonging to each of the Production Systems"
 
-farms_count_df <- utils::read.csv(file = here::here("data/input/09_no_of_farmers_by_production_system.csv"), header = TRUE)
+farms_count_df <- utils::read.csv(file = here::here("data/input/10_no_of_farmers_by_production_system.csv"), header = TRUE)
 
 knitr::kable(head(farms_count_df), caption = "Preview: Number of Farms belonging to each Production System")
 

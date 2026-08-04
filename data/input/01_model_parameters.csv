@@ -1,0 +1,6 @@
+"parameter","value","description"
+"kc_dry_season","0.005","Crop coefficient for bare soil during the dry season"
+"kc_kharip","0.2","Crop coefficient for bare soil during the Kharip (monsoon) season"
+"doy_switch","120","Day of Year (DOY) to switch between dry season and Kharip evaporation rules"
+"sm_init","0.5","Initial soil moisture fraction at the start of the simulation (0 to 1)"
+"soil_input","P","Precipitation routing switch: 'P' uses raw rainfall, 'Peff' calculates surface runoff"
