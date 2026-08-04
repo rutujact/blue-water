@@ -262,45 +262,7 @@ get_budget <- function(cs, p, ts) {
     dplyr::reframe(quantile_df(value)) %>%
     base::as.data.frame() %>%
     tidyr::pivot_wider(names_from = "quantile", values_from = "value")
-  
-  # 3.13. Plot Visualization Components ----
-  crop.sys.title <- base::paste0("Crop System: ", cs$crop.system[1], " | Rotation: ", cs$rotation[1],
-                                 " on ", base::toupper(soil.type), " soil")
-  
-  # 3.13.1 Daily Diagnostic Panels (Default Evaluation Year: 2018) ----
-  daily.vars.to.plot <- c("kcr", "aet.to.etc.crop", "P", "Q", "irrigation", "sm.end", "aet", "recharge")
-  years.to.plot <- c(2018)
-  
-  ts.l <- ts %>%
-    tidyr::pivot_longer(cols = -c(date, year, doy), names_to = "var", values_to = "value") %>%
-    base::subset(var %in% daily.vars.to.plot)
-  ts.l.select <- ts.l %>% base::subset(year %in% years.to.plot)
-  
-  p.daily_1 <- ggplot2::ggplot(ts.l.select %>% base::subset(var %in% c("P", "Q", "irrigation", "sm.end")),
-                               ggplot2::aes(x = date, y = value)) +
-    ggplot2::geom_line(ggplot2::aes(group = var, color = var), na.rm = TRUE) +
-    ggplot2::ylab("mm") + ggplot2::xlab("Year-DOY") +
-    ggplot2::scale_x_date(date_labels = "%Y-%m-%d", date_breaks = "6 months") +
-    ggplot2::theme_minimal() +
-    ggplot2::scale_color_discrete("")
-  
-  p.daily_2 <- p.daily_1 %+% base::subset(ts.l.select, var %in% c("aet", "recharge"))
-  p.daily_3 <- p.daily_1 %+% base::subset(ts.l.select, var %in% c("kcr", "aet.to.etc.crop")) +
-    ggplot2::ylab("value") +
-    ggplot2::ggtitle(base::paste0(crop.sys.title, "\n", "Water Budget for ", base::paste(years.to.plot, collapse = "-")))
-  
-  p.daily.budget <- ggpubr::ggarrange(p.daily_3, p.daily_1, p.daily_2,
-                                      nrow = 3, ncol = 1,
-                                      labels = c("A", "B", "C"),
-                                      legend = "top")
-  
-  if (!base::dir.exists(here::here("figures/water_budgets/"))) base::dir.create(here::here("figures/water_budgets/"), recursive = TRUE)
-  
-  ggplot2::ggsave(plot = p.daily.budget, file = 
-                    here::here(base::paste0("figures/water_budgets/water_budget_SOIL_", soil.type,
-                                            "_CROPS_", base::paste(cs.ncrop$crop[1:3], collapse = "_"), "_", 
-                                            base::paste(years.to.plot, collapse = "-"), "_daily.pdf")), width = 9, height = 9)
-  
+ 
   return(base::list(ts = ts, sum.yr = sum.yr, summary.yr = summary.yr, 
                     sum.mo = sum.mo, clim.mo = clim.mo))
 }

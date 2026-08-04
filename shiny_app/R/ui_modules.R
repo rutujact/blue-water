@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # R/ui_modules.R
-# User Interface Modules for Track 1 and Track 2
+# User Interface Modules for Scales 1, 2, and 3
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Helper to create a native Bootstrap 5 HTML tooltip ----
@@ -25,56 +25,76 @@ data_upload_ui <- function(id) {
     conditionalPanel(
       condition = sprintf("input['%s'] == true", ns("use_custom")),
       
-      h5("Biophysical Data (Track 1)", info_tooltip("Files 1-7 define the hydrological forcing, soil types, and crop phenology.")),
-      fileInput(ns("custom_precip"), "1. Precipitation (01_precip)", accept = ".csv"),
-      fileInput(ns("custom_et0"), "2. Reference ET0 (02_et0)", accept = ".csv"),
-      fileInput(ns("custom_soil"), "3. Soil Params (03_soil)", accept = ".csv"),
-      fileInput(ns("custom_crop"), "4. Crop Params (04_crop)", accept = ".csv"),
-      fileInput(ns("custom_kc"), "5. FAO Kc Params (05_fao_kc)", accept = ".csv"),
-      fileInput(ns("custom_fruit"), "6. Monthly Step Kc Params (06_monthly_kc) [Optional]", accept = ".csv"),
-      fileInput(ns("custom_systems"), "7. Crop Systems (07_systems)", accept = ".csv"),
+      p(tags$small(em("Note: Uploading custom data will securely update the active baseline CSVs in your local 'data/input/' directory to synchronize with the final HTML report generator."))),
+      
+      h5("Scale 1: Cropping Systems Data", info_tooltip("Files 1-8 define the hydrological forcing, soil types, and crop phenology.")),
+      fileInput(ns("custom_model"), "1. Model Params (01_model_parameters)", accept = ".csv"),
+      fileInput(ns("custom_precip"), "2. Precipitation (02_precip)", accept = ".csv"),
+      fileInput(ns("custom_et0"), "3. Reference ET0 (03_et0)", accept = ".csv"),
+      fileInput(ns("custom_soil"), "4. Soil Params (04_soil)", accept = ".csv"),
+      fileInput(ns("custom_crop"), "5. Crop Params (05_crop)", accept = ".csv"),
+      fileInput(ns("custom_kc"), "6. FAO Kc Params (06_fao_kc)", accept = ".csv"),
+      fileInput(ns("custom_fruit"), "7. Monthly Step Kc Params (07_monthly_kc) [Optional]", accept = ".csv"),
+      fileInput(ns("custom_systems"), "8. Crop Systems (08_systems)", accept = ".csv"),
       
       hr(),
-      checkboxInput(ns("enable_track2"), "Include Socio-Demographic Data (Track 2)", value = TRUE),
+      checkboxInput(ns("enable_scale2"), "Include Scale 2 Data (Production Systems)", value = TRUE),
       conditionalPanel(
-        condition = sprintf("input['%s'] == true", ns("enable_track2")),
-        fileInput(ns("custom_area"), "8. Area by Crop System (08_area)", accept = ".csv"),
-        fileInput(ns("custom_farms"), "9. Farm Counts (09_farms)", accept = ".csv")
+        condition = sprintf("input['%s'] == true", ns("enable_scale2")),
+        fileInput(ns("custom_area"), "9. Area by Crop System (09_area)", accept = ".csv"),
+        
+        hr(),
+        checkboxInput(ns("enable_scale3"), "Include Scale 3 Data (Agrarian Systems)", value = TRUE),
+        conditionalPanel(
+          condition = sprintf("input['%s'] == true", ns("enable_scale3")),
+          fileInput(ns("custom_farms"), "10. Farm Counts (10_farms)", accept = ".csv")
+        )
       ),
       
+      br(),
       actionButton(ns("load_custom_data"), "Validate & Load Custom Data", icon = icon("upload"), class = "btn-warning w-100")
     )
   )
 }
 
-# Module: Pre-Processing Controls (Kc Engine) ----
+# Module: Pre-Processing Controls (Crop Phenology Module) ----
 preproc_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    p("Click below to dynamically generate the continuous daily Crop Coefficient (Kc) curves. This must be completed before running the Biophysical Engine."),
+    p("Click below to dynamically generate the continuous daily Crop Coefficient (Kc) curves. This must be completed before running the Core Hydrological Model."),
     hr(),
     uiOutput(ns("run_preproc_ui"))
   )
 }
 
-# Module: Track 1 Controls (Biophysical Engine) ----
-track1_controls_ui <- function(id) {
+# Module: Scale 1 Controls (Core Hydrological Model) ----
+scale1_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
     p("Click below to process the full regional water budget across all crop rotations and soil types. This multi-decadal simulation will take a few minutes."),
     hr(),
     uiOutput(ns("run_engine_ui")),
     br(), br(),
-    uiOutput(ns("download_ui_t1"))
+    uiOutput(ns("download_ui_s1"))
   )
 }
 
-# Module: Track 2 Controls (Socio-Hydrological Engine) ----
-track2_controls_ui <- function(id) {
+# Module: Scale 2 Controls (Production System Level) ----
+scale2_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    p("These visualisations map the physical water budgets to specific socio-economic farm topologies and historical demographic data."),
+    p("These visualisations map the physical water budgets to specific socio-economic farm topologies."),
     hr(),
-    uiOutput(ns("download_ui_t2"))
+    uiOutput(ns("download_ui_s2"))
+  )
+}
+
+# Module: Scale 3 Controls (Agrarian System Level) ----
+scale3_controls_ui <- function(id) {
+  ns <- NS(id)
+  tagList(
+    p("These visualisations scale farm footprints by demographic counts to reveal absolute micro-regional impacts."),
+    hr(),
+    uiOutput(ns("download_ui_s3"))
   )
 }
