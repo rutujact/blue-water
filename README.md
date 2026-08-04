@@ -28,11 +28,11 @@ data from model-generated data.
 ``` text
 project_root/
 ├── data/
-│   ├── input/               <- REQUIRED: Place your 9 standardized static CSVs here
+│   ├── input/               <- REQUIRED: Place your 10 standardized CSVs here
 │   └── processed/           <- AUTOMATED: Derived model requirements (e.g., Kc curves) land here
 ├── code/
-│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Phenology Engine)
-│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Analytical Engine)
+│   ├── 01_Prepare_Model_Inputs.qmd  <- Run 1st: Generates processed Kc curves (Crop Phenology Module)
+│   ├── 02_Blue-Water.qmd            <- Run 2nd: Executes Water Budget & plots results (Core Hydrological Model)
 │   └── functions/                   <- Core Calculation and figure functions
 ├── shiny_app/               <- The interactive Web Application UI
 ├── output/                  <- Generated water budget CSV summaries
@@ -66,26 +66,39 @@ To use this toolkit, you will need to run it locally on your machine.
 install.packages(c("shiny", "bslib", "shinyWidgets", "tidyverse", "data.table", "lubridate", "stringr", "scales", "ggpubr", "patchwork", "RColorBrewer", "networkD3", "htmlwidgets", "parallel", "pbapply", "here", "DT"))
 ```
 
-3.  Environment Stability
+## 💻 Installation & Setup
 
-This project uses `renv` to manage package versions. This ensures that
-the application remains stable and reproducible regardless of future
-package updates.
+To use this toolkit, you will need to run it locally on your machine.
 
-- **To initialize:** After cloning the repository, open the project in
-  RStudio. It will detect the `renv` environment. Run:
+1.  **Install R and RStudio:** Ensure you have
+    [RStudio](https://posit.co/download/rstudio-desktop/) installed.
+    This toolkit was developed and tested using **R version 4.2.2**. To
+    guarantee full compatibility with the package library, we strongly
+    recommend installing [R
+    4.2.2](https://cran.r-project.org/src/base/R-4/), though newer
+    versions may still work.
+
+2.  **Initialize the Environment:** This project uses `renv` to manage
+    package dependencies. This acts as a time capsule, ensuring that the
+    application remains stable and reproducible by installing the exact
+    package versions used during development, regardless of future CRAN
+    updates.
+
+After cloning the repository, open the `Blue-Water.Rproj` file in
+RStudio. It will automatically detect the `renv` environment. Run the
+following command in your R Console:
 
 ``` r
-  renv::restore()
+renv::restore()
 ```
 
-This will automatically install the precise versions of the packages
-required to run the toolkit.
+R will prompt you to confirm the installation of the required packages.
+Type y to proceed.
 
 ## 🚀 Two Ways to Interact with this Toolkit
 
-You can interact with the underlying analytical model in two different
-ways, depending on your comfort level with R code.
+You can interact with the underlying core hydrological model in two
+different ways, depending on your comfort level with R code.
 
 ### Method 1: The Interactive Shiny App (Recommended)
 
@@ -123,38 +136,23 @@ scripts in the `code/` directory.
 
 If applying this toolkit to a new region, you will need the following
 localized datasets. Refer to the data preview tables in the Shiny App or
-the Quarto HTML reports for strict formatting rules.
+the Quarto HTML report (`01_Prepare_Model_Inputs.qmd`) for strict
+formatting rules.
 
 **Scale 1: Blue Water Potential for Cropping Systems.**
 
-1.  **Model Parameters**: The master configuration file
-    (`10_model_parameters.csv`) defines basic hydrological assumptions,
-    including seasonal bare-soil evaporation coefficients
-    (kc_dry_season, kc_kharip), the calendar day to switch between them
-    (doy_switch), the starting soil moisture fraction (sm_init), and the
-    soil_input routing switch—which dictates whether the model should
-    use raw Precipitation (P) or calculate surface runoff to use
-    Effective Precipitation (Peff). This defines basic hydrological
-    assumptions, including seasonal bare-soil evaporation coefficients
-    (kc_dry_season, kc_kharip), the calendar day to switch between them
-    (doy_switch), the starting soil moisture fraction (sm_init), and the
-    soil_input routing switch—which dictates whether the model should
-    use raw Precipitation (P) or calculate surface runoff to use
-    Effective Precipitation (Peff).
-
+1.  **Model Parameters**: The master configuration file defining
+    baseline hydrological assumptions (e.g., bare-soil evaporation
+    rules, initial soil moisture, and runoff routing).
 2.  **Climatic Forcings**: Multi-year Daily Precipitation and Reference
     Evapotranspiration (ET0).
-
 3.  **Soil Properties**: Water Holding Capacity (WHC) and Readily
     Available Water (RAW).
-
 4.  **Crop Parameters**: Rooting depths and whether the crop is
     irrigated or rainfed.
-
 5.  **Crop Cycle**: Sowing date, Crop phenological phase duration and
     respective crop coefficients (Kc) according to FAO56 method (Allen
     et al., 1998).
-
 6.  **Cropping Systems**: Crop rotation at the plot scale.
 
 **Scale 2: Blue Water Potential for Production Systems.**
@@ -164,8 +162,8 @@ the Quarto HTML reports for strict formatting rules.
 
 **Scale 3: Blue Water Potential for Agrarian Systems.**
 
-8.  **Agrarian system**: Area (ha) of each farm production system (ha)
-    in a given village/micro-region.
+8.  **Agrarian system**: Total number of farmers belonging to each
+    production system a given village/micro-region.
 
 ------------------------------------------------------------------------
 
