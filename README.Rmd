@@ -5,12 +5,12 @@ output: github_document
 
 **A socio-hydrological framework to scale water budgets from plot to agrarian system.**[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
-This repository contains the computational workflow and analytical model for the manuscript:
-> **Hemingway, C. et al. (202X).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
+This repository contains the computational workflow and analytical model for the manuscript: > **Hemingway, C. et al. (202X).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
 The **The Blue Water Potential Toolkit** provides a generalized R framework for
 simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
 
+The **The Blue Water Potential Toolkit** serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (202X), and it can be applied to new study sites. 
 ---
 
 ## 📂 Repository Structure
@@ -41,21 +41,6 @@ project_root/
 To use this toolkit, you will need to run it locally on your machine.
 
 1. **Install R and RStudio:**
-Ensure you have [RStudio](https://posit.co/download/rstudio-desktop/) installed. This toolkit was developed and tested using **R version 4.2.2**. To guarantee full compatibility with the `renv` package library, we strongly recommend installing [R 4.2.2](https://cran.r-project.org/src/base/R-4/), though newer versions may still work.
-
-2. **Install Required Packages:**
-Open RStudio, copy the following command, and paste it into your Console to manually install all necessary dependencies. *(If RStudio prompts you to compile from sources, it is generally safer to type "no" and use the pre-compiled binaries).*
-
-```r
-install.packages(c("shiny", "bslib", "shinyWidgets", "tidyverse", "data.table", "lubridate", "stringr", "scales", "ggpubr", "patchwork", "RColorBrewer", "networkD3", "htmlwidgets", "parallel", "pbapply", "here", "DT"))
-
-```
-
-## 💻 Installation & Setup
-
-To use this toolkit, you will need to run it locally on your machine.
-
-1. **Install R and RStudio:**
 Ensure you have [RStudio](https://posit.co/download/rstudio-desktop/) installed. This toolkit was developed and tested using **R version 4.2.2**. To guarantee full compatibility with the package library, we strongly recommend installing [R 4.2.2](https://cran.r-project.org/src/base/R-4/), though newer versions may still work.
 
 2. **Initialize the Environment:**
@@ -68,7 +53,6 @@ renv::restore()
 ```
 
 R will prompt you to confirm the installation of the required packages. Type y to proceed.
-
 
 ## 🚀 Two Ways to Interact with this Toolkit
 
@@ -88,7 +72,7 @@ shiny::runApp("shiny_app")
 
 3. Use the **Data Setup** tab to load the default repository data or upload your own localized CSVs.
 
-4. Navigate through **Track 1** and **Track 2** to generate the water budgets and download a compiled PDF report.
+4. Navigate through **Scale 1**, **Scale 2** and **Scale 3** to generate the water budgets and download a compiled HTML report.
 
 ### Method 2: The Quarto Notebooks (For Advanced Users)
 

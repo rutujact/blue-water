@@ -35,7 +35,7 @@ h1, h2 {
 
 ### 🗂️ Overview & Data Summary
 
-This script processes, visualizes, and expands seven distinct categories of input data required by the hydrological model:
+This script processes, visualizes, and expands eight distinct categories of input data required by the hydrological model:
 
 1. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
 2. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
@@ -73,16 +73,16 @@ The Blue Water Potential Toolkit serves two purposes: it can be used to reproduc
 project_root/
 ├── data/
 │   ├── input/                       <- REQUIRED: Drop your 10 standardized CSVs here
-│   │   ├── 01_precipitation.csv
-│   │   ├── 02_et0.csv
-│   │   ├── 03_soil.parameters.csv
-│   │   ├── 04_crop.parameters.csv
-│   │   ├── 05_fao_kc_curve_parameters_table.csv
-│   │   ├── 06_step_kc_curve_parameters_table.csv (optional)
-│   │   ├── 07_crop.systems.csv
-│   │   ├── 08_crop_system_area_by_production_system.csv
-│   │   ├── 09_no_of_farmers_by_production_system.csv
-│   │   └── 10_model_parameters.csv
+│   │   ├── 01_model_parameters.csv
+│   │   ├── 02_precipitation.csv
+│   │   ├── 03_et0.csv
+│   │   ├── 04_soil.parameters.csv
+│   │   ├── 05_crop.parameters.csv
+│   │   ├── 06_fao_kc_curve_parameters_table.csv
+│   │   ├── 07_step_kc_curve_parameters_table.csv (optional)
+│   │   ├── 08_crop.systems.csv
+│   │   ├── 09_crop_system_area_by_production_system.csv
+│   │   └── 10_no_of_farmers_by_production_system.csv
 │   └── processed/                   <- AUTOMATED: Derived model requirements land here
 │       └── supplementary/           <- Generated: Intermediary Kc tables
 ├── code/
