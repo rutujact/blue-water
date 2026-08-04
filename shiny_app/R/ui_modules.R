@@ -71,7 +71,7 @@ preproc_controls_ui <- function(id) {
 scale1_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    p("Click below to process the full water budget across all crop rotations and soil types. This multi-decadal simulation will take a few minutes."),
+    p("Click below to process the full water budget across all crop rotations and soil types (Scale 1). This multi-decadal simulation will take a few minutes."),
     hr(),
     uiOutput(ns("run_engine_ui")),
     br(), br(),
@@ -83,7 +83,7 @@ scale1_controls_ui <- function(id) {
 scale2_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    p("These visualisations show the aggregated Blue Water Potential of different cropping systems within each production system (social category of farmer)."),
+    p("These visualisations map the hydrological water budgets to socio-economic farm catgories."),
     hr(),
     uiOutput(ns("download_ui_s2"))
   )
@@ -93,7 +93,7 @@ scale2_controls_ui <- function(id) {
 scale3_controls_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    p("These visualisations scale Production System footprints by demographic counts to reveal micro-regional impacts."),
+    p("These visualisations scale farm footprints by demographic counts to reveal micro-regional impacts."),
     hr(),
     uiOutput(ns("download_ui_s3"))
   )

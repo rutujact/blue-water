@@ -54,8 +54,8 @@ data_ingestion_server <- function(id) {
         d_fao_kc       <- read_csv(file.path(data_dir, "06_fao_kc_curve_parameters_table.csv"), show_col_types = FALSE)
         d_step_kc      <- read_csv(file.path(data_dir, "07_step_kc_curve_parameters_table.csv"), show_col_types = FALSE)
         d_crop_systems <- read_csv(file.path(data_dir, "08_crop.systems.csv"), show_col_types = FALSE)
-        d_ps_by_cs_area<- read_csv(file.path(data_dir, "09_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
-        d_farms_count  <- read_csv(file.path(data_dir, "10_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
+        d_ps_by_cs_area<- read_csv(file.path(data_dir, "09_crop_system_area_by_production_system.csv"), show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
+        d_farms_count  <- read_csv(file.path(data_dir, "10_no_of_farmers_by_production_system.csv"), show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
         
         validate_schemas(d_precip, d_et0, d_crop_systems, d_model_param, d_ps_by_cs_area, d_farms_count, has_scale2 = TRUE, has_scale3 = TRUE)
         
@@ -104,11 +104,11 @@ data_ingestion_server <- function(id) {
         
         if (has_s2) {
           req(input$custom_area)
-          d_ps_by_cs_area <- read_csv(input$custom_area$datapath, show_col_types = FALSE)
+          d_ps_by_cs_area <- read_csv(input$custom_area$datapath, show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
         }
         if (has_s3) {
           req(input$custom_farms)
-          d_farms_count <- read_csv(input$custom_farms$datapath, show_col_types = FALSE)
+          d_farms_count <- read_csv(input$custom_farms$datapath, show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
         }
         
         validate_schemas(d_precip, d_et0, d_crop_systems, d_model_param, d_ps_by_cs_area, d_farms_count, has_scale2 = has_s2, has_scale3 = has_s3)
@@ -160,7 +160,7 @@ pre_processing_server <- function(id, app_data) {
     
     output$run_preproc_ui <- renderUI({
       if (isTruthy(app_data$is_loaded)) {
-        actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
+        actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-success w-100")
       } else {
         tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("cogs"), " Calculate Kc Curves")
       }
@@ -287,7 +287,7 @@ scale1_engine_server <- function(id, app_data, preproc_data) {
     
     output$download_ui_s1 <- renderUI({
       if (isTruthy(engine_results$is_calculated)) {
-        downloadButton(session$ns("download_report_s1"), "Download HTML Report", class = "btn-info w-100")
+        downloadButton(session$ns("download_report_s1"), "Download HTML Report", class = "btn-outline-primary w-100")
       } else {
         tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
       }
@@ -361,7 +361,7 @@ socio_engine_server <- function(id, app_data, engine_results) {
     
     output$download_ui_s2 <- renderUI({
       if (isTruthy(engine_results$is_calculated) && app_data$has_scale2) {
-        downloadButton(session$ns("download_report_s2"), "Download HTML Report", class = "btn-info w-100")
+        downloadButton(session$ns("download_report_s2"), "Download HTML Report", class = "btn-outline-primary w-100")
       } else {
         tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
       }
@@ -369,7 +369,7 @@ socio_engine_server <- function(id, app_data, engine_results) {
     
     output$download_ui_s3 <- renderUI({
       if (isTruthy(engine_results$is_calculated) && app_data$has_scale3) {
-        downloadButton(session$ns("download_report_s3"), "Download HTML Report", class = "btn-info w-100")
+        downloadButton(session$ns("download_report_s3"), "Download HTML Report", class = "btn-outline-primary w-100")
       } else {
         tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
       }
@@ -384,10 +384,10 @@ socio_engine_server <- function(id, app_data, engine_results) {
         tidyr::pivot_longer(cols = c(-rotation, -year), names_to = "var", values_to = "value") %>%
         dplyr::left_join(app_data$crop_systems, by = "rotation")
       
-      ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = as.character(time_period))
+      ps_area <- app_data$ps_by_cs_area
       
       if (app_data$has_scale3) {
-        farms <- app_data$farms_count %>% mutate(time_period = as.character(time_period))
+        farms <- app_data$farms_count
         # FIXED: Included sub_production_system in the grouping to prevent it from being dropped
         farms_clean <- farms %>% 
           group_by(time_period, production_system, sub_production_system) %>% 
