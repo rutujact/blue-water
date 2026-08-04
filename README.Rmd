@@ -51,17 +51,23 @@ install.packages(c("shiny", "bslib", "shinyWidgets", "tidyverse", "data.table", 
 
 ```
 
-3. Environment Stability
+## 💻 Installation & Setup
 
-This project uses `renv` to manage package versions. This ensures that the application remains stable and reproducible regardless of future package updates. 
+To use this toolkit, you will need to run it locally on your machine.
 
-* **To initialize:** After cloning the repository, open the project in RStudio. It will detect the `renv` environment. Run:
+1. **Install R and RStudio:**
+Ensure you have [RStudio](https://posit.co/download/rstudio-desktop/) installed. This toolkit was developed and tested using **R version 4.2.2**. To guarantee full compatibility with the package library, we strongly recommend installing [R 4.2.2](https://cran.r-project.org/src/base/R-4/), though newer versions may still work.
+
+2. **Initialize the Environment:**
+This project uses `renv` to manage package dependencies. This acts as a time capsule, ensuring that the application remains stable and reproducible by installing the exact package versions used during development, regardless of future CRAN updates. 
+
+After cloning the repository, open the `Blue-Water.Rproj` file in RStudio. It will automatically detect the `renv` environment. Run the following command in your R Console:
 
 ```r
-  renv::restore()
+renv::restore()
 ```
 
-This will automatically install the precise versions of the packages required to run the toolkit.
+R will prompt you to confirm the installation of the required packages. Type y to proceed.
 
 
 ## 🚀 Two Ways to Interact with this Toolkit

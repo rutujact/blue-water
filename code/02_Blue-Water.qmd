@@ -106,8 +106,22 @@ knitr::opts_chunk$set(
 options(width = 80)
 
 # Load core dependencies
-if (!require("pacman")) install.packages("pacman"); library(pacman)
-pacman::p_load(tidyverse, ggpubr, parallel, mcprogress, pbapply, patchwork, RColorBrewer, ggtext, ggarrow, networkD3, htmlwidgets, webshot2, htmltools, here, readr)
+# Load core dependencies
+library(tidyverse)
+library(ggpubr)
+library(parallel)
+library(mcprogress)
+library(pbapply)
+library(patchwork)
+library(RColorBrewer)
+library(ggtext)
+library(ggarrow)
+library(networkD3)
+library(htmlwidgets)
+library(webshot2)
+library(htmltools)
+library(here)
+library(readr)
 
 # Generate directory framework if missing
 required_dirs <- list(

@@ -99,8 +99,11 @@ project_root/
 base::rm(list = base::ls(all.names = TRUE)); base::gc()
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 
-if (!base::require("pacman")) utils::install.packages("pacman")
-pacman::p_load(tidyverse, here, knitr, rmarkdown)
+# Load core dependencies
+library(tidyverse)
+library(here)
+library(knitr)
+library(rmarkdown)
 
 # Ensure output directories exist
 new.dirs <- base::list(here::here("data/processed"), here::here("data/processed/supplementary"))
