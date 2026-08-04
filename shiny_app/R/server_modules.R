@@ -1,6 +1,6 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # R/server_modules.R
-# Server Logic for Data Ingestion, Pre-Processing, and Engine Execution
+# Server Logic for Data Ingestion, Pre-Processing, and Model Execution
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Module 1: Data Ingestion & Validation ----
@@ -9,30 +9,14 @@ data_ingestion_server <- function(id) {
     
     app_data <- reactiveValues(
       precip = NULL, et0 = NULL, soil_param = NULL, crop_param = NULL,
-      kc_raw = NULL, raw_params = NULL, crop_systems = NULL,
+      kc_raw = NULL, raw_params = NULL, crop_systems = NULL, model_param = NULL,
       ps_by_cs_area = NULL, farms_count = NULL, is_loaded = FALSE,
-      has_track2 = FALSE
+      has_scale2 = FALSE, has_scale3 = FALSE
     )
-    harmonize_extended_data <- function(df, type = "area") {
-      if ("Broad_Category" %in% colnames(df)) {
-        if (type == "area") {
-          df <- df %>%
-            dplyr::select(-any_of(c("Broad_Category_No", "Sub_Category_No"))) %>%
-            dplyr::rename(production_system = Broad_Category, sub_production_system = Sub_Category, crop.system = Crop_system, area_ha = Area_ha) %>%
-            dplyr::mutate(sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"), area_ha = round(area_ha, 2))
-        } else if (type == "farms") {
-          df <- df %>%
-            dplyr::select(-any_of(c("Broad_Category_No", "Sub_Category_No"))) %>%
-            dplyr::rename(production_system = Broad_Category, sub_production_system = Sub_Category, number_of_farms = Number_of_farms) %>%
-            dplyr::mutate(sub_production_system = stringr::str_replace(sub_production_system, "_(.*)$", " (\\1)"))
-        }
-      }
-      return(df)
-    }
     
-    validate_schemas <- function(precip, et0, crop_systems, ps_by_cs_area = NULL, has_track2 = TRUE) {
-      if (any(sapply(list(precip, et0, crop_systems), is.null))) {
-        stop("Missing critical Track 1 data files. Please ensure files 1 through 7 are uploaded.")
+    validate_schemas <- function(precip, et0, crop_systems, model_param, ps_by_cs_area = NULL, farms_count = NULL, has_scale2 = TRUE, has_scale3 = TRUE) {
+      if (any(sapply(list(precip, et0, crop_systems, model_param), is.null))) {
+        stop("Missing critical Scale 1 data files. Please ensure files 1-8 are uploaded.")
       }
       
       if (!all(c("date", "p") %in% tolower(colnames(precip)))) stop("Precipitation must contain 'date' and 'p' columns.")
@@ -44,37 +28,44 @@ data_ingestion_server <- function(id) {
         stop("Crop systems file must explicitly include 'crop_1', 'crop_2', and 'crop_3' columns.")
       }
       
-      if (has_track2) {
-        if (is.null(ps_by_cs_area)) stop("Track 2 enabled, but Demographic Area file is missing.")
+      if (has_scale2) {
+        if (is.null(ps_by_cs_area)) stop("Scale 2 enabled, but Area by Crop System file is missing.")
         area_cols <- colnames(ps_by_cs_area)
         if (!"area_ha" %in% area_cols) stop("Area demographic file must explicitly include the 'area_ha' column.")
       }
+      
+      if (has_scale3) {
+        if (is.null(farms_count)) stop("Scale 3 enabled, but Farm Counts file is missing.")
+      }
+      
       return(TRUE)
     }
     
     observeEvent(input$load_default_data, {
       data_dir <- here::here("data", "input") 
-      
       id_notify <- showNotification("Loading repository baseline data... Please wait.", duration = NULL, type = "message")
       
       tryCatch({
-        d_precip       <- read_csv(file.path(data_dir, "01_precipitation.csv"), show_col_types = FALSE)
-        d_et0          <- read_csv(file.path(data_dir, "02_et0.csv"), show_col_types = FALSE)
-        d_soil_param   <- read_csv(file.path(data_dir, "03_soil.parameters.csv"), show_col_types = FALSE)
-        d_crop_param   <- read_csv(file.path(data_dir, "04_crop.parameters.csv"), show_col_types = FALSE)
-        d_fao_kc       <- read_csv(file.path(data_dir, "05_fao_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-        d_step_kc      <- read_csv(file.path(data_dir, "06_step_kc_curve_parameters_table.csv"), show_col_types = FALSE)
-        d_crop_systems <- read_csv(file.path(data_dir, "07_crop.systems.csv"), show_col_types = FALSE)
-        d_ps_by_cs_area<- read_csv(file.path(data_dir, "08_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
-        d_farms_count  <- read_csv(file.path(data_dir, "09_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
+        d_model_param  <- read_csv(file.path(data_dir, "01_model_parameters.csv"), show_col_types = FALSE)
+        d_precip       <- read_csv(file.path(data_dir, "02_precipitation.csv"), show_col_types = FALSE)
+        d_et0          <- read_csv(file.path(data_dir, "03_et0.csv"), show_col_types = FALSE)
+        d_soil_param   <- read_csv(file.path(data_dir, "04_soil.parameters.csv"), show_col_types = FALSE)
+        d_crop_param   <- read_csv(file.path(data_dir, "05_crop.parameters.csv"), show_col_types = FALSE)
+        d_fao_kc       <- read_csv(file.path(data_dir, "06_fao_kc_curve_parameters_table.csv"), show_col_types = FALSE)
+        d_step_kc      <- read_csv(file.path(data_dir, "07_step_kc_curve_parameters_table.csv"), show_col_types = FALSE)
+        d_crop_systems <- read_csv(file.path(data_dir, "08_crop.systems.csv"), show_col_types = FALSE)
+        d_ps_by_cs_area<- read_csv(file.path(data_dir, "09_crop_system_area_by_production_system.csv"), show_col_types = FALSE)
+        d_farms_count  <- read_csv(file.path(data_dir, "10_no_of_farmers_by_production_system.csv"), show_col_types = FALSE)
         
-        validate_schemas(d_precip, d_et0, d_crop_systems, d_ps_by_cs_area, has_track2 = TRUE)
+        validate_schemas(d_precip, d_et0, d_crop_systems, d_model_param, d_ps_by_cs_area, d_farms_count, has_scale2 = TRUE, has_scale3 = TRUE)
         
-        app_data$precip <- d_precip; app_data$et0 <- d_et0; app_data$soil_param <- d_soil_param
-        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
+        app_data$model_param <- d_model_param; app_data$precip <- d_precip; app_data$et0 <- d_et0 
+        app_data$soil_param <- d_soil_param; app_data$crop_param <- d_crop_param; 
+        app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
         app_data$crop_systems <- d_crop_systems; app_data$ps_by_cs_area <- d_ps_by_cs_area
         app_data$farms_count <- d_farms_count
-        app_data$has_track2 <- TRUE
+        app_data$has_scale2 <- TRUE
+        app_data$has_scale3 <- TRUE
         app_data$is_loaded <- TRUE
         removeNotification(id_notify)
         showNotification("Baseline data successfully validated and loaded.", type = "message")
@@ -86,11 +77,12 @@ data_ingestion_server <- function(id) {
     
     observeEvent(input$load_custom_data, {
       req(input$custom_precip, input$custom_et0, input$custom_soil, input$custom_crop, 
-          input$custom_kc, input$custom_systems)
+          input$custom_kc, input$custom_systems, input$custom_model)
       
-      id_notify <- showNotification("Loading and validating custom data... Please wait.", duration = NULL, type = "message")
+      id_notify <- showNotification("Loading, validating, and syncing custom data... Please wait.", duration = NULL, type = "message")
       
       tryCatch({
+        d_model_param  <- read_csv(input$custom_model$datapath, show_col_types = FALSE)
         d_precip       <- read_csv(input$custom_precip$datapath, show_col_types = FALSE)
         d_et0          <- read_csv(input$custom_et0$datapath, show_col_types = FALSE)
         d_soil_param   <- read_csv(input$custom_soil$datapath, show_col_types = FALSE)
@@ -104,26 +96,48 @@ data_ingestion_server <- function(id) {
           d_step_kc <- NULL
         }
         
-        has_t2 <- input$enable_track2
+        has_s2 <- input$enable_scale2
+        has_s3 <- input$enable_scale3 && has_s2
+        
         d_ps_by_cs_area <- NULL
         d_farms_count <- NULL
         
-        if (has_t2) {
-          req(input$custom_area, input$custom_farms)
+        if (has_s2) {
+          req(input$custom_area)
           d_ps_by_cs_area <- read_csv(input$custom_area$datapath, show_col_types = FALSE)
-          d_farms_count   <- read_csv(input$custom_farms$datapath, show_col_types = FALSE)
+        }
+        if (has_s3) {
+          req(input$custom_farms)
+          d_farms_count <- read_csv(input$custom_farms$datapath, show_col_types = FALSE)
         }
         
-        validate_schemas(d_precip, d_et0, d_crop_systems, d_ps_by_cs_area, has_track2 = has_t2)
+        validate_schemas(d_precip, d_et0, d_crop_systems, d_model_param, d_ps_by_cs_area, d_farms_count, has_scale2 = has_s2, has_scale3 = has_s3)
         
-        app_data$precip <- d_precip; app_data$et0 <- d_et0; app_data$soil_param <- d_soil_param
-        app_data$crop_param <- d_crop_param; app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
+        # Sync Custom Data directly to local disk for Quarto report rendering access
+        data_dir <- here::here("data", "input")
+        dir.create(data_dir, recursive = TRUE, showWarnings = FALSE)
+        write_csv(d_model_param, file.path(data_dir, "01_model_parameters.csv"))
+        write_csv(d_precip, file.path(data_dir, "02_precipitation.csv"))
+        write_csv(d_et0, file.path(data_dir, "03_et0.csv"))
+        write_csv(d_soil_param, file.path(data_dir, "04_soil.parameters.csv"))
+        write_csv(d_crop_param, file.path(data_dir, "05_crop.parameters.csv"))
+        write_csv(d_fao_kc, file.path(data_dir, "06_fao_kc_curve_parameters_table.csv"))
+        write_csv(d_crop_systems, file.path(data_dir, "08_crop.systems.csv"))
+        if (!is.null(d_step_kc)) write_csv(d_step_kc, file.path(data_dir, "07_step_kc_curve_parameters_table.csv"))
+        if (has_s2) write_csv(d_ps_by_cs_area, file.path(data_dir, "09_crop_system_area_by_production_system.csv"))
+        if (has_s3) write_csv(d_farms_count, file.path(data_dir, "10_no_of_farmers_by_production_system.csv"))
+        
+        app_data$model_param <- d_model_param; app_data$precip <- d_precip; app_data$et0 <- d_et0 
+        app_data$soil_param <- d_soil_param; app_data$crop_param <- d_crop_param
+        app_data$kc_raw <- d_fao_kc; app_data$raw_params <- d_step_kc
         app_data$crop_systems <- d_crop_systems; app_data$ps_by_cs_area <- d_ps_by_cs_area
         app_data$farms_count <- d_farms_count
-        app_data$has_track2 <- has_t2
+        app_data$has_scale2 <- has_s2
+        app_data$has_scale3 <- has_s3
         app_data$is_loaded <- TRUE
+        
         removeNotification(id_notify)
-        showNotification("Custom data successfully validated and loaded.", type = "message")
+        showNotification("Custom data successfully validated and synchronized.", type = "message")
       }, error = function(e) {
         removeNotification(id_notify)
         showNotification(paste("Validation Error:", e$message), type = "error")
@@ -144,7 +158,6 @@ pre_processing_server <- function(id, app_data) {
       is_climate_processed = FALSE, is_kc_processed = FALSE
     )
     
-    # Render Pre-Processing Button Conditionally
     output$run_preproc_ui <- renderUI({
       if (isTruthy(app_data$is_loaded)) {
         actionButton(session$ns("run_preproc"), "Calculate Kc Curves", icon = icon("cogs"), class = "btn-warning w-100")
@@ -159,19 +172,16 @@ pre_processing_server <- function(id, app_data) {
         df_p <- app_data$precip %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(P = sum(p, na.rm=TRUE), .groups="drop")
         df_et0 <- app_data$et0 %>% mutate(year = year(date), month = month(date)) %>% group_by(year, month) %>% summarise(ET0 = sum(et0, na.rm=TRUE), .groups="drop")
         
-        preproc_data$climate_summary <- df_p %>% left_join(df_et0, by = c("year", "month")) %>%
-          group_by(month) %>%
-          summarise(
-            Rainfall_avg = mean(P, na.rm=TRUE),
-            Rainfall_q05 = quantile(P, 0.05, na.rm=TRUE),
-            Rainfall_q95 = quantile(P, 0.95, na.rm=TRUE),
-            ET0_avg = mean(ET0, na.rm=TRUE),
-            ET0_q05 = quantile(ET0, 0.05, na.rm=TRUE),
-            ET0_q95 = quantile(ET0, 0.95, na.rm=TRUE),
-            .groups = "drop"
-          ) %>%
-          rename(Month = month) %>%
-          mutate(Temperature_avg = NA_real_, Temperature_q05 = NA_real_, Temperature_q95 = NA_real_)
+        preproc_data$climate_summary <- app_data$precip %>% 
+          left_join(app_data$et0, by = c("date")) %>%
+          mutate(Year = year(date), Month = month(date)) %>%
+          group_by(Year, Month) %>%
+          summarise(Rainfall = sum(p, na.rm = TRUE), 
+                    ET0 = sum(et0, na.rm = TRUE), .groups = "drop") %>%
+          group_by(Month) %>%
+          summarise(across(where(is.numeric), .fns = list(avg = ~ mean(.x, na.rm = TRUE), 
+                                                          sd = ~ sd(.x, na.rm = TRUE)), 
+                           .names = "{.col}_{.fn}"))
         
         preproc_data$is_climate_processed <- TRUE
       }, error = function(e) {
@@ -243,8 +253,14 @@ pre_processing_server <- function(id, app_data) {
         preproc_data$crop_rotation_kc_ls <- split(crop.systems.l.kc, crop.systems.l.kc$rotation)
         preproc_data$is_kc_processed <- TRUE
         
+        # Save preprocessed curves so the Quarto HTML Notebook can access them
+        processed_dir <- here::here("data", "processed")
+        dir.create(file.path(processed_dir, "supplementary"), recursive = TRUE, showWarnings = FALSE)
+        write_csv(kc.doy.crop.all, file.path(processed_dir, "supplementary", "01_crop_kc_by_doy_all_crops.csv"))
+        write_csv(crop.systems.l.kc, file.path(processed_dir, "01_crop.systems.l.kc.csv"))
+        
         removeNotification(id_notify)
-        showNotification("Kc Curves successfully generated!", type = "message")
+        showNotification("Kc Curves successfully generated and saved!", type = "message")
       }, error = function(e) {
         removeNotification(id_notify)
         showNotification(paste("Kc Pre-processing Error:", e$message), type = "error")
@@ -255,38 +271,57 @@ pre_processing_server <- function(id, app_data) {
   })
 }
 
-# Module 2: Track 1 Engine Execution ----
-track1_engine_server <- function(id, app_data, preproc_data) {
+# Module 2: Scale 1 Engine Execution (Core Hydrological Model) ----
+scale1_engine_server <- function(id, app_data, preproc_data) {
   moduleServer(id, function(input, output, session) {
     
     engine_results <- reactiveValues(budget_ls = NULL, summary_yr_budgets = NULL, is_calculated = FALSE)
     
-    # Render Engine Button Conditionally
     output$run_engine_ui <- renderUI({
       if (isTruthy(preproc_data$is_kc_processed)) {
-        actionButton(session$ns("run_engine"), "Run Biophysical Engine", icon = icon("play"), class = "btn-success w-100")
+        actionButton(session$ns("run_engine"), "Run Core Hydrological Model", icon = icon("play"), class = "btn-success w-100")
       } else {
-        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("play"), " Run Biophysical Engine")
+        tags$button(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("play"), " Run Core Hydrological Model")
       }
     })
     
-    # Render Track 1 Download Button Conditionally
-    output$download_ui_t1 <- renderUI({
+    output$download_ui_s1 <- renderUI({
       if (isTruthy(engine_results$is_calculated)) {
-        downloadButton(session$ns("download_report_t1"), "Download PDF Report", class = "btn-info w-100")
+        downloadButton(session$ns("download_report_s1"), "Download HTML Report", class = "btn-info w-100")
       } else {
-        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
       }
     })
     
     observeEvent(input$run_engine, {
       req(app_data$is_loaded, preproc_data$is_kc_processed)
       
-      id_notify <- showNotification("Executing parallel Biophysical Engine. This will take several minutes...", duration = NULL, type = "message")
+      id_notify <- showNotification("Executing parallel Hydrological Model. This will take several minutes...", duration = NULL, type = "message")
       
       tryCatch({
-        p.list <- list(precip = app_data$precip, et0 = app_data$et0, et0.timestep = "daily", CN = 85, soil.input = "P", soil.param = app_data$soil_param, sm.init = 0.5, crop.param = app_data$crop_param, kc_no_crop = list(summer = 0.005, kharip_rabi = 0.2))
-        met.forcing.ls <- lapply(as.list(app_data$soil_param$soil), function(x) { get_peff_et0(p = p.list, soil = x) })
+        get_param <- function(param_name, is_numeric = TRUE) {
+          val <- app_data$model_param$value[app_data$model_param$parameter == param_name]
+          if(is_numeric) return(as.numeric(val)) else return(as.character(val))
+        }
+        
+        KC_FALLOW_CONSTANTS <- list(
+          dry_season = get_param("kc_dry_season"), 
+          kharip = get_param("kc_kharip"), 
+          doy_switch = get_param("doy_switch")
+        )
+        
+        p.list <- list(
+          precip = app_data$precip,
+          et0 = app_data$et0,
+          et0.timestep = "daily",
+          soil.input = get_param("soil_input", FALSE),
+          soil.param = app_data$soil_param,
+          sm.init = get_param("sm_init"),
+          crop.param = app_data$crop_param,
+          kc_no_crop = KC_FALLOW_CONSTANTS
+        )
+        
+        met.forcing.ls <- lapply(as.list(app_data$soil_param$soil), function(x) { get_peff_et0(p = p.list, soil_id = x) })
         names(met.forcing.ls) <- app_data$soil_param$soil
         
         num_cores <- parallel::detectCores(logical = FALSE)
@@ -304,33 +339,45 @@ track1_engine_server <- function(id, app_data, preproc_data) {
         engine_results$summary_yr_budgets <- process_annual_budget(budget, app_data$crop_systems)
         engine_results$is_calculated <- TRUE
         
+        # Save Rdata Output to sync with Quarto HTML generator
+        out_dir <- here::here("output")
+        dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+        base::save(budget, file = file.path(out_dir, "01_processed_water_budgets.Rdata"))
+        
         removeNotification(id_notify)
-        showNotification("Engine execution complete! Visualizations are rendering.", type = "message")
+        showNotification("Model execution complete! Visualizations are rendering.", type = "message")
       }, error = function(e) {
         removeNotification(id_notify)
-        showNotification(paste("Engine execution failed:", e$message), type = "error")
+        showNotification(paste("Model execution failed:", e$message), type = "error")
       })
     })
     return(engine_results)
   })
 }
 
-# Module 3: Track 2 Engine Execution (Socio-Demographic) ----
-track2_engine_server <- function(id, app_data, engine_results) {
+# Module 3: Socio-Demographic Aggregation (Scales 2 and 3) ----
+socio_engine_server <- function(id, app_data, engine_results) {
   moduleServer(id, function(input, output, session) {
     
-    # Render Track 2 Download Button Conditionally
-    output$download_ui_t2 <- renderUI({
-      if (isTruthy(engine_results$is_calculated)) {
-        downloadButton(session$ns("download_report"), "Download PDF Report", class = "btn-info w-100")
+    output$download_ui_s2 <- renderUI({
+      if (isTruthy(engine_results$is_calculated) && app_data$has_scale2) {
+        downloadButton(session$ns("download_report_s2"), "Download HTML Report", class = "btn-info w-100")
       } else {
-        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download PDF Report")
+        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
       }
     })
     
-    track2_data <- reactive({
+    output$download_ui_s3 <- renderUI({
+      if (isTruthy(engine_results$is_calculated) && app_data$has_scale3) {
+        downloadButton(session$ns("download_report_s3"), "Download HTML Report", class = "btn-info w-100")
+      } else {
+        tags$a(class = "btn btn-secondary w-100 disabled", disabled = "disabled", icon("download"), " Download HTML Report")
+      }
+    })
+    
+    socio_data <- reactive({
       req(engine_results$is_calculated, app_data$is_loaded)
-      if (!app_data$has_track2) return(NULL)
+      if (!app_data$has_scale2) return(NULL)
       
       budget_yr_ls <- lapply(engine_results$budget_ls, function(x) x$sum.yr)
       budget_yr_l <- data.table::rbindlist(budget_yr_ls, idcol = "rotation") %>%
@@ -338,23 +385,22 @@ track2_engine_server <- function(id, app_data, engine_results) {
         dplyr::left_join(app_data$crop_systems, by = "rotation")
       
       ps_area <- app_data$ps_by_cs_area %>% mutate(time_period = as.character(time_period))
-      farms <- app_data$farms_count %>% mutate(time_period = as.character(time_period))
-      farms_clean <- farms %>% group_by(time_period, production_system) %>% summarise(number_of_farms = sum(number_of_farms, na.rm = TRUE), .groups = "drop")
+      
+      if (app_data$has_scale3) {
+        farms <- app_data$farms_count %>% mutate(time_period = as.character(time_period))
+        # FIXED: Included sub_production_system in the grouping to prevent it from being dropped
+        farms_clean <- farms %>% 
+          group_by(time_period, production_system, sub_production_system) %>% 
+          summarise(number_of_farms = sum(number_of_farms, na.rm = TRUE), .groups = "drop")
+      } else {
+        farms_clean <- NULL
+      }
       
       ps_results <- get_production_system_budgets(budget_yr_l = budget_yr_l, ps_by_cs_area = ps_area, farms_count_df = farms_clean)
       
-      cs_surface <- app_data$crop_systems %>% select(crop.system, Irrigation) %>% distinct() %>%
-        mutate(land_use = case_when(Irrigation == "Irrigated" ~ "Irrigated", str_detect(crop.system, "(?i)grassland|grazed|pasture") ~ "Pastoral", TRUE ~ "Rainfed"))
-      
-      ps_typology <- ps_area %>% left_join(cs_surface, by = "crop.system") %>%
-        group_by(time_period, production_system, land_use) %>% summarise(land_use_area = sum(area_ha, na.rm = TRUE), .groups = "drop_last") %>%
-        mutate(total_area_ha = sum(land_use_area, na.rm = TRUE), land_use_pc = round((land_use_area / total_area_ha) * 100, 2)) %>%
-        ungroup() %>% select(-land_use_area) %>% pivot_wider(names_from = land_use, values_from = land_use_pc, values_fill = 0) %>%
-        mutate(system_typology = case_when(Irrigated >= 35 ~ "Irrigated", Pastoral > Rainfed ~ "Pastoral", TRUE ~ "Rainfed"))
-      
-      list(ps_bwp_volumetric = ps_results$ps_bwp_volumetric, ps_volumetric_summary = ps_results$ps_volumetric_summary, ps_typology = ps_typology)
+      list(ps_bwp_volumetric = ps_results$ps_bwp_volumetric, ps_volumetric_summary = ps_results$ps_volumetric_summary)
     })
     
-    return(list(track2_data = track2_data))
+    return(list(socio_data = socio_data))
   })
 }

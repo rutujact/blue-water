@@ -527,7 +527,7 @@ cfg <- list(box_width = 100, min_arrow_w = 5, max_arrow_w = 30, v_stagger_out = 
 invisible(plot_village_bwp(
   ps_bwp_volumetric = ps_bwp_volumetric,
   ps_by_cs_area = ps_by_cs_area,
-  cfg = cfg, 
+  cfg = cfg,
   output_dev = grDevices::cairo_pdf, 
   filename = here::here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
   manuscript_style = TRUE,
@@ -545,7 +545,7 @@ invisible(plot_village_bwp(
 invisible(plot_village_bwp(
   ps_bwp_volumetric = ps_bwp_volumetric,
   ps_by_cs_area = ps_by_cs_area,
-  cfg = cfg, 
+  cfg = cfg,
   output_dev = grDevices::png, 
   filename = here::here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
   manuscript_style = TRUE
