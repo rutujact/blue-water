@@ -526,7 +526,7 @@ invisible(plot_village_bwp(
   ps_by_cs_area = ps_by_cs_area,
   cfg = cfg,
   output_dev = grDevices::cairo_pdf, 
-  filename = here::here("figures/manuscript/Fig.7_Historical_Village_Water_Tank_Comparison.pdf"),
+  filename = here::here("figures/manuscript/Fig.7_Historical_Village_BWP_Comparison.pdf"),
   manuscript_style = TRUE,
   save_csv_path = here::here("output/07_village_bwp_fig_data.csv") # Automatically exports the CSV!
 ))
@@ -535,7 +535,7 @@ invisible(plot_village_bwp(
   ps_by_cs_area = ps_by_cs_area,
   cfg = cfg, 
   output_dev = grDevices::png, 
-  filename = here::here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison_box.png"),
+  filename = here::here("figures/presentation/Fig.7_Historical_Village_BWP_Comparison_box.png"),
   manuscript_style = FALSE
 ))
 
@@ -544,13 +544,13 @@ invisible(plot_village_bwp(
   ps_by_cs_area = ps_by_cs_area,
   cfg = cfg,
   output_dev = grDevices::png, 
-  filename = here::here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png"),
+  filename = here::here("figures/presentation/Fig.7_Historical_Village_BWP_Comparison.png"),
   manuscript_style = TRUE
 ))
-# knitr::include_graphics("../figures/presentation/Fig.8_Historical_Village_Water_Tank_Comparison.png")
+# knitr::include_graphics("../figures/presentation/Fig.8_Historical_Village_BWP_Water_Tank_Comparison.png")
 # THE FIX: Read the generated image back into R and natively plot it
 # This forces knitr to natively embed it without pathing conflicts.
-img_path <- here::here("figures/presentation/Fig.7_Historical_Village_Water_Tank_Comparison.png")
+img_path <- here::here("figures/presentation/Fig.7_Historical_Village_BWP_Comparison.png")
 if (file.exists(img_path)) {
   img <- png::readPNG(img_path)
   graphics::par(mar = c(0,0,0,0)) 
