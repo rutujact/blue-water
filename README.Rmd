@@ -7,10 +7,11 @@ output: github_document
 
 This repository contains the computational workflow and analytical model for the manuscript: > **Hemingway, C. et al. (202X).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
-The **The Blue Water Potential Toolkit** provides a generalized R framework for
+**The Blue Water Potential Toolkit** provides a generalized R framework for
 simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
 
-The **The Blue Water Potential Toolkit** serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (202X), and it can be applied to new study sites. 
+**The Blue Water Potential Toolkit** serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (202X), and it can be applied to new study sites. 
+
 ---
 
 ## 📂 Repository Structure
