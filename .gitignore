@@ -17,6 +17,8 @@ temp_combined_sankey.html
 # Excluded Project Folders
 /lib/
 /internal/
+/figures/water_budgets/
+/figures/validation/
 /output/water_budgets/
 /code/lib/
 /code/01_Prepare_Model_Input.html
