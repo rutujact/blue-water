@@ -90,7 +90,7 @@ If applying this toolkit to a new region, you will need the following localized 
 
 **Scale 1: Blue Water Potential for Cropping Systems.**
 
-1. **Model Parameters**: The master configuration file defining baseline hydrological assumptions (e.g., bare-soil evaporation rules, initial soil moisture, and runoff routing). 
+1. **Model Parameters**: The master configuration defining baseline hydrological assumptions (e.g., bare-soil evaporation rules, initial soil moisture, and runoff routing). 
 2. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
 3. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
 4. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
@@ -112,7 +112,7 @@ If applying this toolkit to a new region, you will need the following localized 
 ### Toolkit Development & Attribution
 
 This repository represents the digital translation and scaling of a micro-regional water accounting model:
-* **Model Rationale, Data Collection & Visual Concepts:** Developed in Excel by Charlotte Hemingway & Laurent Ruiz.
+* **Model Rationale, Data Collection & Visual Concepts:** Developed in Microsoft Excel by Charlotte Hemingway & Laurent Ruiz.
 * **R Translation, Framework Design, & Documentation:** Developed by Rutuja Chitra-Tarak.
 
 ### Manuscript Author Statement (CRediT)
@@ -126,7 +126,7 @@ For the associated academic publication, contributions are defined as follows:
 * **Data Curation:** C. Hemingway, R. Chitra-Tarak
 * **Visualization:** C. Hemingway, R. Chitra-Tarak
 * **Writing - Original Draft:** C. Hemingway, L. Ruiz
-* **Writing - Review & Editing:** C. Aubron, M. Vigne, L. Ruiz, G. Boulet, S. Muddu, R. Chitra-Tarak
+* **Writing - Review & Editing:** C. Aubron, M. Vigne, L. Ruiz, G. Boulet, M. Sekhar, R. Chitra-Tarak
 * **Funding Acquisition:** C. Aubron
 
 ---
@@ -152,6 +152,6 @@ The computational workflow, functions, and codebase contained within this reposi
 
 If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:
 
-* **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). *The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)*. Zenodo. https://doi.org/10.5281/zenodo.20665272
+* **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. & Ruiz, L. (2026). *The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)*. Zenodo. https://doi.org/10.5281/zenodo.20665272
 
-* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (202X). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]
+* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (202X). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]
