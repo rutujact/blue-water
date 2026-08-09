@@ -51,9 +51,9 @@ h1, h2 {
 
 # Overview
 
-This document serves as the main reproducible report and computational workflow for Hemingway, C. et al. (202X). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
+This document serves as the main reproducible report and computational workflow for Hemingway et al. (202X). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI Link].
 
-The **The Blue Water Potential Toolkit** provides a generalized R framework for simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
+The **The Blue Water Potential Toolkit** provides a generalized R framework for simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. The BWP calculations follow the FAO-56 method to compute the crop-level water balance, with the equations and assumptions presented in the Methods section and in the Supplementary Material of the Hemingway et al. (202X) manuscript.
 
 While this specific implementation is configured to reproduce the results and figures for the manuscript, the underlying R code is highly modular. It is designed to be easily adaptable for any case study globally, provided you have local meteorological and cropping system data. 
 
@@ -217,7 +217,7 @@ knitr::kable(head(et0, 3), caption = "Preview: Reference ET0 Data Sample")
 ## Climatological Profile Summary
 
 
-```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Monthly mean (\u00B1 SD) rainfall, temperature, and reference evapotranspiration.'}
+```{r fig.1, echo = FALSE, fig.width=11, fig.height=6.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 1. Monthly mean (\u00B1 SD; 1980-2018) rainfall, temperature, and reference evapotranspiration. This figure corresponds to Figure 1 in Hemingway et al. (202X)'}
 
 climate_summary <- utils::read.csv(file = here::here("data/input/supplementary/01_monthly_climatology_for_figure.csv"), header = TRUE)
 
@@ -456,7 +456,7 @@ ggplot2::ggsave(here::here("figures/presentation/Fig.4_Crop_Systems_Irrigation_R
 
 This plot displays the core metric: **Blue Water Potential**, which is the mean annual Net Groundwater Recharge, calculated as the difference between Gross Groundwater Recharge and Irrigation Requirement (mm).
 
-```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = paste0("Figure 5. Annual mean (\u00B1 SD; 1980-2018) of Blue Water Potential for various cropping systems (color coded by Irrigated or Rainfed).")}
+```{r annual-bwp, fig.align='center', echo=FALSE, fig.cap = paste0("Figure 5. Annual mean (\u00B1 SD; 1980-2018) of Blue Water Potential for various cropping systems (color coded by Irrigated or Rainfed). This figure corresponds to Fig. 4 in Hemingway et al. (202X).")}
 
 fig.5_cs_bwp <- plot_annual_summary(summ.qs.cs, "Blue Water Potential (mm)", "mean", "Blue Water Potential [Gross Recharge - Irrigation] (mm)")
 print(fig.5_cs_bwp)
@@ -493,7 +493,7 @@ ps_bwp_volumetric <- ps_results$ps_bwp_volumetric
 utils::write.csv(ps_bwp_volumetric, file = here::here("output/06_production_system_bwp_contributions.csv"), row.names = FALSE)
 ```
 
-```{r ann-social, eval=HAS_PRODUCTION_SYSTEM, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Comparative annual Blue Water Potential ($BWP$) across Production Systems, or farm types, (1950s vs. 2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross.'}
+```{r ann-social, eval=HAS_PRODUCTION_SYSTEM, fig.width=10, fig.height=5.65, out.width="100%", fig.align = 'center', fig.cap = 'Figure 6. Comparative annual Blue Water Potential ($BWP$) across Production Systems, or farm types, (1950s vs. 2022). BWP contributions (+ve or -ve) from Irrigated/Rainfed cropped area, or grazed area within each farm type are mapped by colors. Net BWP contribution of each farm type is identified by a cross. This figure corresponds to Fig. 5 in Hemingway et al. (202X).'}
 fig.6_social <- plot_production_system_bwp(ps_bwp_volumetric)
 print(fig.6_social)
 
@@ -510,11 +510,11 @@ ggplot2::ggsave(here::here("figures/presentation/Fig.6_Socio_Economic_Group_BWP.
 
 ## Contribution of Production Systems to Annual Blue Water Potential at Village Scale
 
-Finally, we aggregate the Blue Water Potential of all the production systems, or Social Categories of Farmers, to understand how they contribute to the Blue Water Potential of the agrarian system. In the case study of Hemingway et al. 202X, this is done at the scale of the archetype village, at two historical periods: 1950s and 2022. In the 1950s, all the social category had a positive Blue Water Potential (and were thus Net Producers), while in 2022 the social categories are divided in Net Consumers and Net Producers.
+Finally, we aggregate the Blue Water Potential of all the production systems, or Social Categories of Farmers, to understand how they contribute to the Blue Water Potential of the agrarian system. In the case study of Hemingway et al. (202X), this is done at the scale of the archetype village, at two historical periods: 1950s and 2022. In the 1950s, all the social category had a positive Blue Water Potential (and were thus Net Producers), while in 2022 the social categories are divided in Net Consumers and Net Producers.
 
-This figure highlights the role of often ignored social category such as Pastoralists who in 2022 are main Net Contributers of Blue Water in the archetype village. 
+This figure highlights the role of often overlooked social categories with no access to groundwater, such as pastoralists and rainfed farmers, who in 2022 are important net contributors to Blue Water production in the archetype village. 
 
-```{r village-bwp, fig.width=17, fig.height=8, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right)."}
+```{r village-bwp, fig.width=17, fig.height=8, out.width="100%", fig.align = 'center', fig.cap= "Figure 7. Annual Blue Water Potential of the archetype village in the 1950s (left) and 2022 (right). This figure corresponds to Fig. 6 in Hemingway et al. (202X)."}
 #| eval: !expr HAS_AGRARIAN_SYSTEM
 #| # Note to Users with their own data: Even with one Historical Period, the following figure function will work.
 
@@ -564,7 +564,7 @@ if (file.exists(img_path)) {
 Here we illustrate how water balance is commonly represented as aggregated Inflows minus Outflows by land-use. In contrast to the new framework (as illustrated in the last figure), here all land uses are represented as net water consumers. This representation ignores the complementarity between land-uses for the Blue Water Balance at the village/micro-regional scale and can lead to maladaptive management decisions (e.g., getting rid of pastoral systems, or replacement of rainfed crops by irrigated crops).
 
 
-```{r village-budget, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village.", message = FALSE}
+```{r village-budget, echo=FALSE, out.width="100%", fig.align='center', fig.cap="Figure 8. Average annual water balance of the archetype village. This figure corresponds to Fig. 7 in Hemingway et al. (202X).", message = FALSE}
 #| eval: !expr HAS_AGRARIAN_SYSTEM
 #| 
 classical_budget_fig_data <- format_agrarian_sankey_data(ps_volumetric_summary)
@@ -652,7 +652,7 @@ combined_panels_html
 
 This figure shows how some social category (Production System) disproportionately affect the Blue Water Potential of the village/micro-region.
 
-For the case study in Hemingway et al. 202X, a large number of rainfed farmers and a few pastoralists have a large positive impact, while a few numbers of Small- and Large-scale fruit growers are the main Blue Water Consumers.
+For the case study in Hemingway et al. (202X), a large number of rainfed farmers and a few pastoralists have a large positive impact, while a few numbers of Small- and Large-scale fruit growers are the main Blue Water Consumers.
 
 
 ```{r disparity-plot, fig.width=11, fig.height=5.5, out.width="100%", fig.align = 'center', fig.cap = 'Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³).'}
@@ -672,3 +672,11 @@ print(fig.9_disparity)
 # References
 
 Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator
+
+# Preferred Citation
+
+If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:
+
+* **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. & Ruiz, L. (2026). *The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)*. Zenodo. https://doi.org/10.5281/zenodo.20665272
+
+* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (202X). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]

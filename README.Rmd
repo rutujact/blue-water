@@ -8,7 +8,7 @@ output: github_document
 This repository contains the computational workflow and analytical model for the manuscript: > **Hemingway, C. et al. (202X).** *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets* [Journal Name]. [DOI]
 
 **The Blue Water Potential Toolkit** provides a generalized R framework for
-simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. 
+simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. The BWP calculations follow the FAO-56 method to compute the crop-level water balance, with the equations and assumptions presented in the Methods section and in the Supplementary Material of the Hemingway, C. et al. (202X) manuscript.
 
 **The Blue Water Potential Toolkit** serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (202X), and it can be applied to new study sites. 
 
@@ -88,22 +88,25 @@ For researchers, or users who want to deeply interrogate the underlying code, th
 
 If applying this toolkit to a new region, you will need the following localized datasets. Refer to the data preview tables in the Shiny App or the Quarto HTML report (`01_Prepare_Model_Inputs.qmd`) for strict formatting rules.
 
-**Scale 1: Blue Water Potential for Cropping Systems.**
+**Scale 1: Blue Water Potential for Cropping Systems**
 
-1. **Model Parameters**: The master configuration defining baseline hydrological assumptions (e.g., bare-soil evaporation rules, initial soil moisture, and runoff routing). 
-2. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
-3. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
-4. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
-5. **Crop Cycle**: Sowing date, Crop phenological phase duration and respective crop coefficients (Kc) according to FAO56 method (Allen et al., 1998).
-6. **Cropping Systems**: Crop rotation at the plot scale.
+1. **Model Parameters (`01_model_parameters.csv`)**: The master configuration defining baseline hydrological assumptions (e.g., bare-soil evaporation rules, initial soil moisture, and runoff routing). 
+2. **Precipitation (`02_precipitation.csv`)**: Multi-year daily precipitation forcings.
+3. **Reference ET0 (`03_et0.csv`)**: Multi-year daily reference evapotranspiration forcings.
+4. **Soil Properties (`04_soil.parameters.csv`)**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
+5. **Crop Parameters (`05_crop.parameters.csv`)**: Rooting depths and whether the crop is irrigated or rainfed.
+6. **FAO Kc Curve Parameters (`06_fao_kc_curve_parameters_table.csv`)**: Sowing date, phenological phase duration, and respective crop coefficients (Kc) according to the FAO-56 method.
+7. **Monthly Step Kc Parameters (`07_step_kc_curve_parameters_table.csv`)**: *(Optional)* Monthly crop coefficients for specific applications, such as fruit trees.
+8. **Cropping Systems (`08_crop.systems.csv`)**: Crop rotation definitions at the plot scale.
 
-**Scale 2: Blue Water Potential for Production Systems.**
+**Scale 2: Blue Water Potential for Production Systems**
 
-7. **Farm production systems**: Aggregation of grazed and cropped area (ha) for each farming system.
+9. **Area by Production System (`09_crop_system_area_by_production_system.csv`)**: Aggregation of grazed and cropped area (ha) for each farming system.
 
-**Scale 3: Blue Water Potential for Agrarian Systems.**
+**Scale 3: Blue Water Potential for Agrarian Systems**
 
-8. **Agrarian system**: Total number of farmers belonging to each production system a given village/micro-region.
+10. **Farm Counts (`10_no_of_farmers_by_production_system.csv`)**: Total number of farmers belonging to each production system in a given village/micro-region.
+
 
 ---
 

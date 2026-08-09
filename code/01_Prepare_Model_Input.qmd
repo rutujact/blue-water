@@ -35,16 +35,26 @@ h1, h2 {
 
 ### 🗂️ Overview & Data Summary
 
-This script processes, visualizes, and expands eight distinct categories of input data required by the hydrological model:
+This script processes, visualizes, and expands the input data required by the hydrological model. The data is organized into up to 10 standardized datasets across three analytical scales:
 
-1. **Climatic Forcings**: Multi-year Daily Precipitation and Reference Evapotranspiration (ET0).
-2. **Soil Properties**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
-3. **Crop Parameters**: Rooting depths and whether the crop is irrigated or rainfed.
-4. **Crop Cycle**: Sowing date, phenological phase duration, and crop coefficients (Kc) according to the FAO-56 method (Allen et al., 1998).
-5. **Cropping Systems**: Crop rotation at the plot scale.
-6. **Farm Production Systems**: Aggregation of grazed and cropped area (ha) for each farming system.
-7. **Agrarian System**: Area (ha) of each farm production system in a given village/micro-region.
-8. **Model Parameters**: The master configuration file. This defines global baseline assumptions, including seasonal bare-soil evaporation coefficients (kc_dry_season, kc_kharip), the calendar day to switch between them (doy_switch), the starting soil moisture fraction (sm_init), and the soil_input routing switch—which dictates whether the model should use raw Precipitation (P) or calculate surface runoff to use Effective Precipitation (Peff).
+**Scale 1: Blue Water Potential for Cropping Systems**
+
+1. **Model Parameters (`01_model_parameters.csv`)**: The master configuration file defines global baseline assumptions, including seasonal bare-soil evaporation coefficients (kc_dry_season, kc_kharip), the calendar day to switch between them (doy_switch), the starting soil moisture fraction (sm_init), and the soil_input routing switch—--which dictates whether the model should use raw Precipitation (P) or calculate surface runoff to use Effective Precipitation (Peff).
+2. **Precipitation (`02_precipitation.csv`)**: Multi-year daily precipitation forcings.
+3. **Reference ET0 (`03_et0.csv`)**: Multi-year daily reference evapotranspiration forcings.
+4. **Soil Properties (`04_soil.parameters.csv`)**: Water Holding Capacity (WHC) and Readily Available Water (RAW).
+5. **Crop Parameters (`05_crop.parameters.csv`)**: Rooting depths and whether the crop is irrigated or rainfed.
+6. **FAO Kc Curve Parameters (`06_fao_kc_curve_parameters_table.csv`)**: Sowing date, phenological phase duration, and respective crop coefficients (Kc) according to the FAO-56 method (Allen et al., 1998).
+7. **Monthly Step Kc Parameters (`07_step_kc_curve_parameters_table.csv`)**: *(Optional)* Monthly crop coefficients for specific applications, such as fruit trees.
+8. **Cropping Systems (`08_crop.systems.csv`)**: Crop rotation definitions at the plot scale.
+
+**Scale 2: Blue Water Potential for Production Systems**
+
+9. **Area by Production System (`09_crop_system_area_by_production_system.csv`)**: Aggregation of grazed and cropped area (ha) for each farming system.
+
+**Scale 3: Blue Water Potential for Agrarian Systems**
+
+10. **Farm Counts (`10_no_of_farmers_by_production_system.csv`)**: Total number of farmers belonging to each production system in a given village/micro-region.
 
 *In Hemingway et al. (202X), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.*
 
@@ -582,7 +592,7 @@ readr::write_csv(crop.systems.l.kc, file = here::here("data/processed/01_crop.sy
 
 # Production Systems
 
-Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. 2025 and modified in Hemingway et al. 2026.
+Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 & 2 of Hemingway et al. (2025) and modified in Hemingway et al. (2026).
 
 ```{r load-production-system}
 ps_by_cs_area  <- data.table::fread(here::here("data/input/09_crop_system_area_by_production_system.csv")) %>% dplyr::as_tibble()
@@ -608,7 +618,7 @@ knitr::kable(preview_ps_disp, escape = FALSE, caption = "Crop Area under each Pr
 
 # Agrarian System
 
-Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. 2026.
+Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. (2026).
 
 ```{r load-agrarian}
 farms_count_df <- data.table::fread(here::here("data/input/10_no_of_farmers_by_production_system.csv")) %>% dplyr::as_tibble()
@@ -639,3 +649,11 @@ Hemingway C., Ruiz L., Vigne M., Aubron C., 2025. The changing role of livestock
 Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator
 
 Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (202X). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. [Journal Name]. [DOI]
+
+# Preferred Citation
+
+If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:
+
+* **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. & Ruiz, L. (2026). *The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)*. Zenodo. https://doi.org/10.5281/zenodo.20665272
+
+* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (202X). *Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. [Journal Name]. [DOI]

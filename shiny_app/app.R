@@ -72,7 +72,7 @@ ui <- navbarPage(
                 )
             )
         ),
-        # -----------------------------------------
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         
         tabsetPanel(
           type = "pills",
@@ -186,11 +186,11 @@ ui <- navbarPage(
           width = 9,
           tabsetPanel(
             type = "pills",
-            tabPanel("Figure 7: Village BWP Trends", 
-                     h5("Annual Blue Water Potential of the Archetype Village", info_tooltip("Annual Blue Water Potential of the archetype village. Highlights the role of often ignored social categories such as Pastoralists who are main Net Contributers of Blue Water."), style = "color: #2C3E50;", align = "center"),
+            tabPanel("Figure 7: Village BWP By Farm Type",
+                     h5("Blue Water Potential of the Archetype Village by Farm Type", info_tooltip("Annual Blue Water Potential of the archetype village. Highlights farm interedependencies and the role of often ignored social categories with no access to groundwater, such as pastoralists and rainfed farmers, who are main Net Contributers of Blue Water."), style = "color: #2C3E50;", align = "center"),
                      plotOutput("plot_fig7_village_bwp", height = "500px")
             ),
-            tabPanel("Figure 8: Classical Balance", 
+            tabPanel("Figure 8: Conventional Balance", 
                      h5("Average Annual Water Balance of the Archetype Village", info_tooltip("Average annual water balance of the archetype village. Illustrates the classical representation of aggregated Inflows minus Outflows by land-use, where all land uses are represented as net water consumers."), style = "color: #2C3E50;", align = "center"),
                      uiOutput("dynamic_sankey_ui")
             ),
@@ -223,7 +223,7 @@ server <- function(input, output, session) {
       title = "Preferred Citation",
       size = "l",
       easyClose = TRUE,
-      p("If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:"),
+      p("If you use this toolkit, its underlying logic, or adapt the framework for another study, please cite both the software repository and the primary manuscript:"),
       tags$ul(
         tags$li(HTML("<b>Software:</b> Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (2026). <em>The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)</em>. Zenodo. https://doi.org/10.5281/zenodo.20665272")),
         tags$li(HTML("<b>Manuscript:</b> Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., & Ruiz, L. (202X). <em>Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets</em>. [Journal Name]. [DOI]"))
