@@ -259,7 +259,9 @@ if (!dir.exists(here::here("figures/manuscript"))) {
   dir.create(here::here("figures/manuscript"), recursive = TRUE, showWarnings = FALSE)
 }
 
-fig.2_journal <- plot_crop_coefficient_curves(kc.doy.crop.all)
+# Apply the local names and generate the plot
+kc_corrected <- rename_local_indian_seasons(kc.doy.crop.all)
+fig.2_journal <- plot_crop_coefficient_curves(kc_corrected)
 print(fig.2_journal)
 
 # Save PDF for Manuscript

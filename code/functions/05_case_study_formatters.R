@@ -19,3 +19,24 @@ format_agrarian_sankey_data <- function(ps_volumetric_summary) {
     ) %>%
     dplyr::rename(unused = grasslands)
 }
+
+#' Correct Local Indian Crop Season Names
+#' 
+#' @description Re-labels crop seasons to correctly match Indian agricultural 
+#' seasons (Rabi, Kharif, Zaid) based on their phenological start dates (DOY).
+#' @param kc_df The processed kc.doy.crop.all dataframe.
+#' @return A dataframe with corrected crop names for localized plotting.
+rename_local_indian_seasons <- function(kc_df) {
+  kc_df %>%
+    dplyr::mutate(
+      crop = dplyr::case_when(
+        crop == "Okra Summer" ~ "Okra Winter",
+        crop == "Okra Winter" ~ "Okra Summer",
+        crop == "Groundnut Summer" ~ "Groundnut Winter",
+        crop == "Tomato Summer" ~ "Tomato Winter",
+        crop == "Tomato Winter" ~ "Tomato Monsoon",
+        crop == "Rice Short Summer" ~ "Rice Short Winter",
+        TRUE ~ crop
+      )
+    )
+}
