@@ -1,5 +1,5 @@
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# 06_case_study_formatters.R
+# 05_case_study_formatters.R
 # Purpose: Case-study-specific data manipulations for Hemingway et al. (202X).
 # Keeps the core toolkit generic by isolating localized assumptions.
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,4 +39,43 @@ rename_local_indian_seasons <- function(kc_df) {
         TRUE ~ crop
       )
     )
+}
+
+#' Harmonize Crop System Names
+#' 
+#' @description Detects spelling or formatting mismatches (e.g., "Sweet lime" vs "Sweet Lime") 
+#' in the area mapping dataset and automatically corrects them to match the 
+#' master crop system definitions, preventing silent data drops during merges.
+#' @param area_df Dataframe containing the production system acreage mapping.
+#' @param master_df Dataframe containing the master crop system definitions (e.g., crop.systems).
+#' @return A dataframe with corrected crop.system names.
+#' @export
+harmonize_crop_system_names <- function(area_df, master_df) {
+  valid_cs <- unique(master_df$crop.system)
+  input_cs <- unique(area_df$crop.system)
+  mismatched <- setdiff(input_cs, valid_cs)
+  
+  if (length(mismatched) > 0) {
+    message("Note: Found spelling mismatches in crop system area mapping. Auto-correcting to match master list.")
+    
+    # Create a robust string cleaner (strips all spaces, punctuation, and makes lowercase)
+    robust_clean <- function(x) stringr::str_remove_all(tolower(x), "[^a-z0-9]")
+    valid_cs_clean <- robust_clean(valid_cs)
+    
+    area_df <- area_df %>%
+      dplyr::mutate(
+        temp_clean = robust_clean(crop.system),
+        crop.system = purrr::map2_chr(crop.system, temp_clean, function(original, cleaned) {
+          match_idx <- match(cleaned, valid_cs_clean)
+          if (!is.na(match_idx)) {
+            return(valid_cs[match_idx]) # Replace with perfect master spelling
+          } else {
+            return(original) # Leave alone if no match found at all
+          }
+        })
+      ) %>%
+      dplyr::select(-temp_clean)
+  }
+  
+  return(area_df)
 }

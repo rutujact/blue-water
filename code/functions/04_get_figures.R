@@ -1315,10 +1315,11 @@ get_single_village_plot <- function(df, cfg, output_dev, filename, manuscript_st
   grDevices::dev.off()
 }
 
+
 #' Generate HTML networkD3 Interactive Sankey Chart
 #' 
-#' @description Maps the volumetric routing of rain through different localized
-#' agrosystems toward ultimate net BWP via `networkD3`.
+#' @description Maps the absolute volumetric routing of rain through different localized
+#' agrosystems toward ultimate net BWP via `networkD3`. 
 #' @param ps_volumetric_summary Core volumetric output from socio-economic calculations.
 #' @param target_period Timeline evaluating string (e.g. "2022" or "1950s").
 #' @param font_size Numeric widget scalar (default: 13).
@@ -1328,12 +1329,11 @@ get_single_village_plot <- function(df, cfg, output_dev, filename, manuscript_st
 #' @export
 get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, margin_left = 120, margin_right = 30) {
   
-  # _________________________________________________________________________
-  # STEP 1: Aggregate Village-Level Totals
-  # _________________________________________________________________________
-  # THE FIX: Extract just the year numbers (e.g., "1950" from "1950s") to safely match the new datasets
   target_yr <- stringr::str_extract(as.character(target_period), "\\d+")
   
+  # _________________________________________________________________________
+  # STEP 1: Extract Period-Specific Data
+  # _________________________________________________________________________
   tp_data <- ps_volumetric_summary %>%
     dplyr::filter(stringr::str_detect(as.character(time_period), target_yr)) %>%
     dplyr::group_by(var) %>%
@@ -1347,61 +1347,43 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
     ) %>%
     dplyr::mutate(dplyr::across(dplyr::ends_with("_m3"), ~ ifelse(is.nan(.) | is.na(.), 0, .)))
   
-  write.csv(tp_data, file = here(paste0("output/08_classical_budget_fig_data_", 
-                                        target_period, ".csv")), row.names = FALSE)
   # _________________________________________________________________________
-  # STEP 2: DYNAMIC AREA NORMALIZATION
-  # _________________________________________________________________________
-  all_periods <- sort(unique(ps_volumetric_summary$time_period))
-  baseline_period <- all_periods[1] 
-  
-  baseline_data <- ps_volumetric_summary %>%
-    dplyr::filter(time_period == baseline_period) %>%
-    dplyr::group_by(var) %>%
-    dplyr::summarise(total_m3 = sum(total_vol_m3, na.rm = TRUE), .groups = "drop")
-  
-  baseline_p_vol <- sum(baseline_data$total_m3[baseline_data$var == "P"], na.rm = TRUE)
-  current_p_vol  <- sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE)
-  
-  area_correction_factor <- if (is.na(current_p_vol) || current_p_vol == 0 || baseline_p_vol == 0) 1 else baseline_p_vol / current_p_vol
-  
-  tp_data <- tp_data %>%
-    dplyr::mutate(
-      total_m3     = total_m3 * area_correction_factor,
-      unused_m3    = unused_m3 * area_correction_factor,
-      irrigated_m3 = irrigated_m3 * area_correction_factor,
-      rainfed_m3   = rainfed_m3 * area_correction_factor,
-      grazed_m3    = grazed_m3 * area_correction_factor
-    )
-  
-  # _________________________________________________________________________
-  # STEP 3: Formatting & Aesthetic Rounding
+  # STEP 2: Formatting & Aesthetic Rounding
   # _________________________________________________________________________
   round_to_10k_in_thousands <- function(val) {
     return(round(val / 10000) * 10)
   }
   
-  p_vol   = round_to_10k_in_thousands(sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE))
-  bwp_vol = round_to_10k_in_thousands(sum(tp_data$total_m3[tp_data$var == "balance"], na.rm = TRUE))
+  p_vol         <- round_to_10k_in_thousands(sum(tp_data$total_m3[tp_data$var == "P"], na.rm = TRUE))
   
-  aet_row      <- tp_data %>% dplyr::filter(var == "aet")
-  aet_tot      <- sum(aet_row$total_m3, na.rm = TRUE)
+  # BWP calculation explicitly matches the mathematical rounding order used in Fig 7
+  # (Rounding each individual production system before summing, to prevent 1650 vs 1640 drift)
+  bwp_components <- ps_volumetric_summary %>%
+    dplyr::filter(stringr::str_detect(as.character(time_period), target_yr) & var == "balance") %>%
+    dplyr::mutate(val_converted = round(total_vol_m3 / 10000) * 10) 
   
-  et_rainfed   <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$rainfed_m3)) else 0
-  et_irrigated <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$irrigated_m3)) else 0
-  et_grazed    <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$grazed_m3)) else 0
-  et_unused    <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$unused_m3)) else 0
+  bwp_vol       <- sum(bwp_components$val_converted, na.rm = TRUE)
+  
+  aet_row       <- tp_data %>% dplyr::filter(var == "aet")
+  aet_tot       <- sum(aet_row$total_m3, na.rm = TRUE)
+  
+  et_rainfed    <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$rainfed_m3)) else 0
+  et_irrigated  <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$irrigated_m3)) else 0
+  et_grazed     <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$grazed_m3)) else 0
+  et_unused     <- if(aet_tot > 0) round_to_10k_in_thousands(sum(aet_row$unused_m3)) else 0
   
   # _________________________________________________________________________
-  # STEP 4: Enforce Absolute Mass Balance
+  # STEP 3: Enforce Absolute Mass Balance
   # _________________________________________________________________________
   total_out <- bwp_vol + et_rainfed + et_irrigated + et_grazed + et_unused
+  
+  # Handle minor rounding artifacts (+/- 10k) naturally across the largest sink
   if (p_vol != total_out && total_out > 0) { 
     et_rainfed <- et_rainfed + (p_vol - total_out) 
   }
   
   # _________________________________________________________________________
-  # STEP 5: Build Network Linkages
+  # STEP 4: Build Network Linkages
   # _________________________________________________________________________
   nodes_df <- data.frame(
     name = c(
@@ -1417,7 +1399,6 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
   
   outflow_vols <- c(et_irrigated, et_rainfed, et_grazed, et_unused, bwp_vol)
   
-  # THE FIX: This index list MUST have 5 numbers to match the 5 variables in outflow_vols
   outflow_indices <- 1:5 
   
   links_list <- list()
@@ -1438,7 +1419,7 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
     .range(', BWP_PALETTES$sankey_range, ')')
   
   # _________________________________________________________________________
-  # STEP 6: Render the D3 Widget
+  # STEP 5: Render the D3 Widget
   # _________________________________________________________________________
   sankey <- networkD3::sankeyNetwork(
     Links = links_df, Nodes = nodes_df, Source = "source", Target = "target",
@@ -1450,7 +1431,7 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
   )
   
   # _________________________________________________________________________
-  # STEP 7: Javascript Typography Override
+  # STEP 6: Javascript Typography Override
   # _________________________________________________________________________
   sankey <- htmlwidgets::onRender(sankey, '
     function(el, x) {

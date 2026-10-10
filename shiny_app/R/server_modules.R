@@ -55,6 +55,12 @@ data_ingestion_server <- function(id) {
         d_step_kc      <- read_csv(file.path(data_dir, "07_step_kc_curve_parameters_table.csv"), show_col_types = FALSE)
         d_crop_systems <- read_csv(file.path(data_dir, "08_crop.systems.csv"), show_col_types = FALSE)
         d_ps_by_cs_area<- read_csv(file.path(data_dir, "09_crop_system_area_by_production_system.csv"), show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
+        
+        # --- NEW IMPLEMENTATION ---
+        # Automatically fix typos before the water budget calculator processes them
+        d_ps_by_cs_area <- harmonize_crop_system_names(d_ps_by_cs_area, d_crop_systems)
+        # --------------------------
+        
         d_farms_count  <- read_csv(file.path(data_dir, "10_no_of_farmers_by_production_system.csv"), show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
         
         validate_schemas(d_precip, d_et0, d_crop_systems, d_model_param, d_ps_by_cs_area, d_farms_count, has_scale2 = TRUE, has_scale3 = TRUE)
@@ -105,6 +111,11 @@ data_ingestion_server <- function(id) {
         if (has_s2) {
           req(input$custom_area)
           d_ps_by_cs_area <- read_csv(input$custom_area$datapath, show_col_types = FALSE) %>% mutate(time_period = as.character(time_period))
+          
+          # --- NEW IMPLEMENTATION ---
+          # Automatically fix typos before the water budget calculator processes them
+          d_ps_by_cs_area <- harmonize_crop_system_names(d_ps_by_cs_area, d_crop_systems)
+          # --------------------------
         }
         if (has_s3) {
           req(input$custom_farms)
@@ -388,7 +399,6 @@ socio_engine_server <- function(id, app_data, engine_results) {
       
       if (app_data$has_scale3) {
         farms <- app_data$farms_count
-        # FIXED: Included sub_production_system in the grouping to prevent it from being dropped
         farms_clean <- farms %>% 
           group_by(time_period, production_system, sub_production_system) %>% 
           summarise(number_of_farms = sum(number_of_farms, na.rm = TRUE), .groups = "drop")
