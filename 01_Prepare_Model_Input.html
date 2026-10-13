@@ -2442,7 +2442,7 @@ margin-bottom: 1rem;
 <ol start="10" type="1">
 <li><strong>Farm Counts (<code>10_no_of_farmers_by_production_system.csv</code>)</strong>: Total number of farmers belonging to each production system in a given village/micro-region.</li>
 </ol>
-<p><em>In Hemingway et al. (202X), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.</em></p>
+<p><em>In Hemingway et al. (2026b), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.</em></p>
 <hr>
 </section>
 <section id="data-architecture-workflow" class="level3" data-number="0.0.2">
@@ -2454,7 +2454,7 @@ margin-bottom: 1rem;
 </section>
 <section id="directory-structure-for-this-script" class="level3" data-number="0.0.3">
 <h3 data-number="0.0.3" class="anchored" data-anchor-id="directory-structure-for-this-script"><span class="header-section-number">0.0.3</span> 📂 Directory Structure for this Script</h3>
-<p>The Blue Water Potential Toolkit serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (202X), and it can be applied to new study sites. As the first step in the pipeline, this script is where both workflows begin.</p>
+<p>The Blue Water Potential Toolkit serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (2026b), and it can be applied to new study sites. As the first step in the pipeline, this script is where both workflows begin.</p>
 <ul>
 <li><strong>Reproducing the Manuscript:</strong> All clean inputs required to run this script are already provided in the <code>data/input/</code> directory.</li>
 <li><strong>Adapting for your own study site:</strong> Place your clean data in the <code>data/input/</code> folder. The script will automatically generate the required folder structure for all derived processed outputs. To run this script, open the <code>.Rproj</code> and click “Render”.</li>
@@ -4270,7 +4270,7 @@ margin-bottom: 1rem;
 </section>
 <section id="production-systems" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Production Systems</h1>
-<p>Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (202X), this information is taken from Tables 1 &amp; 2 of Hemingway et al. (2025) and modified in Hemingway et al. (2026).</p>
+<p>Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (2026b), this information is taken from Tables 1 &amp; 2 of Hemingway et al. (2025) and modified in Hemingway et al. (2026a).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -4741,7 +4741,7 @@ margin-bottom: 1rem;
 </section>
 <section id="agrarian-system" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Agrarian System</h1>
-<p>Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. (2026).</p>
+<p>Read the file with number of farms belonging to each of the Production Systems in the Agrarian System of the considered area (village, micro-region, watershed). In our case study these numbers are calculated for two periods using an optimisation technique as described in Hemingway et al. (2026a).</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -4902,15 +4902,15 @@ margin-bottom: 1rem;
 <h1 data-number="8"><span class="header-section-number">8</span> References</h1>
 <p>Allen, R.G., Pereira, L.S., Raes, D., Smith, M., 1998. Crop evapotranspiration-Guidelines for computing crop water requirements-FAO Irrigation and drainage paper 56. FAO - Food and Agriculture Organization of the United Nations, Rome, Italy.</p>
 <p>Hemingway C., Ruiz L., Vigne M., Aubron C., 2025. The changing role of livestock in agrarian systems: a historical and multifunctional perspective from southern India, Agronomy for Sustainable Development, 45(1) : 7. https://doi.org/10.1007/s13593-024-00999-9</p>
-<p>Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., &amp; Ruiz, L. (2026). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator</p>
-<p>Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., &amp; Ruiz, L. (202X). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. [Journal Name]. [DOI]</p>
+<p>Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., &amp; Ruiz, L. (2026a). The Archetype Village Generator: a tool for constructing modelled representations of agricultural regions while accounting for farm-type diversity in data-scarce contexts (Version 1.0.0). GitLab. https://gitlab.cirad.fr/tetis/public/archetype-village-generator</p>
+<p>Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Muddu, S., &amp; Ruiz, L. (2026b). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. Journal of Hydrology. [DOI]</p>
 </section>
 <section id="preferred-citation" class="level1" data-number="9">
 <h1 data-number="9"><span class="header-section-number">9</span> Preferred Citation</h1>
 <p>If you use this toolkit, its underlying logic, or adapt the framework for another watershed study, please cite both the software repository and the primary manuscript:</p>
 <ul>
 <li><p><strong>Software:</strong> Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. &amp; Ruiz, L. (2026). <em>The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0)</em>. Zenodo. https://doi.org/10.5281/zenodo.20665272</p></li>
-<li><p><strong>Manuscript:</strong> Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., &amp; Ruiz, L. (202X). <em>Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets</em>. [Journal Name]. [DOI]</p></li>
+<li><p><strong>Manuscript:</strong> Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., &amp; Ruiz, L. (2026). <em>Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets</em>. Journal of Hydrology. [DOI]</p></li>
 </ul>
 </section>
 

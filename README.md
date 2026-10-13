@@ -6,9 +6,9 @@ agrarian
 system.**[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
 This repository contains the computational workflow and analytical model
-for the manuscript: \> **Hemingway, C. et al. (202X).** *Accounting the
+for the manuscript: \> **Hemingway, C. et al. (2026).** *Accounting the
 unaccounted: a new framework for incorporating farm social diversity in
-micro-regional water budgets* \[Journal Name\]. \[DOI\]
+micro-regional water budgets* Journal of Hydrology. \[DOI\]
 
 **The Blue Water Potential Toolkit** provides a generalized R framework
 for simulating Blue Water Potential (Gross Groundwater Recharge minus
@@ -19,10 +19,10 @@ different types of farms can be either net consumers or net producers of
 blue water in a given climate. The BWP calculations follow the FAO-56
 method to compute the crop-level water balance, with the equations and
 assumptions presented in the Methods section and in the Supplementary
-Material of the Hemingway, C. et al. (202X) manuscript.
+Material of the Hemingway, C. et al. (2026) manuscript.
 
 **The Blue Water Potential Toolkit** serves two purposes: it can be used
-to reproduce the results presented in Hemingway et al. (202X), and it
+to reproduce the results presented in Hemingway et al. (2026), and it
 can be applied to new study sites.
 
 ------------------------------------------------------------------------
@@ -167,23 +167,24 @@ formatting rules.
 ### Toolkit Development & Attribution
 
 This repository represents the digital translation and scaling of a
-micro-regional water accounting model: \* **Model Rationale, Data
+micro-regional water accounting model:<br> \* **Model Rationale, Data
 Collection & Visual Concepts:** Developed in Microsoft Excel by
-Charlotte Hemingway & Laurent Ruiz. \* **R Translation, Framework
-Design, & Documentation:** Developed by Rutuja Chitra-Tarak.
+Charlotte Hemingway & Laurent Ruiz.<br> \* **R Translation, Framework
+Design, & Documentation:** Developed by Rutuja Chitra-Tarak.<br>
 
 ### Manuscript Author Statement (CRediT)
 
 For the associated academic publication, contributions are defined as
-follows: \* **Conceptualization / Methodology:** C. Hemingway, C.
-Aubron, M. Vigne, L. Ruiz, R. Chitra-Tarak \* **Software:** R.
-Chitra-Tarak, C. Hemingway \* **Validation:** C. Hemingway, R.
-Chitra-Tarak \* **Formal Analysis:** C. Hemingway, L. Ruiz, R.
-Chitra-Tarak \* **Investigation:** C. Hemingway \* **Data Curation:** C.
-Hemingway, R. Chitra-Tarak \* **Visualization:** C. Hemingway, R.
-Chitra-Tarak \* **Writing - Original Draft:** C. Hemingway, L. Ruiz \*
-**Writing - Review & Editing:** C. Aubron, M. Vigne, L. Ruiz, G. Boulet,
-M. Sekhar, R. Chitra-Tarak \* **Funding Acquisition:** C. Aubron
+follows:<br> \* **Conceptualization / Methodology:** C. Hemingway, C.
+Aubron, M. Vigne, L. Ruiz, R. Chitra-Tarak<br> \* **Software:** R.
+Chitra-Tarak, C. Hemingway<br> \* **Validation:** C. Hemingway, R.
+Chitra-Tarak<br> \* **Formal Analysis:** C. Hemingway, L. Ruiz, R.
+Chitra-Tarak<br> \* **Investigation:** C. Hemingway<br> \* **Data
+Curation:** C. Hemingway, R. Chitra-Tarak<br> \* **Visualization:** C.
+Hemingway, R. Chitra-Tarak<br> \* **Writing - Original Draft:** C.
+Hemingway, L. Ruiz<br> \* **Writing - Review & Editing:** C. Aubron, M.
+Vigne, L. Ruiz, G. Boulet, M. Sekhar, R. Chitra-Tarak<br> \* **Funding
+Acquisition:** C. Aubron<br>
 
 ------------------------------------------------------------------------
 
@@ -233,6 +234,6 @@ and the primary manuscript:
   <https://doi.org/10.5281/zenodo.20665272>
 
 - **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet,
-  G., Vigne, M., Sekhar M., & Ruiz, L. (202X). *Accounting the
+  G., Vigne, M., Sekhar M., & Ruiz, L. (2026). *Accounting the
   unaccounted: a new framework for incorporating farm social diversity
-  in micro-regional water budgets*. \[Journal Name\]. \[DOI\]
+  in micro-regional water budgets*. Journal of Hydrology. \[DOI\]
