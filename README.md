@@ -2,13 +2,14 @@ The Blue Water Potential Toolkit
 ================
 
 **A socio-hydrological framework to scale water budgets from plot to
-agrarian
-system.**[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
+agrarian system.**
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20665272.svg)](https://doi.org/10.5281/zenodo.20665272)
 
 This repository contains the computational workflow and analytical model
 for the manuscript: \> **Hemingway, C. et al. (2026).** *Accounting the
 unaccounted: a new framework for incorporating farm social diversity in
-micro-regional water budgets* Journal of Hydrology. \[DOI\]
+micro-regional water budgets.* Journal of Hydrology.
+<https://doi.org/10.1016/j.jhydrol.2026.136621>
 
 **The Blue Water Potential Toolkit** provides a generalized R framework
 for simulating Blue Water Potential (Gross Groundwater Recharge minus
@@ -19,7 +20,7 @@ different types of farms can be either net consumers or net producers of
 blue water in a given climate. The BWP calculations follow the FAO-56
 method to compute the crop-level water balance, with the equations and
 assumptions presented in the Methods section and in the Supplementary
-Material of the Hemingway, C. et al. (2026) manuscript.
+Material of the Hemingway et al. (2026).
 
 **The Blue Water Potential Toolkit** serves two purposes: it can be used
 to reproduce the results presented in Hemingway et al. (2026), and it
@@ -236,4 +237,5 @@ and the primary manuscript:
 - **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet,
   G., Vigne, M., Sekhar M., & Ruiz, L. (2026). *Accounting the
   unaccounted: a new framework for incorporating farm social diversity
-  in micro-regional water budgets*. Journal of Hydrology. \[DOI\]
+  in micro-regional water budgets*. Journal of Hydrology.
+  <https://doi.org/10.1016/j.jhydrol.2026.136621>
