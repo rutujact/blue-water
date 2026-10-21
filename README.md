@@ -229,13 +229,13 @@ for another watershed study, please cite both the software repository
 and the primary manuscript:
 
 - **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G.,
-  Vigne, M., Sekhar M. & Ruiz, L. (2026). *The Blue Water Potential
+  Vigne, M., Sekhar M. & Ruiz, L. (2026). The Blue Water Potential
   Toolkit: a socio-hydrological framework to scale water budgets from
-  plot to agrarian system (Version 1.0.0)*. Zenodo.
+  plot to agrarian system (Version 1.0.0) \[Computer software\]. Zenodo.
   <https://doi.org/10.5281/zenodo.20665272>
 
 - **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet,
-  G., Vigne, M., Sekhar M., & Ruiz, L. (2026). *Accounting the
+  G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the
   unaccounted: a new framework for incorporating farm social diversity
-  in micro-regional water budgets*. Journal of Hydrology.
+  in micro-regional water budgets. Journal of Hydrology.
   <https://doi.org/10.1016/j.jhydrol.2026.136621>
