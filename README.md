@@ -58,10 +58,10 @@ To use this toolkit, you will need to run it locally on your machine.
 
 1.  **Install R and RStudio:** Ensure you have
     [RStudio](https://posit.co/download/rstudio-desktop/) installed.
-    This toolkit was developed and tested using **R version 4.2.2**. To
+    This toolkit was developed and tested using **R version 4.6.1**. To
     guarantee full compatibility with the package library, we strongly
     recommend installing [R
-    4.2.2](https://cran.r-project.org/src/base/R-4/), though newer
+    4.6.1](https://cran.r-project.org/src/base/R-4/), though newer
     versions may still work.
 
 2.  **Initialize the Environment:** This project uses `renv` to manage
