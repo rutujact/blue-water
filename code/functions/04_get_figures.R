@@ -1503,14 +1503,20 @@ get_d3_sankey <- function(ps_volumetric_summary, target_period, font_size = 13, 
 #' @export
 plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_by_cs_area, target_period = "2022") {
   
-  # 1. Extract Typology & Mapping
+# 1. Extract Typology & Mapping (Updated with threshold logic)
   mapping <- ps_by_cs_area %>%
     dplyr::filter(time_period == as.character(target_period)) %>%
-    dplyr::select(production_system, land_use_type, dplyr::any_of("report_group_name")) %>%
-    dplyr::distinct() %>%
-    dplyr::group_by(production_system) %>%
-    dplyr::slice(1) %>%
-    dplyr::ungroup()
+    dplyr::group_by(production_system, dplyr::across(dplyr::any_of("report_group_name"))) %>%
+    dplyr::summarise(
+      total_area = sum(area_ha, na.rm = TRUE),
+      irrigated_area = sum(area_ha[land_use_type == "Irrigated"], na.rm = TRUE),
+      .groups = "drop"
+    ) %>%
+    dplyr::mutate(
+      # Set your threshold here (e.g., > 40% irrigated area = "Irrigated")
+      land_use_type = dplyr::if_else((irrigated_area / total_area) > 0.40, "Irrigated", "Rainfed")
+    ) %>%
+    dplyr::select(production_system, land_use_type, dplyr::any_of("report_group_name"))
   
   clean_data <- ps_bwp_volumetric %>%
     dplyr::filter(time_period == as.character(target_period)) %>%
@@ -1533,7 +1539,7 @@ plot_farm_bwp_disparity <- function(ps_bwp_volumetric, ps_by_cs_area, target_per
     dplyr::group_by(display_label) %>%
     dplyr::summarise(
       total = sum(total_vol_m3, na.rm = TRUE),
-      farms = if(all(is.na(number_of_farms))) 0 else max(number_of_farms, na.rm = TRUE),
+      farms = sum(number_of_farms, na.rm = TRUE), # Fixed: Summing grouped farms
       .groups = "drop"
     ) %>%
     dplyr::mutate(
