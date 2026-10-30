@@ -402,7 +402,19 @@ server <- function(input, output, session) {
               production_system_label = stringr::str_replace(production_system_label, "Rainfed g", "G")
             )
           
-          plot_farm_bwp_disparity(demographic_fig_data, app_data$ps_by_cs_area, target_period = my_p)
+          # Store the plot, apply the demographic panel edits, and print
+          fig.9_disparity <- plot_farm_bwp_disparity(demographic_fig_data, app_data$ps_by_cs_area, target_period = my_p)
+          
+          fig.9_disparity[[1]] <- fig.9_disparity[[1]] +
+            geom_text(
+              aes(label = scales::percent(farms / sum(farms), accuracy = 0.1)),
+              hjust = -0.2,
+              size = 3.5
+            ) +
+            scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+            coord_flip(clip = "off")
+          
+          print(fig.9_disparity)
         }, res = 96, bg = "white")
       })
     }
