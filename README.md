@@ -8,7 +8,7 @@ agrarian system.**
 This repository contains the computational workflow and analytical model
 for the manuscript: \> **Hemingway, C. et al. (2026).** *Accounting the
 unaccounted: a new framework for incorporating farm social diversity in
-micro-regional water budgets.* Journal of Hydrology.
+micro-regional water budgets.* Journal of Hydrology. 681, 136621.
 <https://doi.org/10.1016/j.jhydrol.2026.136621>
 
 **The Blue Water Potential Toolkit** provides a generalized R framework
@@ -234,8 +234,8 @@ and the primary manuscript:
   plot to agrarian system (Version 1.0.0) \[Computer software\]. Zenodo.
   <https://doi.org/10.5281/zenodo.20665272>
 
-- **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet,
-  G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the
-  unaccounted: a new framework for incorporating farm social diversity
-  in micro-regional water budgets. Journal of Hydrology.
+- **Article:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G.,
+  Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the unaccounted: a
+  new framework for incorporating farm social diversity in
+  micro-regional water budgets. Journal of Hydrology. 681, 136621.
   <https://doi.org/10.1016/j.jhydrol.2026.136621>

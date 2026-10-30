@@ -51,7 +51,7 @@ h1, h2 {
 
 # Overview
 
-This document serves as the main reproducible report and computational workflow for Hemingway et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. Journal of Hydrology. <https://doi.org/10.1016/j.jhydrol.2026.136621>
+This document serves as the main reproducible report and computational workflow for Hemingway et al. (2026). *Accounting for the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets*. Journal of Hydrology. 681, 136621. <https://doi.org/10.1016/j.jhydrol.2026.136621>
 
 **The Blue Water Potential Toolkit** provides a generalized R framework for simulating Blue Water Potential (Gross Groundwater Recharge minus Irrigation Requirement) at plot, farm, and village/micro-regional scale. By coupling climate, soil and crop information with socio-agricultural data, this toolkit computes and displays water fluxes, revealing how different types of farms can be either net consumers or net producers of blue water in a given climate. The BWP calculations follow the FAO-56 method to compute the crop-level water balance, with the equations and assumptions presented in the Methods section and in the Supplementary Material of Hemingway et al. (2026).
 
@@ -178,7 +178,7 @@ HAS_PRODUCTION_SYSTEM <- TRUE # Set to FALSE to Stop at Cropping Systems (requir
 HAS_AGRARIAN_SYSTEM <- TRUE # Set to FALSE to Stop at Production Systems (requires ONLY processed/01 to 10 data files).
 
 # The main Water Budget Calculator function can be turned ON/OFF here. 
-CALCULATE_BUDGET <- FALSE # Toggle this to FALSE, for example, if you have already run the water budget calculations once (so budget outputs are saved), and are manipulating the output processing code.
+CALCULATE_BUDGET <- TRUE # Toggle this to FALSE, for example, if you have already run the water budget calculations once (so budget outputs are saved), and are manipulating the output processing code.
 ```
 
 ## Load Toolkit Dependencies
@@ -690,7 +690,7 @@ This figure shows how some social category (Production System) disproportionatel
 For the case study in Hemingway et al. (2026), a large number of rainfed farmers and a few pastoralists have a large positive impact, while a few numbers of Small- and Large-scale fruit growers are the main Blue Water Consumers.
 
 
-```{r disparity-plot, fig.width=12, fig.height=6, out.width="100%", fig.align = 'center', fig.cap = 'Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³). The bracketed labels indicate the system's dominant water source category: a production system is classified as [Irrigated] if more than 40% of its cultivated area receives irrigation, and [Rainfed] otherwise. For example, Rice growers are designated as [Rainfed] because their irrigated area (35%) falls below this threshold.'}
+```{r disparity-plot, fig.width=12, fig.height=6, out.width="100%", fig.align = 'center', fig.cap = "Figure 9. Number of farmers in each Production System (left panel) and their aggregated Blue Water Potential (BWP) (right panel; in thousand m³). The bracketed labels indicate the system's dominant water source category: a production system is classified as [Irrigated] if more than 40% of its cultivated area receives irrigation, and [Rainfed] otherwise. For example, Rice growers are designated as [Rainfed] because their irrigated area (35%) falls below this threshold."}
 #| eval: !expr HAS_AGRARIAN_SYSTEM
 #| 
 fig.9_disparity <- plot_farm_bwp_disparity(ps_bwp_volumetric, ps_by_cs_area)
@@ -725,4 +725,4 @@ If you use this toolkit, its underlying logic, or adapt the framework for anothe
 
 * **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. & Ruiz, L. (2026). The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.20665272>
 
-* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. Journal of Hydrology. <https://doi.org/10.1016/j.jhydrol.2026.136621>
+* **Article:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. Journal of Hydrology. 681, 136621. <https://doi.org/10.1016/j.jhydrol.2026.136621>

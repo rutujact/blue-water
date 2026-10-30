@@ -56,7 +56,7 @@ This script processes, visualizes, and expands the input data required by the hy
 
 10. **Farm Counts (`10_no_of_farmers_by_production_system.csv`)**: Total number of farmers belonging to each production system in a given village/micro-region.
 
-*In Hemingway et al. (2026b), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.*
+*In Hemingway et al. (2026), this process was run for two agrarian systems, corresponding to two historical periods: the 1950s and 2022. The climate time series (1980-2018) was held constant to isolate the impact of land-use changes, while cropping systems, production systems, and agrarian systems were period-specific.*
 
 ---
 
@@ -74,7 +74,7 @@ This folder is fully automated. When you render this script (`01_Prepare_Model_I
 
 ### 📂 Directory Structure for this Script
 
-The Blue Water Potential Toolkit serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (2026b), and it can be applied to new study sites. As the first step in the pipeline, this script is where both workflows begin.
+The Blue Water Potential Toolkit serves two purposes: it can be used to reproduce the results presented in Hemingway et al. (2026), and it can be applied to new study sites. As the first step in the pipeline, this script is where both workflows begin.
 
 * **Reproducing the Manuscript:** All clean inputs required to run this script are already provided in the `data/input/` directory.
 * **Adapting for your own study site:** Place your clean data in the `data/input/` folder. The script will automatically generate the required folder structure for all derived processed outputs. To run this script, open the `.Rproj` and click "Render".
@@ -592,7 +592,7 @@ readr::write_csv(crop.systems.l.kc, file = here::here("data/processed/01_crop.sy
 
 # Production Systems
 
-Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (2026b), this information is taken from Tables 1 & 2 of Hemingway et al. (2025) and modified in Hemingway et al. (2026a).
+Read the file that describes the composition of each production system in terms of cropping systems and their area. For the case study in Hemingway et al. (2026), this information is taken from Tables 1 & 2 of Hemingway et al. (2025) and modified in Hemingway et al. (2026a).
 
 ```{r load-production-system}
 ps_by_cs_area  <- data.table::fread(here::here("data/input/09_crop_system_area_by_production_system.csv")) %>% dplyr::as_tibble()
@@ -654,4 +654,4 @@ If you use this toolkit, its underlying logic, or adapt the framework for anothe
 
 * **Software:** Chitra-Tarak, R., Hemingway, C., Aubron, C., Boulet, G., Vigne, M., Sekhar M. & Ruiz, L. (2026). The Blue Water Potential Toolkit: a socio-hydrological framework to scale water budgets from plot to agrarian system (Version 1.0.0) [Computer software]. Zenodo. <https://doi.org/10.5281/zenodo.20665272>
 
-* **Manuscript:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. Journal of Hydrology. <https://doi.org/10.1016/j.jhydrol.2026.136621>
+* **Article:** Hemingway, C., Aubron, C., Chitra-Tarak, R., Boulet, G., Vigne, M., Sekhar M., & Ruiz, L. (2026). Accounting the unaccounted: a new framework for incorporating farm social diversity in micro-regional water budgets. Journal of Hydrology. 681, 136621.  <https://doi.org/10.1016/j.jhydrol.2026.136621>
